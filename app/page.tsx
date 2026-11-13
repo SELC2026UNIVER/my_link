@@ -153,7 +153,7 @@ export default function Home() {
           className="relative rounded-3xl border-[3px] border-[#161616] bg-[#FFFDF7] shadow-[8px_8px_0px_#161616]"
         >
           {/* 상단 스크랩북 배너 이미지 */}
-          <div className="relative h-36 w-full overflow-hidden rounded-t-[calc(1.5rem-3px)] border-b-[3px] border-[#161616] bg-[#EFE6D5] sm:h-44">
+          <div className="relative h-40 w-full overflow-hidden rounded-t-[calc(1.5rem-3px)] border-b-[3px] border-[#161616] bg-[#EFE6D5] sm:h-44">
             <Image
               src={profile.banner}
               alt={profile.bannerAlt}
@@ -166,12 +166,13 @@ export default function Home() {
             />
 
             {/* 배너 위 스티커 라벨 바 */}
-            <div className="absolute inset-x-4 top-3.5 flex items-center justify-between gap-2 sm:inset-x-6 sm:top-4">
-              <span className="-rotate-1 rounded-lg border-2 border-[#161616] bg-[#FFFDF7] px-3 py-1 font-mono text-[11px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616]">
-                {profile.handle} · SCRAPBOOK
+            <div className="absolute inset-x-3 top-3 flex flex-wrap items-center justify-between gap-2 sm:inset-x-6 sm:top-4">
+              <span className="-rotate-1 max-w-full truncate rounded-lg border-2 border-[#161616] bg-[#FFFDF7] px-2.5 py-1 font-mono text-[10px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616] sm:px-3 sm:text-[11px]">
+                {profile.handle}
+                <span className="hidden sm:inline"> · SCRAPBOOK</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-2 border-[#161616] bg-[#A6BC78] px-3 py-1 font-mono text-[11px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616]">
-                <span className="h-2 w-2 rounded-full border border-[#161616] bg-[#F2C14E]" />
+              <span className="inline-flex max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-2 border-[#161616] bg-[#A6BC78] px-2.5 py-1 font-mono text-[10px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616] sm:px-3 sm:text-[11px]">
+                <span className="h-2 w-2 shrink-0 rounded-full border border-[#161616] bg-[#F2C14E]" />
                 {profile.status}
               </span>
             </div>
@@ -252,17 +253,17 @@ export default function Home() {
                 {beginnerMilestones.map((item, idx) => (
                   <div
                     key={item.label}
-                    className={`rounded-xl border-2 border-[#161616] p-3 text-center shadow-[3px_3px_0px_#161616] ${
+                    className={`rounded-xl border-2 border-[#161616] px-2 py-2.5 text-center shadow-[3px_3px_0px_#161616] sm:p-3 ${
                       item.bg
                     } ${idx === 1 ? "rotate-1" : "-rotate-1"}`}
                   >
                     <div className="font-mono text-[10px] font-bold text-[#161616]/80">
                       {item.label}
                     </div>
-                    <div className="mt-1 text-base font-black text-[#161616] sm:text-lg">
+                    <div className="mt-1 text-sm font-black leading-tight text-[#161616] break-keep sm:text-base">
                       {item.value}
                     </div>
-                    <div className="mt-0.5 text-[10px] font-bold text-[#161616]/85">
+                    <div className="mt-0.5 text-[10px] font-bold text-[#161616]/85 break-keep">
                       {item.note}
                     </div>
                   </div>
