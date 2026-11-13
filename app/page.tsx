@@ -40,7 +40,7 @@ export default function Home() {
                 loading="eager"
                 fetchPriority="high"
                 placeholder="blur"
-                className="h-[120px] w-[120px] object-cover object-top"
+                className="h-[120px] w-[120px] object-cover object-center"
               />
             </div>
 
