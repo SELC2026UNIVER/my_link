@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.0 · 작성일: 2026-11-14 · 상태: 확정(Confirmed)
+> 문서 버전: v3.1 · 작성일: 2026-11-14 · 상태: 확정(Confirmed)
+> v3.1 변경: 전역 상태 관리를 Zustand(`persist` 미들웨어 + `localStorage` Storage Adapter)로 확정
 > v3.0 변경: 클라이언트 완결형 데모(Next.js App Router + `localStorage` + Mock 데이터) 전환, 공개 프로필 확장(아바타·소셜 미디어 배치·섹션 구분 헤더), 대시보드 UX 확장(드래그 앤 드롭·테마 설정·통계 및 추이 차트) 반영
 
 ---
@@ -16,7 +17,7 @@
 | **핵심** | 링크·소셜·섹션 CRUD (Create · Read · Update · Delete) + 개인 URL(`/[username]`) 공유 + 실시간 라이브 프리뷰 대시보드 + 기본 통계 |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태** | **Next.js (App Router) 기반 클라이언트 완결형 데모** — 별도 백엔드 서버·DB 구축 없이 브라우저 `localStorage` 및 Mock 데이터 연동으로 즉시 동작 |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Web Storage(`localStorage`) · Mock 데이터 |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
 | **디자인 기준** | [`design.md`](./design.md) (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필 버튼, 상단 라이트/하단 다크 풀블리드 타일 교차 기본 테마) |
 
 ### 1.1 성공 지표 (KPI)
@@ -274,9 +275,9 @@ flowchart LR
 
 ---
 
-## 5. 데이터 모델 (`localStorage` & Mock 데이터 구조)
+## 5. 데이터 모델 (`Zustand` 스토어 & `localStorage` 구조)
 
-별도 DB 없이 브라우저 `localStorage`에 JSON 형태로 영구 보관하며, 첫 실행 시 `/gildong` 등 기본 Mock 데이터를 자동 시드한다.
+별도 DB 없이 **Zustand 스토어**와 `persist` 미들웨어(`localStorage` Storage Adapter)로 상태를 전역 관리·영구 보관하며, 첫 실행 시 `/gildong` 등 기본 Mock 데이터를 자동 시드한다. (SSR 하이드레이션 불일치 방지를 위해 클라이언트 마운트 후 `hasHydrated` 플래그로 상태를 안전하게 복원한다.)
 
 ```mermaid
 erDiagram
@@ -330,7 +331,7 @@ erDiagram
 ```
 
 ```ts
-// 참고용 TypeScript 타입 (클라이언트 localStorage 스토어 기준)
+// 참고용 TypeScript 타입 (Zustand 스토어 · localStorage persist 기준)
 export type LinkIcon =
   | "link"
   | "instagram"
@@ -420,7 +421,7 @@ export interface AnalyticsData {
 | 항목 | 기준 |
 |---|---|
 | 초기 렌더링 속도 | 공개 페이지 및 대시보드 LCP 2.5초 이내 (4G 모바일 기준), Lighthouse 성능 점수 90점 이상 |
-| 반응 속도 | 모든 데이터 조작(링크/소셜/섹션 추가·수정·삭제·드래그 정렬·테마 변경)은 `localStorage` 즉시 반영으로 **50ms 이내** UI·라이브 프리뷰 갱신 |
+| 반응 속도 | 모든 데이터 조작(링크/소셜/섹션 추가·수정·삭제·드래그 정렬·테마 변경)은 **Zustand 선택적 구독(selector)** 및 `localStorage` 즉시 반영으로 불필요한 리렌더링 없이 **50ms 이내** UI·라이브 프리뷰 갱신 |
 | 저장소 용량 관리 | 브라우저 `localStorage` 한계(약 5MB) 초과를 막기 위해 아바타 이미지는 업로드 시 클라이언트에서 리사이징·압축(WebP/JPEG) 후 저장 |
 | 이미지 최적화 | 정적/시드 이미지는 `next/image`로 최적화 |
 | 번들 크기 | 공개 페이지 초기 클라이언트 JS 120KB(gzip) 이하 목표 (차트 라이브러리는 `/admin` 통계 탭 진입 시 지연 로딩) |
@@ -452,7 +453,7 @@ export interface AnalyticsData {
 |---|---|
 | 브라우저 | Chrome, Safari, Edge, Firefox 최신 2개 버전 / iOS Safari, Android Chrome / 인스타그램·카카오톡 인앱 브라우저 |
 | SEO · 공유 | 정적/기본 Open Graph 메타데이터 설정 및 페이지별 `document.title` 동적 반영 |
-| 코드 품질 | TypeScript strict 모드, ESLint 통과, 저장소 레이어(Storage Adapter)를 분리해 향후 백엔드(DB) 교체 용이 |
+| 코드 품질 | TypeScript strict 모드, ESLint 통과, Zustand 스토어의 Storage Adapter를 분리해 향후 백엔드(DB) 교체 용이 |
 
 ---
 
