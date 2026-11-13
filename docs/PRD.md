@@ -19,7 +19,7 @@
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태** | **Next.js (App Router) 기반 클라이언트 완결형 데모** — 별도 백엔드 서버·DB 구축 없이 브라우저 `localStorage` 및 Mock 데이터 연동으로 즉시 동작 |
 | **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
-| **디자인 기준** | [`design.md`](./design.md) (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필 버튼, 상단 라이트/하단 다크 풀블리드 타일 교차 기본 테마) |
+| **디자인 기준** | [`design.md`](../design.md) (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필 버튼, 상단 라이트/하단 다크 풀블리드 타일 교차 기본 테마) |
 
 ### 1.1 성공 지표 (KPI)
 
@@ -460,7 +460,7 @@ export interface AnalyticsData {
 
 ## 7. 디자인 가이드 (요약)
 
-[`design.md`](./design.md)의 Apple 웹 디자인 언어를 따르며, 기본 테마(`Apple 클래식`)와 대시보드 화면에 아래와 같이 적용한다.
+[`design.md`](../design.md)의 Apple 웹 디자인 언어를 따르며, 기본 테마(`Apple 클래식`)와 대시보드 화면에 아래와 같이 적용한다.
 
 | 화면 / 요소 | 적용 스타일 |
 |---|---|
