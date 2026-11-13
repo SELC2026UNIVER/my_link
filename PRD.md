@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.1 · 작성일: 2026-11-14 · 상태: 확정(Confirmed)
+> 문서 버전: v3.2 · 작성일: 2026-11-14 · 상태: 확정(Confirmed)
+> v3.2 변경: `10. 구현 로드맵 및 시연 마일스톤` 추가 (폴더·모듈 구조, M1~M3 마일스톤, 네이티브 드래그·경량 SVG 차트 직접 구현, End-to-End 시연 시나리오)
 > v3.1 변경: 전역 상태 관리를 Zustand(`persist` 미들웨어 + `localStorage` Storage Adapter)로 확정
 > v3.0 변경: 클라이언트 완결형 데모(Next.js App Router + `localStorage` + Mock 데이터) 전환, 공개 프로필 확장(아바타·소셜 미디어 배치·섹션 구분 헤더), 대시보드 UX 확장(드래그 앤 드롭·테마 설정·통계 및 추이 차트) 반영
 
@@ -424,7 +425,7 @@ export interface AnalyticsData {
 | 반응 속도 | 모든 데이터 조작(링크/소셜/섹션 추가·수정·삭제·드래그 정렬·테마 변경)은 **Zustand 선택적 구독(selector)** 및 `localStorage` 즉시 반영으로 불필요한 리렌더링 없이 **50ms 이내** UI·라이브 프리뷰 갱신 |
 | 저장소 용량 관리 | 브라우저 `localStorage` 한계(약 5MB) 초과를 막기 위해 아바타 이미지는 업로드 시 클라이언트에서 리사이징·압축(WebP/JPEG) 후 저장 |
 | 이미지 최적화 | 정적/시드 이미지는 `next/image`로 최적화 |
-| 번들 크기 | 공개 페이지 초기 클라이언트 JS 120KB(gzip) 이하 목표 (차트 라이브러리는 `/admin` 통계 탭 진입 시 지연 로딩) |
+| 번들 크기 | 외부 차트·드래그 패키지 없이 경량 SVG 차트 및 네이티브 HTML5/Pointer 드래그를 직접 구현해 공개 페이지 초기 클라이언트 JS 120KB(gzip) 이하 목표 |
 
 ### 6.2 보안 및 데이터 안정성
 
@@ -473,7 +474,7 @@ export interface AnalyticsData {
 
 ---
 
-## 8. 범위 외 (Out of Scope, 데모 v3.0)
+## 8. 범위 외 (Out of Scope, 데모 v3.2)
 
 - 실제 백엔드 서버·DB 구축 및 기기 간 실시간 원격 데이터 동기화
 - 실제 트랜잭션 이메일 발송 서버 연동 (브라우저 내 Mock 이메일 인증으로 대체)
@@ -496,3 +497,61 @@ export interface AnalyticsData {
 - [ ] `[테마]` 설정에서 프리셋 테마와 버튼 스타일을 변경하면 라이브 프리뷰와 `/[username]`에 즉시 적용된다.
 - [ ] `[통계]` 탭에서 총 방문자 수, 링크별 클릭 누적 수, 최근 7일 추이 차트를 확인할 수 있으며, 실제 `/[username]` 방문·클릭 시 수치가 실시간으로 올라간다.
 - [ ] `username` 변경 시 이전 주소(`/이전username`) 접속 시 최신 `/[username]`으로 자동 리다이렉트되며, 존재하지 않는 username은 404가 표시된다.
+
+---
+
+## 10. 구현 로드맵 및 시연 마일스톤
+
+### 10.1 폴더 및 모듈 설계
+
+```text
+my_link/
+├── app/
+│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /gildong 예시 링크
+│   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험
+│   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화)
+│   ├── admin/page.tsx            # 대시보드 (편집·테마·통계 탭 + 우측 실시간 모바일 목업)
+│   ├── [username]/page.tsx       # 공개 프로필 페이지 (대문자/이전 username 리다이렉트, 404 포함)
+│   ├── stores/
+│   │   └── useMyLinkStore.ts     # Zustand 5 + persist 스토어 (hasHydrated 가드 포함)
+│   ├── lib/
+│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (기존 avatar.jpg 및 profile-data 활용)
+│   │   ├── validators.ts         # URL(http/https/mailto)·이메일·username·예약어 검증 및 https 보정
+│   │   ├── icon-matcher.ts       # 도메인·스킴 기반 12종 아이콘 자동 추천
+│   │   ├── themes.ts             # 4종 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
+│   │   └── image-resize.ts       # 아바타 이미지 256×256px 리사이징·압축 (Data URL)
+│   └── components/
+│       ├── PublicProfileView.tsx # 공개 프로필 공용 뷰 (/[username] 및 모바일 목업 프리뷰에서 재사용)
+│       ├── MobilePreviewFrame.tsx# 대시보드 우측 스마트폰 목업 프레임
+│       ├── LinkEditorList.tsx    # 링크/섹션 인라인 CRUD + HTML5/Pointer 드래그 + ▲/▼ 이동 + Undo 토스트
+│       ├── SocialEditor.tsx      # 소셜 미디어 아이콘 배치 관리
+│       ├── ProfileEditor.tsx     # 아바타·이름·자기소개·username 변경 편집
+│       ├── ThemeSelector.tsx     # 테마 프리셋·버튼 스타일 선택기
+│       └── AnalyticsPanel.tsx    # 총 방문자·링크별 누적 클릭·경량 SVG 최근 7일 추이 차트
+```
+
+**핵심 구현 원칙**
+- **단일 뷰 재사용**: `PublicProfileView.tsx`를 `/[username]` 공개 페이지와 `/admin` 모바일 목업 프레임이 공유하여 편집 화면과 실제 결과의 디자인·동작 일치를 보장한다 (`isPreview` prop으로 통계 집계만 분기).
+- **외부 의존성 최소화**: 드래그 앤 드롭은 브라우저 네이티브 HTML5 Drag/Pointer 이벤트(`▲`/`▼` 버튼과 병행)로, 최근 7일 추이 차트는 순수 반응형 **SVG 차트**로 직접 구현한다.
+- **하이드레이션 안전성**: `localStorage`에서 복원하는 모든 클라이언트 화면은 `hasHydrated` 완료 전까지 스켈레톤/기본 상태를 렌더링해 Next.js SSR 하이드레이션 경고를 방지한다.
+
+### 10.2 단계별 구현 및 시연 마일스톤 (M1 → M2 → M3)
+
+| 단계 | 핵심 구현 목표 | 완료 기준 (Definition of Done) | 시연 포인트 |
+|---|---|---|---|
+| **M1**<br>기반 & 공개 프로필 | • Zustand 5(`persist`) 스토어 및 `/gildong` Mock 시드 구축<br>• 랜딩(`/`) 및 공개 프로필(`/[username]`) 구현<br>• `PublicProfileView` (`design.md` 상단 라이트 + 하단 다크 타일 교차) | • `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·링크 버튼 정상 표시<br>• 대문자 경로/이전 username 리다이렉트 및 미존재 시 404 표시 | **1차 시연**:<br>랜딩(`/`)에서 `예시 보기`를 눌러 `/gildong` 공개 프로필 레이아웃·외부 링크 동작 확인 |
+| **M2**<br>인증 · 대시보드 CRUD · 프리뷰 | • Mock 이메일 인증(`/login`) & 원클릭 데모 + `/onboarding`<br>• `/admin` PC 2단 분할(좌측 편집 · 우측 `MobilePreviewFrame`) + 모바일 탭 전환<br>• 프로필(아바타 리사이징·이름·소개), 소셜 배치, 섹션 헤더, 링크 인라인 CRUD<br>• URL 오류 빨간 경고(`#e30000`) + 삭제 확인·5초 Undo | • 잘못된 URL 입력 시 빨간 테두리·문구 출력 및 저장 차단<br>• 추가/수정/삭제/복구 시 모바일 목업과 새로고침 후에도 상태 유지<br>• `username` 변경 시 이전 주소 자동 리다이렉트 동작 | **2차 시연**:<br>이메일 로그인/온보딩부터 프로필·소셜·섹션·링크 추가, 오류 경고, 삭제 실행 취소, 목업 즉시 반영까지 시연 |
+| **M3**<br>정렬 · 테마 · 통계 & 최종 검증 | • 네이티브 드래그 앤 드롭 + `▲`/`▼` 순서 변경<br>• `[테마]` 4종 프리셋 및 카드/필 버튼 스타일 적용<br>• `[통계]` 총 방문자 수·링크별 클릭 수·경량 SVG 최근 7일 추이 차트<br>• 접근성(WCAG AA·키보드)·`next build`·ESLint 통과 | • 드래그/`▲`/`▼` 정렬, 테마 전환이 `/[username]`에 즉시 반영<br>• 미리보기 클릭은 제외하고 실제 `/[username]` 방문·클릭만 통계 및 SVG 차트에 누적<br>• `npm run lint` 및 `npm run build` 오류 0건 | **3차 최종 시연**:<br>아래 `10.3 End-to-End 시연 시나리오` 전체 흐름 무중단 데모 |
+
+### 10.3 최종 End-to-End 시연 시나리오
+
+1. **랜딩 & 예시 체험 (`/`)**: 마이링크 소개 화면에서 `예시 보기`를 눌러 `/gildong`으로 이동해 완성된 바이오 프로필·소셜 아이콘·섹션 헤더·다크 타일 링크 UI를 보여준다.
+2. **간편 진입 (`/login` → `/onboarding`)**: 이메일 입력 후 화면에 표시된 Mock 6자리 코드로 로그인(또는 원클릭 데모 체험)하고, `/onboarding`에서 `username`을 지정해 `/admin`에 진입한다.
+3. **편집 & 예외 검증 (`/admin`)**:
+   - 프로필(아바타·이름·소개)과 소셜 아이콘을 수정해 우측 모바일 목업에 즉시 반영되는 모습을 확인한다.
+   - `+ 링크 추가` 인라인 폼에서 잘못된 URL 입력 시 빨간색(`#e30000`) 경고가 뜨는 것을 확인한 뒤, 정상 URL(`youtube.com/...`) 입력 시 아이콘 자동 추천과 함께 저장한다.
+   - 섹션 구분 헤더를 추가하고 **드래그 앤 드롭**으로 링크 사이에 배치한 뒤, 항목 1개를 삭제했다가 **5초 실행 취소 토스트**로 복원한다.
+4. **테마 적용**: `[테마]` 탭에서 `Apple 클래식` → 다른 프리셋 및 `필형` 버튼으로 변경해 라이브 프리뷰의 즉각 변화를 시연한다.
+5. **실시간 통계 & URL 리다이렉트 확인**:
+   - `내 페이지 열기`로 `/[username]`에 접속해 링크를 클릭한 뒤, 다시 `/admin` `[통계]` 탭에서 **총 방문자 수, 링크별 클릭 누적 수, 최근 7일 SVG 추이 차트**가 실시간으로 올라간 것을 확인한다.
+   - 마지막으로 `username`을 변경하고 예전 `/이전username` 주소로 접속했을 때 새 주소로 자동 연결되는 것까지 확인하며 시연을 마무리한다.
