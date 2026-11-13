@@ -1,15 +1,16 @@
 import type { StaticImageData } from "next/image";
 import avatarImg from "@/public/avatar.jpg";
-import heroBannerImg from "@/public/hero-banner.jpg";
-import projectAiImg from "@/public/project-ai.jpg";
-import projectWebImg from "@/public/project-web.jpg";
-import workspaceImg from "@/public/workspace.jpg";
+import bannerScrapbookImg from "@/public/banner-scrapbook.jpg";
+import deskStudyImg from "@/public/desk-study.jpg";
+import projectCafeImg from "@/public/project-cafe.jpg";
+import projectTodoImg from "@/public/project-todo.jpg";
 
-export interface VisualProjectItem {
+export interface PracticeProjectItem {
   id: string;
   title: string;
   badge: string;
   year: string;
+  accentBg: string;
   summary: string;
   image: StaticImageData;
   imageAlt: string;
@@ -18,7 +19,7 @@ export interface VisualProjectItem {
   href?: string;
 }
 
-export interface WorkspaceHighlight {
+export interface DeskHighlight {
   id: string;
   eyebrow: string;
   title: string;
@@ -29,88 +30,138 @@ export interface WorkspaceHighlight {
   specs: string[];
 }
 
-// 프로필 및 프로젝트 데이터 (원하는 내용으로 자유롭게 수정하세요)
+export interface ChecklistGoal {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+// 초보 개발자 프로필 데이터 (원하는 내용으로 자유롭게 수정하세요)
 export const profile = {
   name: "홍길동",
-  handle: "@gildong.dev",
-  role: "Full-Stack Developer",
-  subRole: "Computer Science Student",
-  location: "Seoul, KR",
-  status: "Open to work",
+  handle: "@gildong_study",
+  role: "초보 웹 개발자",
+  subRole: "컴퓨터공학 공부 중",
+  location: "서울",
+  status: "열심히 배우는 중",
   email: "hello@example.com",
   intro:
-    "사용자 경험을 집요하게 고민하고, 아이디어를 빠르게 제품으로 만드는 개발자입니다. React · Next.js 기반의 웹 서비스부터 AI를 활용한 바이브 코딩까지, 매일 한 줄씩 더 나은 코드를 씁니다.",
+    "안녕하세요! 아직 배울 게 많은 초보 개발자 홍길동입니다. 처음 화면에 글자를 띄웠던 날의 기쁨을 기억하며, 오늘도 조금씩 앞으로 나아가려고 열심히 공부하고 있습니다. 서툴더라도 포기하지 않고 끝까지 노력하며, 작은 기능 하나에도 최선을 다해 만들어 보고 있습니다.",
   avatar: avatarImg,
-  avatarAlt: "홍길동 개발자 프로필 3D 일러스트",
-  banner: heroBannerImg,
-  bannerAlt: "네온 노드와 유리 웨이브가 빛나는 3D 개발자 프로필 커버 배너",
+  avatarAlt: "안경을 쓰고 초록색 맨투맨을 입은 초보 개발자 홍길동 2D 일러스트",
+  banner: bannerScrapbookImg,
+  bannerAlt: "메모지와 마스킹 테이프, 연필, 브라우저 카드가 그려진 스크랩북 배너 일러스트",
 };
 
-export const stats = [
-  { value: "12+", label: "Projects", hint: "Web & AI" },
-  { value: "1.2k", label: "Commits", hint: "This year" },
-  { value: "∞", label: "Coffee", hint: "Daily fuel" },
+export const beginnerMilestones = [
+  { label: "연습 작품", value: "3개", note: "차근차근 제작 중", bg: "bg-[#F2C14E]" },
+  { label: "공부 목표", value: "매일 1커밋", note: "꾸준히 노력 중", bg: "bg-[#A6BC78]" },
+  { label: "에너지", value: "아이스 커피", note: "오늘도 최선!", bg: "bg-[#E67E66]" },
 ];
 
-export const developerSnippet = {
-  focus: "Web · AI",
-  motto: "Ship fast, learn faster",
-  currently: "Building Next.js experiences",
+export const studyLog = {
+  badge: "TODAY'S TIL",
+  title: "오늘의 공부 기록",
+  date: "2026.11.14",
+  entries: [
+    {
+      topic: "HTML · CSS",
+      badgeBg: "bg-[#E67E66]",
+      text: "시맨틱 태그와 Flexbox 정렬이 자꾸 헷갈려서 예제를 다섯 번 다시 만들어 보며 열심히 익혔습니다.",
+    },
+    {
+      topic: "JavaScript",
+      badgeBg: "bg-[#F2C14E]",
+      text: "map과 filter로 목록을 걸러내는 연습 중입니다. 아직 손에 안 익어서 콘솔을 자주 찍어보며 노력하고 있어요.",
+    },
+    {
+      topic: "React · Next.js",
+      badgeBg: "bg-[#A6BC78]",
+      text: "컴포넌트끼리 props를 넘겨주는 흐름을 연습장에 그림으로 그려가며 최선을 다해 이해하는 중입니다.",
+    },
+  ],
+  dailyMemo:
+    "남들과 비교해서 조급해하지 말고, 어제의 나보다 딱 한 줄만 더 이해하려고 노력하자!",
 };
 
-export const stack = [
-  { name: "TypeScript", category: "Language", color: "bg-sky-400" },
-  { name: "React", category: "Frontend", color: "bg-cyan-400" },
-  { name: "Next.js", category: "Framework", color: "bg-zinc-100" },
-  { name: "Tailwind", category: "Styling", color: "bg-teal-400" },
-  { name: "Node.js", category: "Backend", color: "bg-lime-400" },
-  { name: "Python", category: "AI / Script", color: "bg-yellow-300" },
-];
-
-export const workspaceHighlight: WorkspaceHighlight = {
-  id: "workspace-desk",
-  eyebrow: "MY DESK SETUP",
-  title: "Late-Night Vibe Desk",
-  subtitle: "코드와 커피가 만나는 나만의 작업 공간",
-  description:
-    "어두운 밤, 은은한 인디고·바이올렛 조명 아래서 몰입하는 개발 환경을 좋아합니다. 깔끔한 에디터 테마와 빠른 키보드, 그리고 따뜻한 커피 한 잔으로 아이디어를 구현합니다.",
-  image: workspaceImg,
-  imageAlt: "네온 조명과 코드 모니터, 커피 머그잔이 놓인 3D 개발자 데스크 일러스트",
-  specs: ["VS Code", "Next.js 16", "TypeScript", "Dark Roast"],
-};
-
-export const featuredProjects: VisualProjectItem[] = [
+export const initialChecklist: ChecklistGoal[] = [
   {
-    id: "neural-vibe-studio",
-    title: "Neural Vibe Studio",
-    badge: "AI · Featured",
+    id: "goal-1",
+    text: "모르는 에러가 나와도 겁먹지 않고 열심히 검색해 보기",
+    done: true,
+  },
+  {
+    id: "goal-2",
+    text: "매일 1커밋 목표로 조금이라도 코드 만지려 노력하기",
+    done: true,
+  },
+  {
+    id: "goal-3",
+    text: "작은 연습 화면이라도 대충 넘기지 않고 최선을 다하기",
+    done: true,
+  },
+  {
+    id: "goal-4",
+    text: "주말마다 이번 주 배운 내용 블로그에 한 편씩 정리하기",
+    done: false,
+  },
+];
+
+export const learningStack = [
+  { name: "HTML & CSS", level: "기초 다지기", bg: "bg-[#F2C14E]" },
+  { name: "JavaScript", level: "열심히 공부 중", bg: "bg-[#A6BC78]" },
+  { name: "TypeScript", level: "조금씩 익히는 중", bg: "bg-[#FFFDF7]" },
+  { name: "React", level: "컴포넌트 연습", bg: "bg-[#E67E66]" },
+  { name: "Next.js", level: "페이지 만들기", bg: "bg-[#EFE6D5]" },
+  { name: "Git & GitHub", level: "매일 커밋 노력", bg: "bg-[#F2C14E]" },
+];
+
+export const deskHighlight: DeskHighlight = {
+  id: "study-desk",
+  eyebrow: "MY STUDY DESK",
+  title: "오늘도 앉아 있는 공부 책상",
+  subtitle: "노트에 적고, 코드 치고, 다시 고쳐 보기",
+  description:
+    "노트북 옆에 항상 스프링 노트와 펜을 두고 공부합니다. 처음 보는 개념은 직접 손으로 적어 가며 열심히 익히려고 노력합니다.",
+  image: deskStudyImg,
+  imageAlt: "노트북과 스프링 노트, 테라코타 머그컵, 작은 화분이 놓인 공부 책상 2D 일러스트",
+  specs: ["스프링 노트", "형광펜", "따뜻한 커피", "초보의 자세"],
+};
+
+export const practiceProjects: PracticeProjectItem[] = [
+  {
+    id: "mini-todo",
+    title: "미니 할 일 메모장",
+    badge: "연습작 #01",
     year: "2026",
+    accentBg: "bg-[#A6BC78]",
     summary:
-      "AI 페어 프로그래밍과 실시간 UI 프리뷰를 결합해 아이디어를 즉시 인터랙티브 웹 프로토타입으로 전환하는 워크스페이스입니다.",
-    image: projectAiImg,
-    imageAlt: "보라빛 AI 뉴럴 구체와 다크 글래스 대시보드 카드들이 떠 있는 3D 일러스트",
-    tags: ["Next.js", "TypeScript", "AI Workflow", "Tailwind"],
+      "해야 할 일을 적고 완료 표시를 남길 수 있는 작은 웹 메모장입니다. 처음이라 코드가 투박하지만, 직접 화면을 움직이게 만들려고 열심히 찾아보며 완성했습니다.",
+    image: projectTodoImg,
+    imageAlt: "체크박스와 노란색 스티커 탭, 픽셀 커서가 그려진 할 일 메모장 2D 일러스트",
+    tags: ["HTML", "CSS", "JavaScript"],
     highlights: [
-      "스트리밍 AI 코드 생성 및 실시간 컴포넌트 프리뷰",
-      "다크 글래스모피즘 기반의 집중형 스튜디오 UI",
-      "프롬프트 히스토리 및 버전 스냅샷 관리",
+      "할 일 추가, 완료 체크 줄 긋기, 삭제 버튼 직접 구현",
+      "새로고침해도 목록이 남도록 브라우저 저장소 연습",
+      "작은 휴대폰 화면에서도 버튼이 안 겹치게 고치려 노력",
     ],
     href: "https://github.com/",
   },
   {
-    id: "bento-glass-ui",
-    title: "Bento Glass UI",
-    badge: "Design System",
+    id: "cafe-menu-clone",
+    title: "동네 카페 메뉴판 클론 코딩",
+    badge: "연습작 #02",
     year: "2026",
+    accentBg: "bg-[#E67E66]",
     summary:
-      "모던 다크 테마 서비스와 개인 포트폴리오를 위해 설계한 모듈형 벤토 그리드 및 글래스 UI 컴포넌트 모음입니다.",
-    image: projectWebImg,
-    imageAlt: "아이소메트릭 다크 글래스 브라우저 창과 모듈형 UI 카드가 배치된 3D 일러스트",
-    tags: ["React 19", "Tailwind v4", "Design System"],
+      "자주 가는 동네 카페 메뉴판을 웹 화면으로 옮겨 본 연습 프로젝트입니다. 글씨 크기와 카드 간격을 맞추려고 최선을 다해 여러 번 수정해 보았습니다.",
+    image: projectCafeImg,
+    imageAlt: "아이스 커피와 머그컵, 크루아상 메뉴 카드가 배치된 네오브루탈리즘 2D 일러스트",
+    tags: ["React", "Tailwind CSS"],
     highlights: [
-      "부드러운 마이크로 인터랙션과 키보드 접근성 지원",
-      "반응형 벤토 그리드 레이아웃 프리셋 제공",
-      "가볍고 커스터마이징하기 쉬운 CSS 토큰 구조",
+      "음료·디저트 탭을 눌러 종류별로 골라 보기 연습",
+      "화면 폭에 맞춰 카드 줄 수가 바뀌는 반응형 배치",
+      "카드를 누르면 상세 안내 창이 열리도록 직접 연결",
     ],
     href: "https://github.com/",
   },
@@ -120,22 +171,22 @@ export const contactLinks = [
   {
     id: "github",
     label: "GitHub",
-    description: "코드와 오픈소스 프로젝트",
+    description: "공부 흔적 & 1일 1커밋 기록",
     href: "https://github.com/",
-    primary: true,
+    bg: "bg-[#F2C14E]",
   },
   {
     id: "blog",
-    label: "Blog",
-    description: "개발 기록과 트러블슈팅",
+    label: "공부 블로그",
+    description: "초보 개발자의 배움 메모",
     href: "#",
-    primary: false,
+    bg: "bg-[#A6BC78]",
   },
   {
     id: "contact",
-    label: "Contact",
-    description: "협업 및 커피챗 문의",
+    label: "이메일 보내기",
+    description: "응원과 조언 모두 감사합니다",
     href: `mailto:${profile.email}`,
-    primary: false,
+    bg: "bg-[#E67E66]",
   },
 ];
