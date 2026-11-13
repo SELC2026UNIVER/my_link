@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ChecklistGoal } from "@/app/profile-data";
+import type { ChecklistGoal } from "../profile-data";
 
 interface BeginnerChecklistProps {
   items: ChecklistGoal[];
@@ -10,64 +10,87 @@ interface BeginnerChecklistProps {
 export default function BeginnerChecklist({ items }: BeginnerChecklistProps) {
   const [goals, setGoals] = useState<ChecklistGoal[]>(items);
 
-  const completedCount = goals.filter((goal) => goal.done).length;
-
-  function toggleGoal(id: string) {
+  const toggleGoal = (id: string) => {
     setGoals((prev) =>
       prev.map((goal) =>
         goal.id === id ? { ...goal, done: !goal.done } : goal
       )
     );
-  }
+  };
+
+  const completedCount = goals.filter((goal) => goal.done).length;
+  const totalCount = goals.length;
+  const progressPercent =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <section
-      aria-labelledby="checklist-heading"
-      className="relative rounded-2xl border-[3px] border-[#161616] bg-[#FFFDF7] p-5 shadow-[6px_6px_0px_#161616]"
+    <div
+      id="checklist"
+      className="rounded-[18px] border border-white/10 bg-[var(--color-surface-tile-2)] p-6 sm:p-8"
     >
-      {/* 기울어진 스티커 라벨 */}
-      <span className="absolute -top-3.5 right-4 rotate-2 rounded-lg border-2 border-[#161616] bg-[#F2C14E] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#161616] shadow-[2px_2px_0px_#161616]">
-        {completedCount}/{goals.length} 실천 중
-      </span>
-
-      <div className="mb-3.5 flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border-2 border-[#161616] bg-[#A6BC78] text-xs font-black text-[#161616]">
-          ✓
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="type-caption-strong uppercase tracking-wider text-[var(--color-body-muted)]">
+            DAILY PLEDGE
+          </p>
+          <h3 className="type-tagline mt-1 text-white">
+            매일 1커밋 · 초보 다짐
+          </h3>
+        </div>
+        <span className="type-caption-strong numeric-spec shrink-0 text-[var(--color-primary-on-dark)]">
+          {completedCount} / {totalCount}
         </span>
-        <h2
-          id="checklist-heading"
-          className="text-base font-extrabold tracking-tight text-[#161616]"
-        >
-          매일 1커밋 · 초보 다짐
-        </h2>
       </div>
 
-      <ul className="space-y-2.5">
+      <div
+        aria-hidden="true"
+        className="mt-5 mb-3 h-[3px] w-full overflow-hidden rounded-full bg-white/10"
+      >
+        <div
+          className="h-full rounded-full bg-[var(--color-primary-on-dark)] transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      <ul className="divide-y divide-white/10">
         {goals.map((goal) => (
           <li key={goal.id}>
             <button
               type="button"
               onClick={() => toggleGoal(goal.id)}
               aria-pressed={goal.done}
-              className={`flex w-full cursor-pointer items-start gap-3 rounded-xl border-2 border-[#161616] p-2.5 text-left transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#161616] ${
-                goal.done ? "bg-[#EFE6D5]" : "bg-[#FFFDF7]"
-              }`}
+              className="group flex w-full cursor-pointer items-start gap-3.5 py-3.5 text-left transition-transform duration-150 active:scale-[0.98] focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
             >
               <span
-                className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-[#161616] text-xs font-black ${
+                aria-hidden="true"
+                className={`mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
                   goal.done
-                    ? "bg-[#A6BC78] text-[#161616]"
-                    : "bg-[#FFFDF7] text-transparent"
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "border border-white/40 bg-transparent group-hover:border-white/75"
                 }`}
-                aria-hidden
               >
-                ✓
+                {goal.done ? (
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                  >
+                    <path
+                      d="M2.5 6.2L4.9 8.6L9.5 3.6"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : null}
               </span>
               <span
-                className={`text-xs leading-relaxed font-medium break-keep sm:text-[13px] ${
+                className={`type-body transition-colors ${
                   goal.done
-                    ? "text-[#161616]/75 line-through decoration-2"
-                    : "text-[#161616]"
+                    ? "text-[var(--color-body-muted)] line-through decoration-white/30"
+                    : "text-white"
                 }`}
               >
                 {goal.text}
@@ -76,6 +99,12 @@ export default function BeginnerChecklist({ items }: BeginnerChecklistProps) {
           </li>
         ))}
       </ul>
-    </section>
+
+      <p className="type-caption mt-4 border-t border-white/10 pt-4 text-[var(--color-body-muted)]">
+        {completedCount === totalCount
+          ? "오늘의 초보 다짐을 모두 마쳤습니다. 내일도 꾸준히 노력하겠습니다."
+          : "서툴더라도 매일 한 걸음씩 최선을 다해 채워 가고 있습니다."}
+      </p>
+    </div>
   );
 }

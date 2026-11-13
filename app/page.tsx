@@ -1,8 +1,8 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
-import BeginnerChecklist from "@/app/components/BeginnerChecklist";
-import CopyEmailButton from "@/app/components/CopyEmailButton";
-import ProfileShowcase from "@/app/components/ProfileShowcase";
+import BeginnerChecklist from "./components/BeginnerChecklist";
+import CopyEmailButton from "./components/CopyEmailButton";
+import ProfileShowcase from "./components/ProfileShowcase";
+import TopNav from "./components/TopNav";
 import {
   beginnerMilestones,
   contactLinks,
@@ -12,328 +12,338 @@ import {
   practiceProjects,
   profile,
   studyLog,
-} from "@/app/profile-data";
-
-const linkIcons: Record<string, ReactNode> = {
-  github: (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden>
-      <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a10.9 10.9 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" />
-    </svg>
-  ),
-  blog: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden
-    >
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  ),
-  contact: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden
-    >
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-10 6L2 7" />
-    </svg>
-  ),
-};
+} from "./profile-data";
 
 export default function Home() {
-  // 좌측 컬럼: 오늘의 공부 기록 (TIL) + 배우는 중인 기술
-  const leftColumnCard = (
-    <>
-      <section
-        aria-labelledby="til-heading"
-        className="relative rounded-2xl border-[3px] border-[#161616] bg-[#FFFDF7] p-5 shadow-[6px_6px_0px_#161616] sm:p-6"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b-[2.5px] border-dashed border-[#161616]/30 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="-rotate-2 rounded-lg border-2 border-[#161616] bg-[#E67E66] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#161616] shadow-[2px_2px_0px_#161616]">
-              {studyLog.badge}
-            </span>
-            <h2
-              id="til-heading"
-              className="text-lg font-black tracking-tight text-[#161616]"
-            >
-              {studyLog.title}
-            </h2>
-          </div>
-          <span className="font-mono text-xs font-semibold text-[#161616]/70">
-            {studyLog.date}
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {studyLog.entries.map((entry) => (
-            <div
-              key={entry.topic}
-              className="rounded-xl border-2 border-[#161616] bg-[#EFE6D5] p-3.5"
-            >
-              <span
-                className={`inline-block rounded-md border-2 border-[#161616] px-2 py-0.5 font-mono text-[11px] font-bold text-[#161616] ${entry.badgeBg}`}
-              >
-                {entry.topic}
-              </span>
-              <p className="mt-2 text-sm leading-relaxed font-medium text-[#161616] break-keep">
-                {entry.text}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* 노란 메모지 스티커 */}
-        <div className="mt-4 -rotate-[0.5deg] rounded-xl border-2 border-[#161616] bg-[#F2C14E] p-3.5 shadow-[4px_4px_0px_#161616]">
-          <div className="font-mono text-[10px] font-bold tracking-wider text-[#161616] uppercase">
-            ★ 오늘의 한 줄 메모
-          </div>
-          <p className="mt-1 text-sm font-bold leading-snug text-[#161616] break-keep">
-            &ldquo;{studyLog.dailyMemo}&rdquo;
-          </p>
-        </div>
-      </section>
-
-      {/* 배우고 있는 기술 스택 스티커 카드 */}
-      <section
-        aria-labelledby="learning-stack-heading"
-        className="rounded-2xl border-[3px] border-[#161616] bg-[#FFFDF7] p-5 shadow-[6px_6px_0px_#161616] sm:p-6"
-      >
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <h2
-            id="learning-stack-heading"
-            className="text-lg font-black tracking-tight text-[#161616]"
-          >
-            열심히 배우고 있는 기술들
-          </h2>
-          <span className="rotate-2 rounded-lg border-2 border-[#161616] bg-[#A6BC78] px-2.5 py-0.5 font-mono text-[10px] font-bold text-[#161616]">
-            LEARNING
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {learningStack.map((item, idx) => (
-            <div
-              key={item.name}
-              className={`rounded-xl border-2 border-[#161616] p-3 shadow-[3px_3px_0px_#161616] transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 ${
-                item.bg
-              } ${idx % 2 === 0 ? "-rotate-[0.6deg]" : "rotate-[0.6deg]"}`}
-            >
-              <div className="text-sm font-black text-[#161616]">
-                {item.name}
-              </div>
-              <div className="mt-1 font-mono text-[11px] font-semibold text-[#161616]/80">
-                {item.level}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
-  );
-
   return (
-    <main className="min-h-screen px-4 py-8 text-[#161616] sm:px-6 sm:py-12">
-      <div className="mx-auto w-full max-w-4xl">
-        {/* Hero 스크랩북 카드 */}
+    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
+      <TopNav
+        name={profile.name}
+        handle={profile.handle}
+        status={profile.status}
+        contactHref="#contact"
+      />
+
+      <main id="main-content">
+        {/* Light Hero Tile */}
         <section
-          aria-label="초보 개발자 프로필 소개"
-          className="relative rounded-3xl border-[3px] border-[#161616] bg-[#FFFDF7] shadow-[8px_8px_0px_#161616]"
+          id="about"
+          className="w-full scroll-mt-[52px] bg-[var(--color-canvas)] pt-12 pb-20 sm:pt-16 sm:pb-28"
         >
-          {/* 상단 스크랩북 배너 이미지 */}
-          <div className="relative h-40 w-full overflow-hidden rounded-t-[calc(1.5rem-3px)] border-b-[3px] border-[#161616] bg-[#EFE6D5] sm:h-44">
-            <Image
-              src={profile.banner}
-              alt={profile.bannerAlt}
-              fill
-              loading="eager"
-              fetchPriority="high"
-              placeholder="blur"
-              sizes="(max-width: 896px) 100vw, 896px"
-              className="object-cover object-center"
-            />
-
-            {/* 배너 위 스티커 라벨 바 */}
-            <div className="absolute inset-x-3 top-3 flex flex-wrap items-center justify-between gap-2 sm:inset-x-6 sm:top-4">
-              <span className="-rotate-1 max-w-full truncate rounded-lg border-2 border-[#161616] bg-[#FFFDF7] px-2.5 py-1 font-mono text-[10px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616] sm:px-3 sm:text-[11px]">
-                {profile.handle}
-                <span className="hidden sm:inline"> · SCRAPBOOK</span>
-              </span>
-              <span className="inline-flex max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-2 border-[#161616] bg-[#A6BC78] px-2.5 py-1 font-mono text-[10px] font-bold text-[#161616] shadow-[3px_3px_0px_#161616] sm:px-3 sm:text-[11px]">
-                <span className="h-2 w-2 shrink-0 rounded-full border border-[#161616] bg-[#F2C14E]" />
-                {profile.status}
-              </span>
-            </div>
-          </div>
-
-          {/* 프로필 본문 */}
-          <div className="px-5 pb-6 sm:px-8 sm:pb-8">
-            <div className="flex flex-col items-center gap-5 md:flex-row md:items-end md:justify-between">
-              {/* 120x120px 프로필 아바타 + 이름/역할 */}
-              <div className="flex flex-col items-center gap-5 md:flex-row md:items-end">
-                <div className="relative -mt-14 shrink-0 md:-mt-16">
-                  {/* 정확한 120px x 120px 프로필 이미지 프레임 */}
-                  <div className="rounded-2xl border-[3px] border-[#161616] bg-[#FFFDF7] shadow-[5px_5px_0px_#161616]">
-                    <div className="relative h-[120px] w-[120px] overflow-hidden rounded-[calc(1rem-3px)]">
-                      <Image
-                        src={profile.avatar}
-                        alt={profile.avatarAlt}
-                        width={120}
-                        height={120}
-                        loading="eager"
-                        fetchPriority="high"
-                        placeholder="blur"
-                        className="h-[120px] w-[120px] object-cover"
-                      />
-                    </div>
-                  </div>
-                  <span className="absolute -right-2.5 -bottom-2.5 rotate-6 rounded-lg border-2 border-[#161616] bg-[#F2C14E] px-2 py-0.5 font-mono text-[11px] font-black text-[#161616] shadow-[2px_2px_0px_#161616]">
-                    초보!
-                  </span>
-                </div>
-
-                <div className="text-center md:pb-1 md:text-left">
-                  <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
-                    <h1 className="text-3xl font-black tracking-tight text-[#161616] sm:text-4xl">
-                      {profile.name}
-                    </h1>
-                    <span className="-rotate-2 rounded-lg border-2 border-[#161616] bg-[#F2C14E] px-2.5 py-0.5 font-mono text-xs font-bold text-[#161616] shadow-[2px_2px_0px_#161616]">
-                      {profile.role}
-                    </span>
-                  </div>
-
-                  <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2 text-xs font-bold md:justify-start">
-                    <span className="rounded-md border-2 border-[#161616] bg-[#EFE6D5] px-2.5 py-0.5 text-[#161616]">
-                      {profile.subRole}
-                    </span>
-                    <span className="rounded-md border-2 border-[#161616] bg-[#E67E66] px-2.5 py-0.5 text-[#161616]">
-                      📍 {profile.location}
-                    </span>
-                    <span className="rotate-1 rounded-md border-2 border-[#161616] bg-[#A6BC78] px-2.5 py-0.5 text-[#161616]">
-                      #노력파
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 상단 액션 버튼 */}
-              <div className="flex flex-wrap items-center justify-center gap-2.5 md:pb-1">
-                <a
-                  href="https://github.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border-[2.5px] border-[#161616] bg-[#F2C14E] px-4 py-2 text-xs font-extrabold text-[#161616] shadow-[4px_4px_0px_#161616] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#161616] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-                >
-                  {linkIcons.github}
-                  GitHub
-                </a>
-                <CopyEmailButton email={profile.email} />
-              </div>
+          <div className="mx-auto max-w-[980px] px-5 text-center sm:px-6">
+            <div className="mx-auto h-[120px] w-[120px] overflow-hidden rounded-full bg-[var(--color-canvas-parchment)] shadow-product">
+              <Image
+                src={profile.avatar}
+                alt={profile.avatarAlt}
+                width={120}
+                height={120}
+                loading="eager"
+                fetchPriority="high"
+                placeholder="blur"
+                className="h-[120px] w-[120px] object-cover object-top"
+              />
             </div>
 
-            {/* 초보 개발자 소개글 + 3개 마일스톤 스티커 */}
-            <div className="mt-6 grid grid-cols-1 gap-5 border-t-[2.5px] border-dashed border-[#161616]/30 pt-6 md:grid-cols-12 md:items-center">
-              <p className="rounded-2xl border-2 border-[#161616] bg-[#EFE6D5] p-4 text-sm leading-relaxed font-medium text-[#161616] break-keep sm:text-[15px] md:col-span-7">
-                {profile.intro}
-              </p>
+            <p className="type-caption-strong mt-6 text-[var(--color-ink-muted-48)]">
+              {profile.status} · {profile.subRole} · {profile.location}
+            </p>
 
-              <div className="grid grid-cols-3 gap-2.5 md:col-span-5">
-                {beginnerMilestones.map((item, idx) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-xl border-2 border-[#161616] px-2 py-2.5 text-center shadow-[3px_3px_0px_#161616] sm:p-3 ${
-                      item.bg
-                    } ${idx === 1 ? "rotate-1" : "-rotate-1"}`}
-                  >
-                    <div className="font-mono text-[10px] font-bold text-[#161616]/80">
-                      {item.label}
-                    </div>
-                    <div className="mt-1 text-sm font-black leading-tight text-[#161616] break-keep sm:text-base">
-                      {item.value}
-                    </div>
-                    <div className="mt-0.5 text-[10px] font-bold text-[#161616]/85 break-keep">
-                      {item.note}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            <h1 className="type-hero-display mt-2 text-[var(--color-ink)]">
+              {profile.name}
+            </h1>
 
-          {/* 하단 스크랩북 테이프 배너 */}
-          <div className="overflow-hidden rounded-b-[calc(1.5rem-3px)] border-t-[3px] border-[#161616] bg-[#161616] px-4 py-2 text-center font-mono text-[11px] font-bold tracking-wide text-[#F2C14E] sm:text-xs">
-            ★ 초보 개발자 홍길동 · 열심히 배우고 · 매일 노력하고 · 끝까지 최선을 다합니다 ★
-          </div>
-        </section>
+            <p className="type-lead mt-2 text-[var(--color-ink-muted-80)]">
+              {profile.role} · {profile.handle}
+            </p>
 
-        {/* Bento 스크랩북 섹션 (TIL + 체크리스트 + 공부 책상 + 연습 프로젝트 + 모달) */}
-        <ProfileShowcase
-          leftColumnSlot={leftColumnCard}
-          checklistSlot={<BeginnerChecklist items={initialChecklist} />}
-          desk={deskHighlight}
-          projects={practiceProjects}
-        />
-
-        {/* 링크 & 인사하기 섹션 */}
-        <section aria-label="개발자 링크 및 인사하기" className="mt-8">
-          <div className="mb-3.5 flex flex-wrap items-center gap-2.5">
-            <span className="rotate-1 shrink-0 rounded-lg border-2 border-[#161616] bg-[#E67E66] px-3 py-1 font-mono text-xs font-bold text-[#161616] shadow-[3px_3px_0px_#161616]">
-              LINKS
-            </span>
-            <h2 className="text-xl font-black tracking-tight text-[#161616] break-keep">
-              저의 공부 기록과 연락처예요
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {contactLinks.map((link) => (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3.5">
               <a
-                key={link.id}
-                href={link.href}
-                target={link.href.startsWith("http") ? "_blank" : undefined}
-                rel={link.href.startsWith("http") ? "noreferrer" : undefined}
-                className={`group flex items-center justify-between rounded-2xl border-[3px] border-[#161616] p-4 text-[#161616] shadow-[5px_5px_0px_#161616] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_#161616] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${link.bg}`}
+                href={contactLinks[0].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[var(--color-primary)] px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-white transition-all duration-150 hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
               >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#161616] bg-[#FFFDF7] text-[#161616] shadow-[2px_2px_0px_#161616]">
-                    {linkIcons[link.id]}
-                  </span>
-                  <div>
-                    <div className="text-sm font-black">{link.label}</div>
-                    <div className="text-xs font-semibold text-[#161616]/80">
-                      {link.description}
-                    </div>
-                  </div>
-                </div>
-
-                <span
-                  aria-hidden
-                  className="font-mono text-base font-black transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                >
-                  ↗
-                </span>
+                GitHub
               </a>
-            ))}
+              <CopyEmailButton email={profile.email} variant="secondary" />
+            </div>
+
+            <p className="type-body mx-auto mt-8 max-w-[640px] text-[var(--color-ink)]">
+              {profile.intro}
+            </p>
+
+            <div className="mx-auto mt-12 max-w-[920px] sm:mt-16">
+              <div className="overflow-hidden rounded-[18px] bg-[var(--color-canvas-parchment)] shadow-product">
+                <Image
+                  src={deskHighlight.image}
+                  alt={deskHighlight.imageAlt}
+                  loading="eager"
+                  fetchPriority="high"
+                  placeholder="blur"
+                  className="h-auto w-full object-cover"
+                />
+              </div>
+              <p className="type-caption mt-5 text-[var(--color-ink-muted-48)]">
+                {deskHighlight.title} — {deskHighlight.description}
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* 푸터 */}
-        <footer className="mt-10 pb-2 text-center font-mono text-xs font-bold text-[#161616]/75">
-          © 2026 {profile.name} · 오늘도 열심히 공부하고 노력하는 초보 개발자
-        </footer>
-      </div>
-    </main>
+        {/* Dark Tile 1: Today's Study Log & Beginner Pledge Checklist */}
+        <section
+          id="study-log"
+          className="w-full scroll-mt-[52px] bg-[var(--color-surface-tile-1)] py-20 text-white sm:py-28"
+        >
+          <div className="mx-auto max-w-[980px] px-5 sm:px-6">
+            <div className="mx-auto max-w-[680px] text-center">
+              <p className="type-caption-strong numeric-spec uppercase tracking-wider text-[var(--color-body-muted)]">
+                {studyLog.badge} · {studyLog.date}
+              </p>
+              <h2 className="type-display-lg mt-2 text-white">
+                {studyLog.title}
+              </h2>
+              <p className="type-lead mt-3 text-[var(--color-body-muted)]">
+                어제의 나보다 딱 한 줄만 더 이해하려고 열심히 노력합니다.
+              </p>
+              <a
+                href="#projects"
+                className="type-body mt-4 inline-flex items-center gap-1 text-[var(--color-primary-on-dark)] hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary-focus)]"
+              >
+                <span>연습 작품 보러 가기</span>
+                <span aria-hidden="true">›</span>
+              </a>
+            </div>
+
+            <div className="mt-14 grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+              <div className="rounded-[18px] border border-white/10 bg-[var(--color-surface-tile-2)] p-6 sm:p-8 lg:col-span-7">
+                <ul className="divide-y divide-white/10">
+                  {studyLog.entries.map((entry) => (
+                    <li
+                      key={entry.topic}
+                      className="py-5 first:pt-0 last:pb-0"
+                    >
+                      <p className="type-caption-strong text-[var(--color-primary-on-dark)]">
+                        {entry.topic}
+                      </p>
+                      <p className="type-body mt-1.5 text-white">
+                        {entry.text}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <p className="type-caption text-[var(--color-body-muted)]">
+                    오늘의 공부 다짐
+                  </p>
+                  <p className="type-lead-airy mt-1.5 text-white">
+                    “{studyLog.dailyMemo}”
+                  </p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5">
+                <BeginnerChecklist items={initialChecklist} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Light Parchment Utility Tile: Practice Projects */}
+        <section
+          id="projects"
+          className="w-full scroll-mt-[52px] bg-[var(--color-canvas-parchment)] py-20 text-[var(--color-ink)] sm:py-28"
+        >
+          <div className="mx-auto max-w-[980px] px-5 sm:px-6">
+            <div className="mx-auto max-w-[680px] text-center">
+              <p className="type-caption-strong uppercase tracking-wider text-[var(--color-ink-muted-48)]">
+                PRACTICE PROJECTS
+              </p>
+              <h2 className="type-display-lg mt-2 text-[var(--color-ink)]">
+                작은 연습 작품
+              </h2>
+              <p className="type-lead mt-3 text-[var(--color-ink-muted-80)]">
+                서툴지만 직접 손으로 만들고 고쳐 본 첫 결과물들입니다.
+              </p>
+            </div>
+
+            <ProfileShowcase projects={practiceProjects} />
+          </div>
+        </section>
+
+        {/* Dark Tile 2: Milestones & Learning Stack */}
+        <section
+          id="stack"
+          className="w-full scroll-mt-[52px] bg-[var(--color-surface-tile-1)] py-20 text-white sm:py-28"
+        >
+          <div className="mx-auto max-w-[980px] px-5 sm:px-6">
+            <div className="mx-auto max-w-[680px] text-center">
+              <p className="type-caption-strong uppercase tracking-wider text-[var(--color-body-muted)]">
+                LEARNING JOURNEY
+              </p>
+              <h2 className="type-display-lg mt-2 text-white">
+                차근차근 쌓아가는 기록
+              </h2>
+              <p className="type-lead mt-3 text-[var(--color-body-muted)]">
+                작은 기초부터 하나씩 익히며 최선을 다하고 있습니다.
+              </p>
+            </div>
+
+            <div className="mt-14 grid grid-cols-1 divide-y divide-white/10 border-y border-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {beginnerMilestones.map((item) => (
+                <div key={item.label} className="py-8 text-center sm:px-6">
+                  <p className="type-caption text-[var(--color-body-muted)]">
+                    {item.label}
+                  </p>
+                  <p className="type-display-lg numeric-spec mt-2 text-white">
+                    {item.value}
+                  </p>
+                  <p className="type-caption mt-2 text-[var(--color-primary-on-dark)]">
+                    {item.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {learningStack.map((tech) => (
+                <div
+                  key={tech.name}
+                  className="rounded-[18px] border border-white/10 bg-[var(--color-surface-tile-2)] px-6 py-5"
+                >
+                  <p className="type-tagline text-white">{tech.name}</p>
+                  <p className="type-caption mt-1 text-[var(--color-body-muted)]">
+                    {tech.level}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Parchment Footer */}
+      <footer
+        id="contact"
+        className="w-full scroll-mt-[52px] border-t border-[var(--color-hairline)] bg-[var(--color-canvas-parchment)] py-16 text-[var(--color-ink)] sm:py-20"
+      >
+        <div className="mx-auto max-w-[980px] px-5 sm:px-6">
+          <div className="max-w-[640px]">
+            <h2 className="type-display-md text-[var(--color-ink)]">
+              함께 이야기해요
+            </h2>
+            <p className="type-body mt-2 text-[var(--color-ink-muted-80)]">
+              아직 서툴지만 매일 열심히 배우고 있습니다. 따뜻한 응원과 작은
+              조언 모두 감사히 듣겠습니다.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <a
+                href={`mailto:${profile.email}`}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[var(--color-primary)] px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-white transition-all duration-150 hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+              >
+                이메일 보내기
+              </a>
+              <CopyEmailButton
+                email={profile.email}
+                variant="pearl"
+                label={`${profile.email} 복사`}
+              />
+            </div>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-8 border-t border-[var(--color-hairline)] pt-10 sm:grid-cols-3">
+            <div>
+              <p className="type-caption-strong text-[var(--color-ink)]">
+                둘러보기
+              </p>
+              <ul className="mt-2">
+                <li>
+                  <a
+                    href="#about"
+                    className="type-dense-link text-[var(--color-ink-muted-80)] hover:text-[var(--color-primary)] hover:underline"
+                  >
+                    소개
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#study-log"
+                    className="type-dense-link text-[var(--color-ink-muted-80)] hover:text-[var(--color-primary)] hover:underline"
+                  >
+                    오늘의 공부 기록
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#projects"
+                    className="type-dense-link text-[var(--color-ink-muted-80)] hover:text-[var(--color-primary)] hover:underline"
+                  >
+                    작은 연습 작품
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#stack"
+                    className="type-dense-link text-[var(--color-ink-muted-80)] hover:text-[var(--color-primary)] hover:underline"
+                  >
+                    배우는 기술
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="type-caption-strong text-[var(--color-ink)]">
+                공부 책상
+              </p>
+              <ul className="mt-2">
+                {deskHighlight.specs.map((spec) => (
+                  <li
+                    key={spec}
+                    className="type-dense-link text-[var(--color-ink-muted-80)]"
+                  >
+                    {spec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="type-caption-strong text-[var(--color-ink)]">
+                연결
+              </p>
+              <ul className="mt-2">
+                {contactLinks.map((link) => {
+                  const isExternal = link.href.startsWith("http");
+                  return (
+                    <li key={link.id}>
+                      <a
+                        href={link.href}
+                        target={isExternal ? "_blank" : undefined}
+                        rel={isExternal ? "noopener noreferrer" : undefined}
+                        className="type-dense-link text-[var(--color-primary)] hover:underline"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-2 border-t border-[var(--color-hairline)] pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="type-fine-print text-[var(--color-ink-muted-48)]">
+              © 2026 {profile.name} ({profile.handle}). 오늘도 최선을 다해
+              배우는 초보 개발자 기록.
+            </p>
+            <p className="type-fine-print text-[var(--color-ink-muted-48)]">
+              {profile.location} · {profile.subRole}
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
