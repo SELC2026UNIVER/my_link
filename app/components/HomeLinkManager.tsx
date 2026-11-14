@@ -2,12 +2,14 @@
 
 import {
   AlertCircle,
+  ExternalLink,
   Lock,
   LogIn,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -710,6 +712,17 @@ export function HomeLinkManager({
                 <span>프로필 수정</span>
               </Button>
             ) : null}
+
+            <Link
+              href={`/${encodeURIComponent(user.displayName)}`}
+              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-black/[0.08] bg-[#e8e8ed] px-[20px] py-[11px] text-[16px] font-normal leading-none tracking-[-0.022em] text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-150 hover:bg-[#dcdce1] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+            >
+              <span>내 페이지 바로가기</span>
+              <ExternalLink
+                className="size-4 text-[#515154]"
+                aria-hidden="true"
+              />
+            </Link>
           </>
         ) : null}
 

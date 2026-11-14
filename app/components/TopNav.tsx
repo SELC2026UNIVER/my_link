@@ -143,7 +143,9 @@ export default function TopNav({
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="whitespace-nowrap">{handle}</span>
+            <span className="whitespace-nowrap">
+              {user ? `@${user.displayName}` : handle}
+            </span>
           </a>
 
           <div className="hidden items-center gap-7 min-[834px]:flex">
@@ -253,7 +255,7 @@ export default function TopNav({
               href="#about"
               className="type-tagline whitespace-nowrap text-[var(--color-ink)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
             >
-              {name}
+              {user ? user.displayName : name}
             </a>
             <span className="type-fine-print hidden whitespace-nowrap text-[var(--color-ink-muted-48)] sm:inline">
               {status}
@@ -299,97 +301,111 @@ export default function TopNav({
                 className="h-8 w-[82px] animate-pulse rounded-full border border-black/[0.06] bg-[#e8e8ed]"
               />
             ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  aria-label="프로필 메뉴 열기"
-                  className="group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#e8e8ed]/85 p-1 pr-2.5 text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all hover:bg-[#dcdce1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] active:scale-95"
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/${encodeURIComponent(user.displayName)}`}
+                  aria-label="내 페이지 바로가기"
+                  className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-black/[0.08] bg-[#e8e8ed] px-3 text-[12px] font-medium tracking-[-0.014em] text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all hover:bg-[#dcdce1] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] sm:h-9 sm:px-3.5"
                 >
-                  <Avatar size="default" className="size-7">
-                    {user.photoURL ? (
-                      <AvatarImage
-                        src={user.photoURL}
-                        alt={`${user.displayName} 프로필 아바타`}
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : null}
-                    <AvatarFallback className="bg-[#d2d2d7] text-[12px] font-semibold text-[#1d1d1f]">
-                      {avatarInitial}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-[104px] truncate text-[12px] font-medium tracking-[-0.014em] text-[#1d1d1f] min-[420px]:inline">
-                    @{user.displayName}
-                  </span>
-                  <ChevronDown
-                    className="size-3.5 text-[#6e6e73] transition-transform duration-150 group-data-popup-open:rotate-180"
+                  <span>내 페이지 바로가기</span>
+                  <ExternalLink
+                    className="size-3.5 text-[#515154]"
                     aria-hidden="true"
                   />
-                </DropdownMenuTrigger>
+                </Link>
 
-                <DropdownMenuContent
-                  align="end"
-                  sideOffset={8}
-                  className="w-64 rounded-[14px] border border-black/[0.08] bg-popover/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-0 backdrop-blur-md"
-                >
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="px-2.5 py-2 font-normal">
-                      <p className="truncate text-[13px] font-semibold tracking-[-0.014em] text-foreground">
-                        @{user.displayName}
-                      </p>
-                      {user.email ? (
-                        <p className="mt-0.5 truncate text-[12px] font-normal text-muted-foreground">
-                          {user.email}
-                        </p>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="프로필 메뉴 열기"
+                    className="group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#e8e8ed]/85 p-1 pr-2.5 text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all hover:bg-[#dcdce1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] active:scale-95"
+                  >
+                    <Avatar size="default" className="size-7">
+                      {user.photoURL ? (
+                        <AvatarImage
+                          src={user.photoURL}
+                          alt={`${user.displayName} 프로필 아바타`}
+                          referrerPolicy="no-referrer"
+                        />
                       ) : null}
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-
-                  <DropdownMenuSeparator className="my-1 bg-black/[0.06]" />
-
-                  <DropdownMenuItem
-                    onClick={() => {
-                      void handleCopyPublicProfileUrl();
-                    }}
-                    className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium text-foreground focus:bg-secondary"
-                  >
-                    <Copy
-                      className="size-4 text-muted-foreground"
+                      <AvatarFallback className="bg-[#d2d2d7] text-[12px] font-semibold text-[#1d1d1f]">
+                        {avatarInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-[104px] truncate text-[12px] font-medium tracking-[-0.014em] text-[#1d1d1f] min-[420px]:inline">
+                      @{user.displayName}
+                    </span>
+                    <ChevronDown
+                      className="size-3.5 text-[#6e6e73] transition-transform duration-150 group-data-popup-open:rotate-180"
                       aria-hidden="true"
                     />
-                    <span>내 공개 페이지 링크 복사</span>
-                  </DropdownMenuItem>
+                  </DropdownMenuTrigger>
 
-                  <DropdownMenuItem
-                    onClick={() => {
-                      router.push(`/${encodeURIComponent(user.displayName)}`);
-                    }}
-                    className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium text-foreground focus:bg-secondary"
+                  <DropdownMenuContent
+                    align="end"
+                    sideOffset={8}
+                    className="w-64 rounded-[14px] border border-black/[0.08] bg-popover/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-0 backdrop-blur-md"
                   >
-                    <ExternalLink
-                      className="size-4 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <span>내 공개 페이지 보기</span>
-                  </DropdownMenuItem>
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="px-2.5 py-2 font-normal">
+                        <p className="truncate text-[13px] font-semibold tracking-[-0.014em] text-foreground">
+                          @{user.displayName}
+                        </p>
+                        {user.email ? (
+                          <p className="mt-0.5 truncate text-[12px] font-normal text-muted-foreground">
+                            {user.email}
+                          </p>
+                        ) : null}
+                      </DropdownMenuLabel>
+                    </DropdownMenuGroup>
 
-                  <DropdownMenuSeparator className="my-1 bg-black/[0.06]" />
+                    <DropdownMenuSeparator className="my-1 bg-black/[0.06]" />
 
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={isAuthActionPending}
-                    onClick={() => {
-                      void handleSignOut();
-                    }}
-                    className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium"
-                  >
-                    {isAuthActionPending ? (
-                      <Spinner decorative className="size-4 text-destructive" />
-                    ) : (
-                      <LogOut className="size-4" aria-hidden="true" />
-                    )}
-                    <span>로그아웃</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        void handleCopyPublicProfileUrl();
+                      }}
+                      className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium text-foreground focus:bg-secondary"
+                    >
+                      <Copy
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span>내 공개 페이지 링크 복사</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        router.push(`/${encodeURIComponent(user.displayName)}`);
+                      }}
+                      className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium text-foreground focus:bg-secondary"
+                    >
+                      <ExternalLink
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span>내 페이지 바로가기</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="my-1 bg-black/[0.06]" />
+
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={isAuthActionPending}
+                      onClick={() => {
+                        void handleSignOut();
+                      }}
+                      className="min-h-9 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] font-medium"
+                    >
+                      {isAuthActionPending ? (
+                        <Spinner decorative className="size-4 text-destructive" />
+                      ) : (
+                        <LogOut className="size-4" aria-hidden="true" />
+                      )}
+                      <span>로그아웃</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : (
               <Button
                 type="button"

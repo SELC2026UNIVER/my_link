@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,7 +8,13 @@ import { useAuth } from "@/app/components/AuthProvider";
 import { PublicProfileSkeleton } from "@/app/components/PublicProfileSkeleton";
 import { PublicProfileView } from "@/app/components/PublicProfileView";
 import { fetchUserLinks, type HomeLinkItem } from "@/app/lib/firestore-links";
+import {
+  DEFAULT_USER_BIO,
+  fetchPublicProfileByUsername,
+  type UserProfileDoc,
+} from "@/app/lib/firestore-profile";
 import type { LinkItem, UserProfile } from "@/app/lib/types";
+import { validateUsernameFormat } from "@/app/lib/validators";
 import {
   resolveUsernameTarget,
   useMyLinkStore,
@@ -21,8 +27,10 @@ interface PublicProfileClientProps {
   rawUsername: string;
 }
 
-interface LiveLinksState {
-  uid: string;
+interface FirestorePublicLookupState {
+  requestedUsername: string;
+  status: "found" | "not-found";
+  profileDoc: UserProfileDoc | null;
   items: HomeLinkItem[];
 }
 
@@ -41,8 +49,9 @@ function decodeNormalizedUsername(raw: string): {
 }
 
 /**
- * 로그인한 사용자의 공개 URL(`/{displayName}`) 또는 Zustand 시드 프로필(`/gildong`)을 조회하고
- * 리다이렉트·404·방문/클릭 통계를 처리한다.
+ * 비로그인 방문자를 포함한 모든 사용자에게 `/[username]` 공개 프로필 및
+ * 등록된 링크 목록(`users/{uid}/links`)을 읽기 전용(Read-Only) 카드 목록으로 표시한다.
+ * 존재하지 않는 `username`인 경우 404 안내 화면을 렌더링한다.
  */
 export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   const router = useRouter();
@@ -60,23 +69,20 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   const recordVisit = useMyLinkStore((state) => state.recordVisit);
   const recordLinkClick = useMyLinkStore((state) => state.recordLinkClick);
 
-  const [liveLinksState, setLiveLinksState] = useState<LiveLinksState | null>(
-    null
-  );
-  const [liveLinksErrorUid, setLiveLinksErrorUid] = useState<string | null>(
-    null
-  );
+  const [lookupState, setLookupState] =
+    useState<FirestorePublicLookupState | null>(null);
 
   const { trimmed: requestedTrimmed, normalized: requestedNormalized } =
     decodeNormalizedUsername(rawUsername);
+
+  const isFormatValid = validateUsernameFormat(requestedNormalized).valid;
+  const needsCanonicalLowerRedirect =
+    isFormatValid && requestedTrimmed !== requestedNormalized;
 
   const isOwnedAuthProfile =
     Boolean(authUser) &&
     Boolean(requestedNormalized) &&
     authUser!.displayName.toLowerCase() === requestedNormalized;
-
-  const needsCanonicalRedirect =
-    isOwnedAuthProfile && requestedTrimmed !== authUser!.displayName;
 
   useEffect(() => {
     if (!useMyLinkStore.persist.hasHydrated()) {
@@ -87,48 +93,147 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   }, []);
 
   useEffect(() => {
-    if (!needsCanonicalRedirect || !authUser) return;
-    router.replace(`/${encodeURIComponent(authUser.displayName)}`);
-  }, [authUser, needsCanonicalRedirect, router]);
+    if (!needsCanonicalLowerRedirect) return;
+    router.replace(`/${encodeURIComponent(requestedNormalized)}`);
+  }, [needsCanonicalLowerRedirect, requestedNormalized, router]);
 
   useEffect(() => {
-    if (!isOwnedAuthProfile || needsCanonicalRedirect || !authUser) {
+    if (needsCanonicalLowerRedirect || !requestedNormalized) {
       return;
     }
 
     let isCancelled = false;
-    const targetUid = authUser.uid;
+    const targetUsername = requestedNormalized;
 
-    async function loadOwnedLinks() {
-      try {
-        const fetched = await fetchUserLinks(targetUid);
+    async function loadFirestorePublicProfile() {
+      if (!validateUsernameFormat(targetUsername).valid) {
         if (!isCancelled) {
-          setLiveLinksState({ uid: targetUid, items: fetched });
-          setLiveLinksErrorUid((prev) => (prev === targetUid ? null : prev));
+          setLookupState({
+            requestedUsername: targetUsername,
+            status: "not-found",
+            profileDoc: null,
+            items: [],
+          });
+        }
+        return;
+      }
+
+      try {
+        const fetchedProfile =
+          await fetchPublicProfileByUsername(targetUsername);
+
+        if (fetchedProfile) {
+          const fetchedItems = await fetchUserLinks(fetchedProfile.uid).catch(
+            () => []
+          );
+          if (!isCancelled) {
+            setLookupState({
+              requestedUsername: targetUsername,
+              status: "found",
+              profileDoc: fetchedProfile,
+              items: fetchedItems,
+            });
+          }
+          return;
+        }
+
+        // 로그인한 본인의 공개 페이지인데 아직 프로필 문서 색인이 반영되기 전인 경우 본인 UID로 폴백 조회
+        if (
+          authUser &&
+          authUser.displayName.toLowerCase() === targetUsername
+        ) {
+          const fallbackItems = await fetchUserLinks(authUser.uid).catch(
+            () => []
+          );
+          if (!isCancelled) {
+            setLookupState({
+              requestedUsername: targetUsername,
+              status: "found",
+              profileDoc: {
+                uid: authUser.uid,
+                username: authUser.displayName,
+                bio: authUser.bio || DEFAULT_USER_BIO,
+                name: authUser.googleDisplayName,
+                email: authUser.email,
+                photoURL: authUser.photoURL,
+              },
+              items: fallbackItems,
+            });
+          }
+          return;
+        }
+
+        if (!isCancelled) {
+          setLookupState({
+            requestedUsername: targetUsername,
+            status: "not-found",
+            profileDoc: null,
+            items: [],
+          });
         }
       } catch {
+        if (
+          authUser &&
+          authUser.displayName.toLowerCase() === targetUsername
+        ) {
+          const fallbackItems = await fetchUserLinks(authUser.uid).catch(
+            () => []
+          );
+          if (!isCancelled) {
+            setLookupState({
+              requestedUsername: targetUsername,
+              status: "found",
+              profileDoc: {
+                uid: authUser.uid,
+                username: authUser.displayName,
+                bio: authUser.bio || DEFAULT_USER_BIO,
+                name: authUser.googleDisplayName,
+                email: authUser.email,
+                photoURL: authUser.photoURL,
+              },
+              items: fallbackItems,
+            });
+          }
+          return;
+        }
+
         if (!isCancelled) {
-          setLiveLinksState({ uid: targetUid, items: [] });
-          setLiveLinksErrorUid(targetUid);
+          setLookupState({
+            requestedUsername: targetUsername,
+            status: "not-found",
+            profileDoc: null,
+            items: [],
+          });
         }
       }
     }
 
-    void loadOwnedLinks();
+    void loadFirestorePublicProfile();
 
     return () => {
       isCancelled = true;
     };
-  }, [authUser, isOwnedAuthProfile, needsCanonicalRedirect]);
+  }, [authUser, needsCanonicalLowerRedirect, requestedNormalized]);
+
+  const isFirestoreLookupPending =
+    Boolean(requestedNormalized) &&
+    !needsCanonicalLowerRedirect &&
+    lookupState?.requestedUsername !== requestedNormalized;
+
+  const matchedFirestoreProfile =
+    lookupState?.requestedUsername === requestedNormalized &&
+    lookupState.status === "found"
+      ? lookupState.profileDoc
+      : null;
 
   const resolution =
-    hasHydrated && !isOwnedAuthProfile
+    hasHydrated && !matchedFirestoreProfile && !isFirestoreLookupPending
       ? resolveUsernameTarget({ profiles, usernameHistory }, rawUsername)
       : null;
 
   const targetRedirectUsername =
     resolution?.kind === "redirect" ? resolution.targetUsername : null;
-  const activeProfile =
+  const activeSeedProfile =
     resolution?.kind === "profile" ? resolution.profile : null;
 
   useEffect(() => {
@@ -137,45 +242,51 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   }, [router, targetRedirectUsername]);
 
   useEffect(() => {
-    if (isOwnedAuthProfile && authUser && !needsCanonicalRedirect) {
-      document.title = `${authUser.displayName} (@${authUser.displayName}) | MyLink`;
+    if (matchedFirestoreProfile) {
+      const titleName =
+        matchedFirestoreProfile.name || matchedFirestoreProfile.username;
+      document.title = `${titleName} (@${matchedFirestoreProfile.username}) | MyLink`;
       return;
     }
-    if (!activeProfile) return;
-    document.title = `${activeProfile.displayName} (@${activeProfile.username}) | MyLink`;
-    recordVisit(activeProfile.id);
-  }, [activeProfile, authUser, isOwnedAuthProfile, needsCanonicalRedirect, recordVisit]);
+    if (!activeSeedProfile) return;
+    document.title = `${activeSeedProfile.displayName} (@${activeSeedProfile.username}) | MyLink`;
+    recordVisit(activeSeedProfile.id);
+  }, [activeSeedProfile, matchedFirestoreProfile, recordVisit]);
 
-  if (isAuthLoading) {
+  if (
+    needsCanonicalLowerRedirect ||
+    isFirestoreLookupPending ||
+    (isAuthLoading && isOwnedAuthProfile)
+  ) {
     return <PublicProfileSkeleton />;
   }
 
-  if (isOwnedAuthProfile && authUser) {
-    if (
-      needsCanonicalRedirect ||
-      (liveLinksState?.uid !== authUser.uid && liveLinksErrorUid !== authUser.uid)
-    ) {
-      return <PublicProfileSkeleton />;
-    }
-
+  if (matchedFirestoreProfile) {
     const nowIso = new Date().toISOString();
-    const ownedProfile: UserProfile = {
-      id: authUser.uid,
-      email: authUser.email ?? "",
-      username: authUser.displayName,
-      displayName: authUser.googleDisplayName || `@${authUser.displayName}`,
-      bio: `@${authUser.displayName}님의 MyLink 공개 프로필 페이지입니다.`,
-      avatarUrl: authUser.photoURL,
+    const resolvedUsername = isOwnedAuthProfile && authUser
+      ? authUser.displayName
+      : matchedFirestoreProfile.username;
+    const resolvedBio = isOwnedAuthProfile && authUser
+      ? authUser.bio
+      : matchedFirestoreProfile.bio;
+
+    const publicProfile: UserProfile = {
+      id: matchedFirestoreProfile.uid,
+      email: matchedFirestoreProfile.email ?? "",
+      username: resolvedUsername,
+      displayName: matchedFirestoreProfile.name || resolvedUsername,
+      bio: resolvedBio,
+      avatarUrl: matchedFirestoreProfile.photoURL,
       themePreset: "apple-classic",
       buttonStyle: "card",
       createdAt: nowIso,
       updatedAt: nowIso,
     };
 
-    const ownedItems: LinkItem[] = (liveLinksState?.items ?? []).map(
+    const publicItems: LinkItem[] = (lookupState?.items ?? []).map(
       (item, index) => ({
         id: item.id,
-        userId: authUser.uid,
+        userId: matchedFirestoreProfile.uid,
         kind: "link",
         title: item.title,
         url: item.url,
@@ -192,9 +303,9 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
     return (
       <main className="flex min-h-dvh w-full flex-col">
         <PublicProfileView
-          profile={ownedProfile}
+          profile={publicProfile}
           socialLinks={[]}
-          items={ownedItems}
+          items={publicItems}
         />
       </main>
     );
@@ -206,22 +317,28 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
 
   if (resolution.kind === "not-found") {
     return (
-      <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-secondary px-4 py-12 text-foreground">
-        <Card className="w-full max-w-[460px] gap-5 rounded-[18px] border border-border bg-card p-8 text-center shadow-none ring-0">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+      <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-[#f5f5f7] px-4 py-12 text-[#1d1d1f]">
+        <Card className="w-full max-w-[460px] gap-5 rounded-[22px] border border-black/[0.08] bg-card p-8 text-center shadow-[0_8px_28px_rgba(0,0,0,0.06)] ring-0 sm:p-10">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full border border-black/[0.06] bg-[#e8e8ed] text-[#515154]">
             <AlertTriangle className="size-5" aria-hidden="true" />
           </div>
 
           <div>
-            <h1 className="type-display-md text-[24px] sm:text-[28px] text-foreground">
+            <p className="text-[12px] font-semibold tracking-[0.06em] text-[#86868b] uppercase">
+              404 Not Found
+            </p>
+            <h1 className="type-display-md mt-1 text-[24px] text-[#1d1d1f] sm:text-[28px]">
               페이지를 찾을 수 없습니다
             </h1>
-            <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-muted-foreground">
-              요청하신 마이링크 페이지
-              {resolution.requestedUsername
-                ? `(@${resolution.requestedUsername})`
-                : ""}
-              가 존재하지 않습니다.
+            <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-[#6e6e73]">
+              요청하신 공개 페이지
+              {requestedTrimmed ? (
+                <span className="font-medium text-[#1d1d1f]">
+                  {" "}
+                  (@{requestedTrimmed})
+                </span>
+              ) : null}
+              를 찾을 수 없습니다. 주소를 다시 확인해 주세요.
             </p>
           </div>
 
@@ -230,19 +347,24 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
               href="/"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg", shape: "pill" }),
-                "min-h-[44px] px-5 text-[15px] font-normal active:scale-95"
+                "min-h-[44px] gap-1.5 bg-[#1d1d1f] px-5 text-[15px] font-normal text-white hover:bg-[#333336] active:scale-95"
               )}
             >
-              홈으로 가기
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              <span>홈으로 가기</span>
             </Link>
             <Link
               href="/gildong"
               className={cn(
-                buttonVariants({ variant: "outline", size: "lg", shape: "pill" }),
-                "min-h-[44px] border-primary px-5 text-[15px] font-normal text-primary hover:bg-primary/5 hover:text-primary active:scale-95"
+                buttonVariants({
+                  variant: "secondary",
+                  size: "lg",
+                  shape: "pill",
+                }),
+                "min-h-[44px] border border-black/[0.08] bg-[#e8e8ed] px-5 text-[15px] font-normal text-[#1d1d1f] hover:bg-[#dcdce1] active:scale-95"
               )}
             >
-              예시 보기 (/gildong)
+              예시 프로필 보기 (/gildong)
             </Link>
           </div>
         </Card>
