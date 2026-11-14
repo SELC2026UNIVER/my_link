@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.3 · 작성일: 2026-11-14 · 상태: 확정(Confirmed)
+> 문서 버전: v3.4 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v3.4 변경: UI 컴포넌트 구현 기반을 **shadcn/ui (`https://ui.shadcn.com/create`)** + **Tailwind CSS 4 (CSS-first, `tailwind.config` 파일 미사용)** 로 정의하고, [`design.md`](../design.md)를 Apple 디자인 시스템 기준서로 유지·연동하는 원칙 명시
 > v3.3 변경: `10.3 사용자 시나리오 및 End-to-End 시연 시나리오` 확장 (페르소나별 정상·예외 시나리오 4종 및 발표용 6단계 데모 체크표 추가)
 > v3.2 변경: `10. 구현 로드맵 및 시연 마일스톤` 추가 (폴더·모듈 구조, M1~M3 마일스톤, 네이티브 드래그·경량 SVG 차트 직접 구현, End-to-End 시연 시나리오)
 > v3.1 변경: 전역 상태 관리를 Zustand(`persist` 미들웨어 + `localStorage` Storage Adapter)로 확정
@@ -19,8 +20,8 @@
 | **핵심** | 링크·소셜·섹션 CRUD (Create · Read · Update · Delete) + 개인 URL(`/[username]`) 공유 + 실시간 라이브 프리뷰 대시보드 + 기본 통계 |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태** | **Next.js (App Router) 기반 클라이언트 완결형 데모** — 별도 백엔드 서버·DB 구축 없이 브라우저 `localStorage` 및 Mock 데이터 연동으로 즉시 동작 |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
-| **디자인 기준** | [`design.md`](../design.md) (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필 버튼, 상단 라이트/하단 다크 풀블리드 타일 교차 기본 테마) |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, 별도 `tailwind.config` 없음) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`) · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
+| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create)로 UI 프리미티브·폼·인터랙션 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
 ### 1.1 성공 지표 (KPI)
 
@@ -461,23 +462,32 @@ export interface AnalyticsData {
 
 ---
 
-## 7. 디자인 가이드 (요약)
+## 7. 디자인 시스템 및 UI 구현 전략
 
-[`design.md`](../design.md)의 Apple 웹 디자인 언어를 따르며, 기본 테마(`Apple 클래식`)와 대시보드 화면에 아래와 같이 적용한다.
+앞으로의 UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https://ui.shadcn.com/create)** 를 기반으로 진행하며, 브랜드·시각적 완성도는 **[`design.md`](../design.md)** 에 정의된 **Apple 디자인 시스템**처럼 구축한다. 두 계층의 역할은 아래와 같이 결합한다.
+
+### 7.1 역할 분리: shadcn/ui (컴포넌트 기반) + Apple 시스템 (`design.md`)
+
+| 구분 | 기준 | 적용 범위 및 원칙 |
+|---|---|---|
+| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 앞으로의 모든 UI 프리미티브(`Button`, `Card`, `Input`, `Textarea`, `Label`, `Dialog`, `Tabs`, `Select`, `Switch`, `Badge`, `Separator`, `Tooltip`, `Alert` 등)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 스타일링 엔진은 최신 **Tailwind CSS 4** CSS-first 규격(`tailwind.config` 파일 없이 `app/globals.css`의 `@import "tailwindcss";`, `@theme inline`/`@theme static`, `@utility` 사용)을 따른다. |
+| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 컬러, 타이포그래피 위계, 여백, 타일 교차 레이아웃, 모서리·그림자 철학은 `design.md`의 **Apple 웹 디자인 언어**처럼 일관되게 유지·구축한다.<br>• shadcn/ui 시맨틱 토큰(`--background`, `--foreground`, `--primary`, `--muted-foreground`, `--border`, `--ring`, `--destructive`)을 `design.md`의 Apple OKLCH/HEX 토큰에 매핑하고, `Button`의 `shape="pill"` 등 Apple 고유의 UI 문법을 확장 적용한다. |
+
+### 7.2 화면별 시각 가이드 (Apple 시스템 기준)
 
 | 화면 / 요소 | 적용 스타일 |
 |---|---|
 | **랜딩(`/`) & 기본 공개(`/[username]`) 레이아웃** | `design.md`의 **상단 라이트 ↔ 하단 다크 풀블리드 타일 교차** 적용 (타일 경계 자체가 구분선 역할, 그림자 없음) |
 | **공개 페이지 상단 (프로필 + 소셜 배치)** | Pure White(`#ffffff`) 또는 Parchment(`#f5f5f7`) 배경, Near-Black Ink(`#1d1d1f`) 텍스트, 원형 아바타에만 `shadow-product` 적용 |
 | **공개 페이지 하단 (섹션 헤더 + 링크 목록)** | Near-Black Tile 1(`#272729`) 배경, 섹션 헤더는 `rgba(255,255,255,0.12)` 헤어라인 구분선 + 뮤트 캡션, 링크 카드는 Near-Black Tile 2(`#2a2a2c`) + `1px solid rgba(255,255,255,0.1)` 헤어라인 + 18px 둥근 모서리(또는 필형 선택), 강조 색상은 Sky Link Blue(`#2997ff`) |
-| **대시보드(`/admin`) · 로그인(`/login`) · 온보딩(`/onboarding`)** | Parchment(`#f5f5f7`) 배경 위 White(`#ffffff`) 18px 둥근 카드 (`1px solid #e0e0e0` 헤어라인), 편집 집중형 UI + 우측 모바일 목업 프레임 |
-| **액센트 & 버튼** | Action Blue(`#0066cc`) — 추가·저장 등 주요 CTA는 필(pill) 형태, 눌림 시 `scale(0.95)`, 포커스 링 `#0071e3` |
-| **오류 색상** | Error Red(`#e30000`) — 유효성 오류 테두리 및 안내 문구 (`design.md`에 없는 상태값으로 본 문서에서 추가 정의) |
-| **글꼴** | `system-ui, -apple-system` (비 Apple 환경은 Inter / Pretendard), 디스플레이 제목은 weight 600 및 음수 자간 |
+| **대시보드(`/admin`) · 로그인(`/login`) · 온보딩(`/onboarding`)** | Parchment(`#f5f5f7`) 배경 위 `shadcn/ui Card` 기반 White(`#ffffff`) 18px 둥근 카드 (`1px solid #e0e0e0` 헤어라인), 편집 집중형 UI + 우측 모바일 목업 프레임 |
+| **액센트 & 버튼** | `shadcn/ui Button`에 Apple Action Blue(`#0066cc`) 적용 — 추가·저장 등 주요 CTA는 필(`shape="pill"`) 형태, 눌림 시 active scale 트랜스폼, 포커스 링 `#0071e3` |
+| **오류 색상** | Error Red(`#e30000`) — `shadcn/ui Input`/`Alert` 유효성 오류 테두리(`--destructive`) 및 안내 문구 (`design.md`에 없는 상태값으로 본 문서에서 추가 정의) |
+| **글꼴** | `system-ui, -apple-system` (비 Apple 환경은 `Inter` + `Noto Sans KR`), 디스플레이 제목은 weight 600 및 음수 자간 |
 
 ---
 
-## 8. 범위 외 (Out of Scope, 데모 v3.3)
+## 8. 범위 외 (Out of Scope, 데모 v3.4)
 
 - 실제 백엔드 서버·DB 구축 및 기기 간 실시간 원격 데이터 동기화
 - 실제 트랜잭션 이메일 발송 서버 연동 (브라우저 내 Mock 이메일 인증으로 대체)
@@ -509,7 +519,14 @@ export interface AnalyticsData {
 
 ```text
 my_link/
+├── components.json               # shadcn/ui 설정 (base-nova, Tailwind CSS 4 CSS-first 규격: tailwind.config 미사용)
+├── lib/
+│   └── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
+├── components/
+│   └── ui/                       # shadcn/ui (https://ui.shadcn.com/create) 기반 공용 프리미티브 (button, card, input 등)
 ├── app/
+│   ├── globals.css               # Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
+│   ├── layout.tsx                # Inter · Noto Sans KR 폰트 & TooltipProvider 설정
 │   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /gildong 예시 링크
 │   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험
 │   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화)
@@ -534,8 +551,9 @@ my_link/
 ```
 
 **핵심 구현 원칙**
+- **shadcn/ui 기반 + Apple 시스템 시각 통합**: 앞으로의 모든 UI는 `components/ui/*` (**shadcn/ui**, `https://ui.shadcn.com/create`) 기반으로 구축하며, 색상·타이포그래피·타일 여백·모서리 규칙은 [`design.md`](../design.md)의 Apple 디자인 시스템 기준으로 스타일링한다.
 - **단일 뷰 재사용**: `PublicProfileView.tsx`를 `/[username]` 공개 페이지와 `/admin` 모바일 목업 프레임이 공유하여 편집 화면과 실제 결과의 디자인·동작 일치를 보장한다 (`isPreview` prop으로 통계 집계만 분기).
-- **외부 의존성 최소화**: 드래그 앤 드롭은 브라우저 네이티브 HTML5 Drag/Pointer 이벤트(`▲`/`▼` 버튼과 병행)로, 최근 7일 추이 차트는 순수 반응형 **SVG 차트**로 직접 구현한다.
+- **외부 의존성 최소화**: UI 프리미티브는 `shadcn/ui`(`@base-ui/react` · `lucide-react`)로 구성하되, 드래그 앤 드롭은 브라우저 네이티브 HTML5 Drag/Pointer 이벤트(`▲`/`▼` 버튼과 병행)로, 최근 7일 추이 차트는 순수 반응형 **SVG 차트**로 직접 구현한다.
 - **하이드레이션 안전성**: `localStorage`에서 복원하는 모든 클라이언트 화면은 `hasHydrated` 완료 전까지 스켈레톤/기본 상태를 렌더링해 Next.js SSR 하이드레이션 경고를 방지한다.
 
 ### 10.2 단계별 구현 및 시연 마일스톤 (M1 → M2 → M3)
