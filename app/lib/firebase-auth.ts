@@ -7,14 +7,17 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
+import { DEFAULT_USER_BIO } from "@/app/lib/firestore-profile";
 import { RESERVED_USERNAMES } from "@/app/lib/validators";
 import { createGoogleAuthProvider, getFirebaseAuth } from "@/lib/firebase";
 
 export interface AuthUser {
   uid: string;
   email: string | null;
-  /** 개인 URL 주소(`/[username]`)로 활용할 수 있는 기본 디스플레이 네임(구글 이메일 앞부분 영문 아이디). */
+  /** 개인 URL 주소(`/[username]`)로 활용할 수 있는 디스플레이 네임(기본값: 구글 이메일 앞부분 영문 아이디). */
   displayName: string;
+  /** 한 줄 소개(bio). Firestore `users/{uid}` 프로필 문서와 동기화된다. */
+  bio: string;
   googleDisplayName: string | null;
   photoURL: string | null;
 }
@@ -72,9 +75,31 @@ export function toAuthUser(user: User): AuthUser {
     uid: user.uid,
     email: user.email,
     displayName: deriveDefaultDisplayName(user),
+    bio: DEFAULT_USER_BIO,
     googleDisplayName: user.displayName,
     photoURL: user.photoURL,
   };
+}
+
+/**
+ * 현재 로그인된 Firebase Auth 사용자의 displayName을 동기화한다.
+ */
+export async function syncFirebaseUserDisplayName(
+  nextDisplayName: string
+): Promise<void> {
+  try {
+    const firebaseAuth = getFirebaseAuth();
+    if (
+      firebaseAuth.currentUser &&
+      firebaseAuth.currentUser.displayName !== nextDisplayName
+    ) {
+      await updateProfile(firebaseAuth.currentUser, {
+        displayName: nextDisplayName,
+      });
+    }
+  } catch {
+    // Firebase Auth 프로필 부가 동기화 실패는 무시한다.
+  }
 }
 
 /**

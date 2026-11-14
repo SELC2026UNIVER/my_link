@@ -50,15 +50,10 @@ export default function Home() {
               {profile.status} · {profile.subRole} · {profile.location}
             </p>
 
-            <h1 className="type-hero-display mt-2 text-[var(--color-ink)]">
-              {profile.name}
-            </h1>
-
-            <p className="type-lead mt-2 text-[var(--color-ink-muted-80)]">
-              {profile.role} · {profile.handle}
-            </p>
-
             <HomeLinkManager
+              defaultName={profile.name}
+              defaultRole={profile.role}
+              defaultHandle={profile.handle}
               githubHref={contactLinks[0].href}
               email={profile.email}
               intro={profile.intro}

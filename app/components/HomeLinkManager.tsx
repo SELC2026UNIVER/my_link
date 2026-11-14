@@ -20,11 +20,17 @@ import {
   type HomeLinkItem,
 } from "@/app/lib/firestore-links";
 import {
+  MAX_BIO_LENGTH,
+  UsernameTakenError,
+  validateBio,
+} from "@/app/lib/firestore-profile";
+import {
   formatDisplayUrl,
   MAX_ACTIVE_ITEMS,
   MAX_LINK_TITLE_LENGTH,
   validateLinkTitle,
   validateLinkUrl,
+  validateUsernameFormat,
 } from "@/app/lib/validators";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +50,9 @@ import { DeleteLinkDialog } from "./DeleteLinkDialog";
 import { LinkCard } from "./LinkCard";
 
 interface HomeLinkManagerProps {
+  defaultName: string;
+  defaultRole: string;
+  defaultHandle: string;
   githubHref: string;
   email: string;
   intro: string;
@@ -59,12 +68,16 @@ interface ScopedLoadError {
   message: string;
 }
 
+const MAX_USERNAME_LENGTH = 20;
+
 /**
- * 루트(/) 홈 화면에서 로그인 사용자 UID 기반 Firestore(users/{uid}/links) 링크 목록 조회·
- * 모달 추가(AddLinkDialog) 및 인라인 편집·삭제 UI를 관리하는 컴포넌트.
- * 비로그인 상태에서는 로그인 안내 화면을 표시한다.
+ * 루트(/) 홈 화면에서 로그인 사용자의 프로필(username, bio) 인라인 편집 및
+ * UID 기반 Firestore(users/{uid}/links) 링크 목록 조회·추가·인라인 편집·삭제를 관리하는 컴포넌트.
  */
 export function HomeLinkManager({
+  defaultName,
+  defaultRole,
+  defaultHandle,
   githubHref,
   email,
   intro,
@@ -72,10 +85,26 @@ export function HomeLinkManager({
   const {
     user,
     isLoading: isAuthLoading,
+    isProfileLoading,
     isAuthActionPending,
     signInWithGoogle,
+    updateUserProfileInfo,
   } = useAuth();
   const activeUid = user?.uid ?? null;
+
+  const [editingProfileUid, setEditingProfileUid] = useState<string | null>(
+    null
+  );
+  const [profileUsernameDraft, setProfileUsernameDraft] = useState("");
+  const [profileBioDraft, setProfileBioDraft] = useState("");
+  const [profileEditError, setProfileEditError] = useState<string | null>(null);
+  const [profileEditErrorField, setProfileEditErrorField] = useState<
+    "username" | "bio" | "submit" | null
+  >(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const isEditingProfile =
+    Boolean(activeUid) && editingProfileUid === activeUid;
 
   const [linksState, setLinksState] = useState<ScopedLinksState | null>(null);
   const [loadErrorState, setLoadErrorState] = useState<ScopedLoadError | null>(
@@ -149,6 +178,76 @@ export function HomeLinkManager({
     };
   }, [activeUid]);
 
+  const startProfileEdit = () => {
+    if (!user || isSavingProfile) return;
+    setEditingProfileUid(user.uid);
+    setProfileUsernameDraft(user.displayName);
+    setProfileBioDraft(user.bio);
+    setProfileEditError(null);
+    setProfileEditErrorField(null);
+  };
+
+  const cancelProfileEdit = () => {
+    if (isSavingProfile) return;
+    setEditingProfileUid(null);
+    setProfileUsernameDraft("");
+    setProfileBioDraft("");
+    setProfileEditError(null);
+    setProfileEditErrorField(null);
+  };
+
+  const handleProfileSave = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!user || isSavingProfile) return;
+
+    const usernameCheck = validateUsernameFormat(profileUsernameDraft);
+    if (!usernameCheck.valid) {
+      setProfileEditError(
+        usernameCheck.error ?? "올바른 디스플레이 네임 형식이 아닙니다."
+      );
+      setProfileEditErrorField("username");
+      return;
+    }
+
+    const bioCheck = validateBio(profileBioDraft);
+    if (!bioCheck.valid) {
+      setProfileEditError(
+        bioCheck.error ??
+          `한 줄 소개는 최대 ${MAX_BIO_LENGTH}자까지 입력할 수 있습니다.`
+      );
+      setProfileEditErrorField("bio");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileEditError(null);
+    setProfileEditErrorField(null);
+
+    try {
+      const updated = await updateUserProfileInfo({
+        username: usernameCheck.normalized,
+        bio: bioCheck.normalized,
+      });
+      setEditingProfileUid(null);
+      toast.success(`프로필이 저장되었습니다 (@${updated.username})`);
+    } catch (error) {
+      if (error instanceof UsernameTakenError) {
+        setProfileEditError(error.message);
+        setProfileEditErrorField("username");
+      } else {
+        setProfileEditError(
+          formatFirestoreErrorMessage(
+            error,
+            "프로필을 저장하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+          )
+        );
+        setProfileEditErrorField("submit");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   const refreshLinks = useCallback(async () => {
     if (!activeUid) return;
     const targetUid = activeUid;
@@ -194,7 +293,6 @@ export function HomeLinkManager({
       try {
         await refreshLinks();
       } catch {
-        // Firestore 저장 성공 직후 재조회만 실패한 경우 중복 저장 방지를 위해 목록 선두에 반영한다.
         setLinksState((prev) => ({
           uid: activeUid,
           items: [
@@ -365,24 +463,254 @@ export function HomeLinkManager({
     }
   };
 
+  const heroDisplayName = user ? user.displayName : defaultName;
+  const heroSubtitle = user
+    ? `${user.googleDisplayName || defaultRole} · @${user.displayName}`
+    : `${defaultRole} · ${defaultHandle}`;
+  const heroBio = user
+    ? user.bio.trim() || "한 줄 소개를 추가해 나만의 프로필을 완성해 보세요."
+    : intro;
+
   return (
     <>
+      {user && isEditingProfile ? (
+        <form
+          onSubmit={(event) => {
+            void handleProfileSave(event);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !isSavingProfile) {
+              event.preventDefault();
+              cancelProfileEdit();
+            }
+          }}
+          noValidate
+          aria-label="프로필 인라인 수정"
+          className="mx-auto mt-5 max-w-[540px] rounded-[20px] border border-black/[0.08] bg-card p-5 text-left shadow-[0_4px_20px_rgba(0,0,0,0.06)] sm:p-6"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-foreground">
+                내 프로필 수정
+              </h2>
+              <p className="mt-0.5 text-[12px] text-muted-foreground">
+                디스플레이 네임과 한 줄 소개는 공개 페이지에도 바로 반영됩니다.
+              </p>
+            </div>
+            <Badge
+              variant="secondary"
+              className="rounded-full bg-[#e8e8ed] px-2.5 py-0.5 text-[11px] font-medium text-[#515154]"
+            >
+              인라인 편집
+            </Badge>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3.5">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor="profile-edit-username"
+                  className="text-[12px] font-semibold text-foreground"
+                >
+                  디스플레이 네임 (username)
+                </Label>
+                <span
+                  className={cn(
+                    "text-[11px] tabular-nums",
+                    profileUsernameDraft.length >= MAX_USERNAME_LENGTH ||
+                      profileEditErrorField === "username"
+                      ? "font-semibold text-destructive"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {profileUsernameDraft.length}/{MAX_USERNAME_LENGTH}
+                </span>
+              </div>
+
+              <div className="flex items-center rounded-xl border border-input bg-background px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                <span
+                  aria-hidden="true"
+                  className="select-none pr-1 text-[14px] font-medium text-muted-foreground"
+                >
+                  @
+                </span>
+                <Input
+                  id="profile-edit-username"
+                  type="text"
+                  value={profileUsernameDraft}
+                  maxLength={MAX_USERNAME_LENGTH}
+                  autoFocus
+                  disabled={isSavingProfile}
+                  placeholder="username"
+                  aria-invalid={profileEditErrorField === "username"}
+                  aria-describedby={
+                    profileEditError ? "profile-edit-error" : "profile-edit-hint"
+                  }
+                  onChange={(event) => {
+                    setProfileUsernameDraft(
+                      event.target.value
+                        .toLowerCase()
+                        .slice(0, MAX_USERNAME_LENGTH)
+                    );
+                    setProfileEditError(null);
+                    setProfileEditErrorField(null);
+                  }}
+                  className="h-10 border-0 bg-transparent px-0 text-[14px] shadow-none focus-visible:ring-0"
+                />
+              </div>
+              <p
+                id="profile-edit-hint"
+                className="text-[11px] text-muted-foreground"
+              >
+                영문 소문자·숫자·밑줄(_)·마침표(.) 3~20자 · 내 공개 주소:{" "}
+                <span className="font-medium text-foreground">
+                  /{profileUsernameDraft.trim() || user.displayName}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor="profile-edit-bio"
+                  className="text-[12px] font-semibold text-foreground"
+                >
+                  바이오 (한 줄 소개)
+                </Label>
+                <span
+                  className={cn(
+                    "text-[11px] tabular-nums",
+                    profileBioDraft.length >= MAX_BIO_LENGTH ||
+                      profileEditErrorField === "bio"
+                      ? "font-semibold text-destructive"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {profileBioDraft.length}/{MAX_BIO_LENGTH}
+                </span>
+              </div>
+              <Input
+                id="profile-edit-bio"
+                type="text"
+                value={profileBioDraft}
+                maxLength={MAX_BIO_LENGTH}
+                disabled={isSavingProfile}
+                placeholder="나를 표현하는 한 줄 소개를 입력해 주세요"
+                aria-invalid={profileEditErrorField === "bio"}
+                aria-describedby={
+                  profileEditError ? "profile-edit-error" : undefined
+                }
+                onChange={(event) => {
+                  setProfileBioDraft(
+                    event.target.value.slice(0, MAX_BIO_LENGTH)
+                  );
+                  setProfileEditError(null);
+                  setProfileEditErrorField(null);
+                }}
+                className="h-10 rounded-xl text-[14px]"
+              />
+            </div>
+          </div>
+
+          {profileEditError ? (
+            <p
+              id="profile-edit-error"
+              role="alert"
+              className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold text-destructive"
+            >
+              <AlertCircle
+                className="size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span>{profileEditError}</span>
+            </p>
+          ) : null}
+
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              shape="pill"
+              disabled={isSavingProfile}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={cancelProfileEdit}
+              className="min-h-9 rounded-full border border-black/[0.08] bg-[#e8e8ed] px-4 text-[13px] font-medium text-[#1d1d1f] shadow-none hover:bg-[#dcdce1]"
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              shape="pill"
+              disabled={isSavingProfile}
+              aria-busy={isSavingProfile}
+              className="min-h-9 min-w-[88px] gap-1.5 rounded-full bg-[#1d1d1f] px-4 text-[13px] font-medium text-white shadow-[0_1px_6px_rgba(0,0,0,0.12)] hover:bg-[#333336] disabled:cursor-not-allowed disabled:opacity-65"
+            >
+              {isSavingProfile ? (
+                <>
+                  <Spinner decorative className="size-3.5 text-white" />
+                  <span>저장 중...</span>
+                </>
+              ) : (
+                <span>저장</span>
+              )}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <h1 className="type-hero-display mt-2 text-[var(--color-ink)]">
+            {heroDisplayName}
+          </h1>
+
+          <p className="type-lead mt-2 text-[var(--color-ink-muted-80)]">
+            {heroSubtitle}
+          </p>
+
+          <p
+            className={cn(
+              "type-body mx-auto mt-5 max-w-[640px] text-[var(--color-ink)] transition-opacity",
+              isProfileLoading && "opacity-70"
+            )}
+          >
+            {heroBio}
+          </p>
+        </>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3.5">
         {user ? (
-          <Button
-            type="button"
-            shape="pill"
-            onClick={() => setDialogOpen(true)}
-            className="h-auto min-h-11 cursor-pointer gap-2 rounded-full border border-black/10 bg-primary px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16),0_2px_4px_rgba(0,0,0,0.08)] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
-          >
-            <span
-              className="inline-flex size-5 items-center justify-center rounded-full bg-white/15 text-white"
-              aria-hidden="true"
+          <>
+            <Button
+              type="button"
+              shape="pill"
+              onClick={() => setDialogOpen(true)}
+              className="h-auto min-h-11 cursor-pointer gap-2 rounded-full border border-black/10 bg-primary px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16),0_2px_4px_rgba(0,0,0,0.08)] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
             >
-              <Plus className="size-3.5 stroke-[2.25]" />
-            </span>
-            <span>링크 추가</span>
-          </Button>
+              <span
+                className="inline-flex size-5 items-center justify-center rounded-full bg-white/15 text-white"
+                aria-hidden="true"
+              >
+                <Plus className="size-3.5 stroke-[2.25]" />
+              </span>
+              <span>링크 추가</span>
+            </Button>
+
+            {!isEditingProfile ? (
+              <Button
+                type="button"
+                variant="secondary"
+                shape="pill"
+                disabled={isProfileLoading}
+                onClick={startProfileEdit}
+                className="h-auto min-h-11 cursor-pointer gap-2 rounded-full border border-black/[0.08] bg-[#e8e8ed] px-[20px] py-[11px] text-[16px] font-normal leading-none tracking-[-0.022em] text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-150 hover:bg-[#dcdce1] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] disabled:opacity-60"
+              >
+                <Pencil className="size-4 text-[#515154]" aria-hidden="true" />
+                <span>프로필 수정</span>
+              </Button>
+            ) : null}
+          </>
         ) : null}
 
         <a
@@ -396,10 +724,6 @@ export function HomeLinkManager({
 
         <CopyEmailButton email={email} variant="secondary" />
       </div>
-
-      <p className="type-body mx-auto mt-8 max-w-[640px] text-[var(--color-ink)]">
-        {intro}
-      </p>
 
       <section
         id="my-links"

@@ -302,15 +302,16 @@ my_link/
 │   │   ├── types.ts              # LinkIcon, LinkItem, ThemePreset 등 도메인 타입
 │   │   ├── clipboard.ts          # 클립보드 복사(navigator.clipboard + textarea 폴백) 공용 헬퍼
 │   │   ├── firebase-auth.ts      # Google 소셜 로그인/로그아웃, onAuthStateChanged용 AuthUser 매핑, 이메일 앞부분 기본 디스플레이 네임 정규화
+│   │   ├── firestore-profile.ts  # users/{uid} 사용자 프로필(username, bio) 생성·조회·인라인 수정 및 공개 프로필 조회 서비스
 │   │   ├── firestore-links.ts    # users/{uid}/links Firestore CRUD(addDoc · getDocs · updateDoc · deleteDoc) 서비스
 │   │   ├── mock-seed.ts          # /gildong 공개 뷰 시드 데이터
 │   │   ├── validators.ts         # URL(http/https/mailto)·제목(1~50자)·예약어 검증 및 https 보정
 │   │   ├── icon-matcher.ts       # 도메인·스킴 기반 13종 아이콘 자동 추천
 │   │   └── themes.ts             # 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
 │   └── components/
-│       ├── AuthProvider.tsx      # onAuthStateChanged 실시간 인증 상태 감지 & 세션 유지 Context Provider
+│       ├── AuthProvider.tsx      # onAuthStateChanged 실시간 인증 상태 감지 & Firestore users/{uid} 프로필(username, bio) 동기화 Context Provider
 │       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (비로그인 회색 로그인 버튼 / 로그인 프로필 아바타 드롭다운 메뉴)
-│       ├── HomeLinkManager.tsx   # 루트(/) Firestore(users/{uid}/links) 조회·추가·인라인 수정·삭제 모달 및 비로그인 안내 관리
+│       ├── HomeLinkManager.tsx   # 루트(/) 프로필(username, bio) 인라인 편집 및 Firestore(users/{uid}/links) 조회·추가·인라인 수정·삭제 모달 관리
 │       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 모달 (저장 중 스피너·비활성화)
 │       ├── DeleteLinkDialog.tsx  # shadcn/ui Dialog + destructive 버튼 기반 삭제 확인 모달 (삭제 중 스피너·비활성화)
 │       ├── LinkCard.tsx          # shadcn/ui Card + Badge + Tailwind CSS 공용 링크 카드
@@ -330,6 +331,7 @@ my_link/
 | **M5** *(완료 · v4.2)*<br>Google 소셜 로그인 연동 | • `firebase/auth`(`signInWithPopup`, `GoogleAuthProvider`, `onAuthStateChanged`) 및 `AuthProvider` 구축<br>• 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용<br>• 헤더 우측 애플 모노톤 회색 톤 로그인/로그아웃 버튼 | • 새로고침 후에도 `onAuthStateChanged`로 세션 유지<br>• 로그인/로그아웃 동작 및 오류 안내 표시 |
 | **M6** *(완료 · v4.3)*<br>UID 기반 데이터 개인화 마이그레이션 | • `users/anonymous/links` → `users/{uid}/links` 경로 전면 전환<br>• 비로그인 시 내 링크 목록 대신 로그인 안내 화면(`Google로 로그인하기`) 표시 | • 로그인 사용자별 고유 UID 경로에만 링크 저장·조회<br>• 로그아웃 시 즉시 개인 링크 목록 숨김 및 안내 화면 전환 |
 | **M7** *(완료 · v4.4)*<br>프로필 드롭다운 · 링크 복사 · Sonner 연동 | • `shadcn/ui` `Avatar`, `DropdownMenu`, `Sonner` 설치 및 `<Toaster />` 마운트<br>• 헤더 우측 프로필 아바타 클릭 드롭다운 메뉴(`내 공개 페이지 링크 복사`, `내 공개 페이지 보기`, `로그아웃`) 구현<br>• `/{displayName}` 공개 페이지 링크 복사 및 CRUD 토스트 알림을 Sonner로 통합 | • 아바타 클릭 시 드롭다운 열림 및 링크 복사 시 Sonner 토스트 알림 표시<br>• 복사한 `/{displayName}` 경로에서 본인 링크 실시간 조회 가능 |
+| **M8** *(완료 · v4.5)*<br>홈 프로필(`username` · `bio`) 인라인 수정 | • 홈 화면(마이페이지) 히어로 영역에 `프로필 수정` 모노톤 회색 필 버튼 및 인라인 편집 폼 구현<br>• 디스플레이 네임(`username`, 3~20자 중복/형식 검증) 및 바이오(`bio`, 최대 80자) 수정 후 Firestore `users/{uid}` 문서 영속화 | • 수정 후 새로고침해도 Firestore `users/{uid}`에서 `username`·`bio` 유지<br>• 저장 시 Sonner 토스트 알림 및 헤더·공개 주소 즉시 동기화 |
 
 ### 10.3 핵심 사용자 시나리오 (v4.3 Auth + Firestore CRUD 기준)
 
