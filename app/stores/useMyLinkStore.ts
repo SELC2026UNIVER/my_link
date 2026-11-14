@@ -2,16 +2,39 @@
 
 import { create } from "zustand";
 import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
-import { createInitialSeedData } from "@/app/lib/mock-seed";
+import { recommendIconForUrl } from "@/app/lib/icon-matcher";
+import { createInitialSeedData, GILDONG_USER_ID } from "@/app/lib/mock-seed";
 import type {
   AnalyticsData,
+  LinkIcon,
   LinkItem,
   SocialLink,
   UserProfile,
   UsernameHistoryEntry,
 } from "@/app/lib/types";
+import {
+  MAX_ACTIVE_ITEMS,
+  validateLinkTitle,
+  validateLinkUrl,
+} from "@/app/lib/validators";
 
 export const MYLINK_STORAGE_KEY = "mylink-demo-storage";
+const STORAGE_QUOTA_ERROR = "브라우저 저장 공간이 부족합니다";
+
+export interface AddLinkInput {
+  userId: string;
+  title: string;
+  url: string;
+  icon?: LinkIcon;
+}
+
+export type AddLinkResult =
+  | { ok: true; item: LinkItem }
+  | {
+      ok: false;
+      error: string;
+      field?: "title" | "url" | "limit" | "storage";
+    };
 
 interface PersistedMyLinkState {
   profiles: UserProfile[];
@@ -28,6 +51,9 @@ export interface MyLinkStoreState extends PersistedMyLinkState {
   storageError: string | null;
   setHasHydrated: (hydrated: boolean, recovered?: boolean) => void;
   dismissStorageRecovered: () => void;
+  clearStorageError: () => void;
+  ensureDemoSession: () => void;
+  addLink: (input: AddLinkInput) => AddLinkResult;
   recordVisit: (userId: string) => void;
   recordLinkClick: (linkId: string) => void;
   resetDemoData: () => void;
@@ -35,6 +61,7 @@ export interface MyLinkStoreState extends PersistedMyLinkState {
 
 let detectedCorruptedStorage = false;
 let shouldSeedStorageAfterHydration = false;
+let lastStorageWriteError: string | null = null;
 
 function getLocalDateKey(date: Date = new Date()): string {
   const year = date.getFullYear();
@@ -95,8 +122,9 @@ function createSafeLocalStorage(): PersistStorage<PersistedMyLinkState> | undefi
     setItem: (name, value) => {
       try {
         window.localStorage.setItem(name, JSON.stringify(value));
+        lastStorageWriteError = null;
       } catch {
-        // Ignore quota errors inside storage adapter; callers check storageError if needed.
+        lastStorageWriteError = STORAGE_QUOTA_ERROR;
       }
     },
     removeItem: (name) => {
@@ -166,6 +194,108 @@ export const useMyLinkStore = create<MyLinkStoreState>()(
         })),
 
       dismissStorageRecovered: () => set({ storageRecovered: false }),
+
+      clearStorageError: () => set({ storageError: null }),
+
+      ensureDemoSession: () => {
+        const state = get();
+        const hasValidSession =
+          Boolean(state.currentUserId) &&
+          state.profiles.some((profile) => profile.id === state.currentUserId);
+        if (hasValidSession) return;
+
+        const demoProfile =
+          state.profiles.find((profile) => profile.id === GILDONG_USER_ID) ??
+          state.profiles[0] ??
+          null;
+        if (demoProfile) {
+          set({ currentUserId: demoProfile.id });
+        }
+      },
+
+      addLink: (input) => {
+        const titleCheck = validateLinkTitle(input.title);
+        if (!titleCheck.valid) {
+          return {
+            ok: false,
+            error: titleCheck.error ?? "제목을 입력해 주세요",
+            field: "title",
+          };
+        }
+
+        const urlCheck = validateLinkUrl(input.url);
+        if (!urlCheck.valid) {
+          return {
+            ok: false,
+            error:
+              urlCheck.error ??
+              "올바른 URL 형식이 아닙니다 (예: https://example.com 또는 mailto:name@example.com)",
+            field: "url",
+          };
+        }
+
+        const state = get();
+        const userItems = state.links.filter(
+          (item) => item.userId === input.userId
+        );
+        const activeCount = userItems.filter(
+          (item) => item.deletedAt === null
+        ).length;
+
+        if (activeCount >= MAX_ACTIVE_ITEMS) {
+          return {
+            ok: false,
+            error: `항목은 최대 ${MAX_ACTIVE_ITEMS}개까지 등록할 수 있습니다`,
+            field: "limit",
+          };
+        }
+
+        const nextOrder =
+          userItems.reduce((max, item) => Math.max(max, item.order), -1) + 1;
+        const now = new Date().toISOString();
+        const generatedId =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? `link-${crypto.randomUUID()}`
+            : `link-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+        const newItem: LinkItem = {
+          id: generatedId,
+          userId: input.userId,
+          kind: "link",
+          title: titleCheck.normalized,
+          url: urlCheck.normalized,
+          icon: input.icon ?? recommendIconForUrl(urlCheck.normalized),
+          order: nextOrder,
+          clickCount: 0,
+          isVisible: true,
+          deletedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        const previousLinks = state.links;
+        lastStorageWriteError = null;
+        set({
+          links: [...state.links, newItem],
+          storageError: null,
+        });
+
+        if (lastStorageWriteError) {
+          const writeError = lastStorageWriteError;
+          lastStorageWriteError = null;
+          set({
+            links: previousLinks,
+            storageError: writeError,
+          });
+          return {
+            ok: false,
+            error: writeError,
+            field: "storage",
+          };
+        }
+
+        return { ok: true, item: newItem };
+      },
 
       recordVisit: (userId) => {
         if (typeof window !== "undefined") {

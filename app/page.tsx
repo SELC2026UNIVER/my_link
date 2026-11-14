@@ -307,6 +307,14 @@ export default function Home() {
                     공개 프로필 (/gildong)
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/admin"
+                    className="type-dense-link text-[var(--color-primary)] hover:underline"
+                  >
+                    대시보드 (/admin)
+                  </Link>
+                </li>
               </ul>
             </div>
 

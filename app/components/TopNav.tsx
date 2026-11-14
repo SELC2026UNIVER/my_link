@@ -17,6 +17,7 @@ const navItems = [
   { label: "배우는 기술", href: "#stack" },
   { label: "링크 목록", href: "/links" },
   { label: "공개 프로필", href: "/gildong" },
+  { label: "대시보드", href: "/admin" },
   { label: "연락처", href: "#contact" },
 ];
 
@@ -204,6 +205,12 @@ export default function TopNav({
               className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
             >
               공개 프로필
+            </Link>
+            <Link
+              href="/admin"
+              className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+            >
+              대시보드
             </Link>
             <a
               href="#study-log"

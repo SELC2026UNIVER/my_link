@@ -3,6 +3,9 @@ const DANGEROUS_SCHEME_PATTERN = /^(javascript|data|vbscript|file):/i;
 const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
 
+export const MAX_LINK_TITLE_LENGTH = 50;
+export const MAX_ACTIVE_ITEMS = 50;
+
 export const RESERVED_USERNAMES = new Set([
   "admin",
   "login",
@@ -197,6 +200,32 @@ export function validateUsernameFormat(rawUsername: string): {
       valid: false,
       normalized,
       error: "예약된 시스템 이름은 사용할 수 없습니다",
+    };
+  }
+  return { valid: true, normalized };
+}
+
+/**
+ * 링크 제목 규칙(앞뒤 공백 제거 후 1~50자)을 검사한다.
+ */
+export function validateLinkTitle(rawTitle: string): {
+  valid: boolean;
+  normalized: string;
+  error?: string;
+} {
+  const normalized = rawTitle.trim();
+  if (!normalized) {
+    return {
+      valid: false,
+      normalized: "",
+      error: "제목을 입력해 주세요",
+    };
+  }
+  if (normalized.length > MAX_LINK_TITLE_LENGTH) {
+    return {
+      valid: false,
+      normalized,
+      error: `제목은 최대 ${MAX_LINK_TITLE_LENGTH}자까지 입력할 수 있습니다`,
     };
   }
   return { valid: true, normalized };
