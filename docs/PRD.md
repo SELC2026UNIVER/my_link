@@ -276,6 +276,7 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 ```text
 my_link/
 ├── .env.local                    # Firebase 환경 변수 (NEXT_PUBLIC_FIREBASE_*, .gitignore 제외 대상)
+├── firestore.rules               # Firestore 보안 규칙 (공개 읽기 allow read: if true; / 본인 전용 쓰기 request.auth.uid == userId)
 ├── components.json               # shadcn/ui 설정 (base-nova, Tailwind CSS 4 CSS-first 규격)
 ├── lib/
 │   ├── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
@@ -333,6 +334,7 @@ my_link/
 | **M7** *(완료 · v4.4)*<br>프로필 드롭다운 · 링크 복사 · Sonner 연동 | • `shadcn/ui` `Avatar`, `DropdownMenu`, `Sonner` 설치 및 `<Toaster />` 마운트<br>• 헤더 우측 프로필 아바타 클릭 드롭다운 메뉴(`내 공개 페이지 링크 복사`, `내 공개 페이지 보기`, `로그아웃`) 구현<br>• `/{displayName}` 공개 페이지 링크 복사 및 CRUD 토스트 알림을 Sonner로 통합 | • 아바타 클릭 시 드롭다운 열림 및 링크 복사 시 Sonner 토스트 알림 표시<br>• 복사한 `/{displayName}` 경로에서 본인 링크 실시간 조회 가능 |
 | **M8** *(완료 · v4.5)*<br>홈 프로필(`username` · `bio`) 인라인 수정 | • 홈 화면(마이페이지) 히어로 영역에 `프로필 수정` 모노톤 회색 필 버튼 및 인라인 편집 폼 구현<br>• 디스플레이 네임(`username`, 3~20자 중복/형식 검증) 및 바이오(`bio`, 최대 80자) 수정 후 Firestore `users/{uid}` 문서 영속화 | • 수정 후 새로고침해도 Firestore `users/{uid}`에서 `username`·`bio` 유지<br>• 저장 시 Sonner 토스트 알림 및 헤더·공개 주소 즉시 동기화 |
 | **M9** *(완료 · v4.6)*<br>개인별 공개 페이지(`/[username]`) 동적 라우팅 & 바로가기 | • 비로그인 방문자도 조회 가능한 `/[username]` 동적 라우팅 페이지 구현 (`users` 컬렉션 `username` 조회 → `users/{uid}/links` Read-Only `LinkCard` 렌더링)<br>• 헤더 프로필 옆 및 마이페이지 상단에 모노톤 회색 `'내 페이지 바로가기'` 버튼 추가<br>• 존재하지 않는 `username` 접속 시 애플 모노톤 404 안내 화면 표시 | • 수정/삭제 버튼 없이 읽기 전용 카드 목록만 깔끔하게 노출<br>• 존재하지 않는 경로 접속 시 404 안내 카드 및 홈 이동 제공 |
+| **M10** *(완료 · v4.7)*<br>Firestore 보안 규칙(`firestore.rules`) | • `users/{userId}` 및 `users/{userId}/links/{linkId}` 공개 읽기(`allow read: if true;`) 허용<br>• 프로필 및 링크 생성·수정·삭제(쓰기)는 로그인한 본인(`request.auth != null && request.auth.uid == userId`)만 가능하도록 제한 | • 비로그인 방문자의 공개 페이지 조회 허용<br>• 타인 UID 경로에 대한 무단 생성/수정/삭제 차단 |
 
 ### 10.3 핵심 사용자 시나리오 (v4.3 Auth + Firestore CRUD 기준)
 
@@ -349,3 +351,8 @@ my_link/
 4. **확인 모달(`DeleteLinkDialog`) & Firestore `deleteDoc`**:
    - 항상 표시되는 휴지통 아이콘(`삭제`) 버튼을 클릭하면 `'정말 삭제하시겠습니까?'` 제목, 삭제할 링크 이름, 빨간색 `'이 작업은 되돌릴 수 없습니다'` 경고 문구, `취소` 및 `destructive`(빨간색) `삭제하기` 버튼이 포함된 모달이 열린다.
    - `삭제하기`를 누르면 버튼 내부 스피너가 돌며 비활성화된 상태에서 Firestore `deleteDoc`으로 문서가 삭제되고 목록에서 제거된다.
+
+### 10.4 Firestore 보안 규칙 (`firestore.rules`)
+
+- **공개 읽기 (`allow read: if true;`)**: 비로그인 방문자도 `/[username]` 공개 페이지에서 사용자 프로필(`users/{userId}`)과 링크 목록(`users/{userId}/links/{linkId}`)을 자유롭게 조회할 수 있다.
+- **본인 전용 쓰기 (`request.auth != null && request.auth.uid == userId`)**: 프로필 문서(`users/{userId}`)의 생성·수정·삭제와 링크 문서(`users/{userId}/links/{linkId}`)의 생성·수정·삭제는 로그인한 본인만 수행할 수 있다.

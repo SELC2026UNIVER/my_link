@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 로그인한 본인(UID 일치)인지 검증하는 헬퍼 함수
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // 사용자 프로필 문서 경로: users/{userId}
+    match /users/{userId} {
+      // 공개 페이지(/[username]) 조회를 위해 로그인 여부와 관계없이 누구나 읽기 허용
+      allow read: if true;
+
+      // 프로필 문서 생성·수정·삭제(쓰기)는 로그인한 본인만 허용
+      allow create, update, delete: if isOwner(userId);
+
+      // 사용자별 링크 서브컬렉션 경로: users/{userId}/links/{linkId}
+      match /links/{linkId} {
+        // 공개 페이지 조회를 위해 로그인 여부와 관계없이 누구나 읽기 허용
+        allow read: if true;
+
+        // 링크의 생성·수정·삭제(쓰기)는 로그인한 본인(request.auth.uid == userId)만 허용
+        allow create, update, delete: if isOwner(userId);
+      }
+    }
+  }
+}
