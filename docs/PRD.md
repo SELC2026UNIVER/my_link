@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v4.1 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v4.2 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v4.2 변경: **Firebase Authentication Google 소셜 로그인 연동** — `lib/firebase.ts`(`getAuth`, `GoogleAuthProvider`) · `app/lib/firebase-auth.ts` · `AuthProvider`(`onAuthStateChanged` 실시간 감지 및 `browserLocalPersistence` 세션 유지) 추가, 개인 URL 주소로 활용 가능하도록 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용(`deriveDefaultDisplayName`), 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) `로그인` / `로그아웃` 버튼 배치 (`F-11`, `3`, `7.2`, `8`, `9`, `10` 반영)
 > v4.1 변경: **Firestore 인라인 수정(`updateDoc` + `updatedAt: serverTimestamp()`) & 삭제 확인 모달(`DeleteLinkDialog` + `deleteDoc`) 동시 연동** 반영 — 링크 카드 우측 `수정`(연필)·`삭제`(휴지통) 버튼을 호버 여부에 관계없이 항상 표시하고, 인라인 수정 저장 시 `updateDoc` + `updatedAt: serverTimestamp()` 갱신(저장 버튼 내부 스피너·비활성화, 취소 시 원래 값 복구) 및 삭제 버튼 클릭 시 `'정말 삭제하시겠습니까?'` 확인 모달(링크명, 빨간색 `'이 작업은 되돌릴 수 없습니다'` 경고, `shadcn/ui` destructive 빨간색 `삭제하기` 버튼 내부 스피너·비활성화, `deleteDoc` 후 목록 제거)을 `F-03`, `F-04`, `5.1`, `6.3`, `7.2`, `8`, `9`, `10`에 반영
 > v4.0 변경: **Firebase SDK 연동 및 Firestore 영속화(Create · Read)** 명세 반영 — API 키 등 Firebase 설정은 `.env.local`(`NEXT_PUBLIC_FIREBASE_*`)로 분리 관리하고, 루트(`/`)의 `내 링크 목록` 추가(`addDoc`)·조회(`getDocs`, `onSnapshot` 미사용)를 **`users/anonymous/links`** 컬렉션(`createdAt` 내림차순 정렬)으로 마이그레이션. 빈 컬렉션 시 더미 데이터 없이 `'등록된 링크가 없습니다'` 빈 상태를 표시하며, 목록 중앙 그레이 스피너 및 저장 버튼 내부 스피너·비활성화(애플 미니멀 모노톤 테마) 규칙을 `F-01`, `F-02`, `5.1`, `6.3`, `7.2`, `9`, `10`에 추가
 > v3.10 변경: **가로 400px 이하(모바일 미니)** 좁은 화면에서 `LinkCard` 텍스트가 말줄임표(`...`)로 잘리는 현상을 방지하기 위해, **400px 이하에서는 텍스트·배지·화살표를 숨기고 대표 아이콘(`LinkGlyph`)만 중앙에 표시**하는 반응형 규칙을 `F-01`, `6.3`, `7.2`, `9`에 추가
@@ -24,7 +25,7 @@
 | **핵심** | **메인 페이지(루트 `/`)** 상단 프라이머리 `링크 추가` 버튼 기반 **모달(다이얼로그) 링크 추가 + 카드 인라인 편집·삭제**, 공용 링크 목록 뷰(`/links`), 개인 공개 프로필(`/[username]`, `/gildong`) |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태 (Firestore 연동)** | **Firebase Firestore(`users/anonymous/links`) 영속 저장소와 연동하는 풀스택 프론트엔드 애플리케이션** — 루트(`/`)가 실제 Firestore 데이터를 조회(`getDocs`, `createdAt` 최신순)·추가(`addDoc`)·인라인 수정(`updateDoc`, `updatedAt: serverTimestamp()`)·확인 모달 삭제(`deleteDoc`)하는 단일 진입점 역할을 수행하며, 컬렉션이 비어 있을 때는 더미 데이터 없이 빈 상태를 표시함 (별도 `/links` 정적 데모 페이지는 기존 상태 유지) |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Firebase SDK (Firestore)** · `.env.local` 환경 변수 (`NEXT_PUBLIC_FIREBASE_*`) · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **React Hook Form + Zod** (`@hookform/resolvers/zod`) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Firebase SDK (Authentication · Firestore)** · `.env.local` 환경 변수 (`NEXT_PUBLIC_FIREBASE_*`) · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **React Hook Form + Zod** (`@hookform/resolvers/zod`) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
 | **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`)·모달(`app/components/AddLinkDialog.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (모노톤 다크 그레이 `#1d1d1f` 프라이머리 CTA 버튼 · 둥근 모서리 & 은은한 그림자, 다크 타일 위 `#2997ff`, 18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
 ### 1.1 성공 지표 (KPI)
@@ -56,7 +57,7 @@
 | F-08 | 링크 | 링크 순서 변경 | 목록 내 링크 순서 드래그 앤 드롭 또는 `▲`/`▼` 이동 버튼 지원 | 선택 (P1) |
 | F-09 | UI | 테마 프리셋 및 버튼 스타일 | 카드형(`18px`) / 필형(`9999px`) 및 라이트/다크 테마 전환 | 선택 (P1) |
 | F-10 | 공유 | URL 복사 / QR 코드 | 공개 프로필 주소 원클릭 복사 (`페이지 공유` 버튼 구현됨) | 선택 (P1) |
-| F-11 | 확장 | 정식 사용자 인증 및 `/links` 통합 | 정식 사용자 인증(Firebase Auth) 연동 및 `/links` 통합 | 확장 (P2) |
+| F-11 | 인증 | Google 소셜 로그인 및 세션 유지 | Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider` + `onAuthStateChanged`) 기반 로그인/로그아웃, 브라우저 세션 유지, 이메일 앞부분(영문 아이디) 기본 `displayName` 설정 및 헤더 모노톤 회색 버튼 UI | **필수 (P0)** |
 
 ---
 
@@ -232,15 +233,20 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 
 ---
 
-## 8. 범위 외 (Out of Scope, 현재 Firestore CRUD 연동 기준)
+## 8. 범위 외 (Out of Scope, 현재 Google Auth + Firestore CRUD 연동 기준)
 
 - 별도 관리자 대시보드 라우트(`/admin`) 및 임시 데모 계정 자동 세션 주입
 - 가짜 로그인 우회 화면(`/login`, `/onboarding`)
-- 실시간 구독(`onSnapshot`), 정식 사용자 인증(Firebase Auth) 및 `/links` 정적 데모 페이지의 DB 연동
+- 실시간 구독(`onSnapshot`) 및 `/links` 정적 데모 페이지의 DB 연동
 
 ---
 
-## 9. 수용 기준 (Acceptance Criteria, v4.1 Firestore CRUD 연동 기준)
+## 9. 수용 기준 (Acceptance Criteria, v4.2 Google Auth 연동 기준)
+
+- [x] Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider`)으로 구글 소셜 로그인 및 로그아웃이 동작한다.
+- [x] `onAuthStateChanged`로 로그인 상태를 감지하고 `browserLocalPersistence`로 새로고침 이후에도 세션이 유지된다.
+- [x] 구글 이메일 앞부분(영문 아이디)을 개인 URL 주소용 기본 디스플레이 네임(`displayName`)으로 정규화해 사용한다.
+- [x] 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) 로그인/로그아웃 버튼이 표시된다.
 
 - [x] Firebase SDK(`firebase`)가 설치되고, 모든 Firebase 설정값이 `.env.local`의 `NEXT_PUBLIC_FIREBASE_*` 환경 변수로 분리되어 Git 추적에서 제외된다.
 - [x] 루트(`/`) 진입 시 `getDocs` + `orderBy("createdAt", "desc")` 방식으로 `users/anonymous/links` 컬렉션을 불러오며(`onSnapshot` 미사용), 컬렉션이 비어 있을 때 더미 데이터 없이 `'등록된 링크가 없습니다'` 안내가 표시된다.
@@ -268,12 +274,12 @@ my_link/
 ├── components.json               # shadcn/ui 설정 (base-nova, Tailwind CSS 4 CSS-first 규격)
 ├── lib/
 │   ├── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
-│   └── firebase.ts               # Firebase App 싱글톤 초기화 & Firestore(db) 인스턴스
+│   ├── firebase.ts               # Firebase App 싱글톤 초기화, Auth(auth), Firestore(db) 인스턴스
 ├── components/
 │   └── ui/                       # shadcn/ui 공용 프리미티브 (alert, badge, button, card, dialog, input, label, select, separator, spinner, switch, tabs, textarea, tooltip)
 ├── app/
 │   ├── globals.css               # 유일한 CSS 파일 — Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
-│   ├── layout.tsx                # Inter · Noto Sans KR 폰트 & TooltipProvider 설정
+│   ├── layout.tsx                # Inter · Noto Sans KR 폰트, TooltipProvider & AuthProvider 설정
 │   ├── page.tsx                  # 메인 페이지 (/) — 프로필 히어로 + HomeLinkManager + 공부 기록 + 연습 작품 + 푸터
 │   ├── links/                    # 링크 카드 유틸리티 페이지 (/links, 정적 데모 유지)
 │   │   ├── page.tsx              # 프로필 요약 카드 + 공용 LinkCard 목록 화면
@@ -289,13 +295,15 @@ my_link/
 │   │   └── useMyLinkStore.ts     # /[username] 공개 뷰 상태 (임시 데모 세션/로그인 우회 미포함)
 │   ├── lib/
 │   │   ├── types.ts              # LinkIcon, LinkItem, ThemePreset 등 도메인 타입
+│   │   ├── firebase-auth.ts      # Google 소셜 로그인/로그아웃, onAuthStateChanged용 AuthUser 매핑, 이메일 앞부분 기본 디스플레이 네임 정규화
 │   │   ├── firestore-links.ts    # users/anonymous/links Firestore CRUD(addDoc · getDocs · updateDoc · deleteDoc) 서비스
 │   │   ├── mock-seed.ts          # /gildong 공개 뷰 시드 데이터
 │   │   ├── validators.ts         # URL(http/https/mailto)·제목(1~50자)·예약어 검증 및 https 보정
 │   │   ├── icon-matcher.ts       # 도메인·스킴 기반 13종 아이콘 자동 추천
 │   │   └── themes.ts             # 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
 │   └── components/
-│       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (/admin 링크 미포함)
+│       ├── AuthProvider.tsx      # onAuthStateChanged 실시간 인증 상태 감지 & 세션 유지 Context Provider
+│       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (애플 모노톤 회색 로그인/로그아웃 버튼 포함)
 │       ├── HomeLinkManager.tsx   # 루트(/) Firestore(users/anonymous/links) 조회·추가·인라인 수정·삭제 모달 관리
 │       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 모달 (저장 중 스피너·비활성화)
 │       ├── DeleteLinkDialog.tsx  # shadcn/ui Dialog + destructive 버튼 기반 삭제 확인 모달 (삭제 중 스피너·비활성화)
@@ -313,6 +321,7 @@ my_link/
 | **M2** *(완료)*<br>홈(`/`) 모달 추가 · 검증 · 미니 반응형 | • `/admin` 제거 후 루트(`/`) 상단 모노톤 다크 그레이(`#1d1d1f`) `링크 추가` 버튼 + `AddLinkDialog` 모달 구현<br>• `Zod + React Hook Form` 검증 및 `≤ 400px` 모바일 미니 아이콘 전용 `LinkCard` 적용 | • 루트(`/`) 모달 검증 및 유효성 오류 `#e30000` 경고 출력<br>• `≤ 400px`에서 말줄임 없이 아이콘만 중앙 표시 |
 | **M3** *(완료 · v4.0)*<br>Firebase SDK & Firestore Create/Read & 로딩 스피너 | • `firebase` SDK 설치 및 `.env.local` 분리 (`lib/firebase.ts`)<br>• 루트(`/`) `users/anonymous/links` `addDoc` 저장 + `getDocs`(`createdAt` 내림차순) 조회·자동 갱신<br>• 목록 중앙 그레이 스피너 & 모달 저장 버튼 스피너·비활성화 | • `.env.local` 미추적 상태에서 빌드·런타임 동작<br>• 빈 컬렉션 시 `'등록된 링크가 없습니다'` 표시, 새 링크 저장 후 새로고침 시에도 최신순 유지 |
 | **M4** *(완료 · v4.1)*<br>Firestore Update/Delete 동시 연동 | • 링크 카드 우측 항상 노출 `수정`(연필)·`삭제`(휴지통) 버튼<br>• 인라인 수정 `updateDoc` + `updatedAt: serverTimestamp()` + 취소 시 원복<br>• `DeleteLinkDialog` 확인 모달 + `destructive` 삭제하기 + `deleteDoc` + 버튼 스피너·비활성화 | • 새로고침 후에도 수정/삭제 결과 영속 유지<br>• 저장/삭제 중 버튼 내부 스피너 회전 및 비활성화 |
+| **M5** *(완료 · v4.2)*<br>Google 소셜 로그인 연동 | • `firebase/auth`(`signInWithPopup`, `GoogleAuthProvider`, `onAuthStateChanged`) 및 `AuthProvider` 구축<br>• 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용<br>• 헤더 우측 애플 모노톤 회색 톤 로그인/로그아웃 버튼 | • 새로고침 후에도 `onAuthStateChanged`로 세션 유지<br>• 로그인/로그아웃 동작 및 오류 안내 표시 |
 
 ### 10.3 핵심 사용자 시나리오 (v4.1 Firestore CRUD 기준)
 

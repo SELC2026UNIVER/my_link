@@ -1,7 +1,11 @@
 "use client";
 
+import { AlertCircle, LogIn, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "./AuthProvider";
 
 interface TopNavProps {
   name: string;
@@ -27,6 +31,15 @@ export default function TopNav({
   contactHref = "#contact",
 }: TopNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const {
+    user,
+    isLoading: isAuthLoading,
+    isAuthActionPending,
+    authError,
+    signInWithGoogle,
+    signOut,
+    clearAuthError,
+  } = useAuth();
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -192,40 +205,125 @@ export default function TopNav({
             </span>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 min-[401px]:gap-5">
+          <div className="flex shrink-0 items-center gap-2.5 min-[401px]:gap-4 sm:gap-5">
             <Link
               href="/links"
-              className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] min-[480px]:inline"
             >
               링크 목록
             </Link>
             <Link
               href="/gildong"
-              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] min-[401px]:inline"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] min-[560px]:inline"
             >
               공개 프로필
             </Link>
             <a
               href="#study-log"
-              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] sm:inline"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] md:inline"
             >
               오늘의 기록
             </a>
             <a
               href="#projects"
-              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] sm:inline"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] md:inline"
             >
               연습 작품
             </a>
             <a
               href={contactHref}
-              className="type-nav-link inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[var(--color-primary)] px-3.5 py-1.5 text-white transition-transform duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] sm:inline"
             >
               연락하기
             </a>
+
+            {isAuthLoading ? (
+              <div
+                role="status"
+                aria-label="로그인 상태 확인 중"
+                className="h-8 w-[82px] animate-pulse rounded-full border border-black/[0.06] bg-[#e8e8ed]"
+              />
+            ) : user ? (
+              <div className="flex items-center gap-2">
+                <span
+                  title={user.email ?? `@${user.displayName}`}
+                  className="hidden max-w-[132px] truncate rounded-full border border-black/[0.06] bg-white/80 px-2.5 py-1 text-[12px] font-medium tracking-[-0.012em] text-[#424245] min-[401px]:inline-block"
+                >
+                  @{user.displayName}
+                </span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  shape="pill"
+                  disabled={isAuthActionPending}
+                  aria-busy={isAuthActionPending}
+                  aria-label="로그아웃"
+                  onClick={() => {
+                    void signOut();
+                  }}
+                  className="h-8 gap-1.5 border border-black/[0.08] bg-[#e8e8ed] px-3.5 text-[12px] font-medium tracking-[-0.014em] text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all hover:bg-[#dcdce1] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] disabled:opacity-60"
+                >
+                  {isAuthActionPending ? (
+                    <Spinner decorative className="size-3.5 text-[#1d1d1f]" />
+                  ) : (
+                    <LogOut className="size-3.5 text-[#515154]" aria-hidden="true" />
+                  )}
+                  <span>로그아웃</span>
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                shape="pill"
+                disabled={isAuthActionPending}
+                aria-busy={isAuthActionPending}
+                aria-label="Google 계정으로 로그인"
+                onClick={() => {
+                  void signInWithGoogle();
+                }}
+                className="h-8 gap-1.5 border border-black/[0.08] bg-[#e8e8ed] px-3.5 text-[12px] font-medium tracking-[-0.014em] text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all hover:bg-[#dcdce1] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] disabled:opacity-60"
+              >
+                {isAuthActionPending ? (
+                  <>
+                    <Spinner decorative className="size-3.5 text-[#1d1d1f]" />
+                    <span>로그인 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="size-3.5 text-[#515154]" aria-hidden="true" />
+                    <span>로그인</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </header>
+
+      {authError ? (
+        <div
+          role="alert"
+          className="border-b border-destructive/20 bg-destructive/5 px-4 py-2 text-[13px] text-destructive"
+        >
+          <div className="mx-auto flex max-w-[980px] items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+              <span>{authError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={clearAuthError}
+              aria-label="인증 오류 닫기"
+              className="inline-flex size-7 items-center justify-center rounded-full text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
