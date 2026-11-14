@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { LinkGlyph } from "./LinkGlyph";
 
@@ -404,9 +405,16 @@ export function AddLinkDialog({
               shape="pill"
               disabled={isAtLimit || isSubmitting}
               aria-busy={isSubmitting}
-              className="min-h-11 min-w-[92px] border border-black/10 bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16)] active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-65"
+              className="min-h-11 min-w-[104px] gap-2 border border-black/10 bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16)] active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-65"
             >
-              {isSubmitting ? "저장 중..." : "저장"}
+              {isSubmitting ? (
+                <>
+                  <Spinner decorative className="size-4 text-primary-foreground" />
+                  <span>저장 중...</span>
+                </>
+              ) : (
+                <span>저장</span>
+              )}
             </Button>
           </DialogFooter>
         </form>

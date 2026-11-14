@@ -1,9 +1,10 @@
 "use client";
 
 import { CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   createAnonymousLink,
+  fetchAnonymousLinks,
   formatFirestoreErrorMessage,
   type HomeLinkItem,
 } from "@/app/lib/firestore-links";
@@ -15,12 +16,12 @@ import {
   validateLinkTitle,
   validateLinkUrl,
 } from "@/app/lib/validators";
-import { dummyLinks } from "@/app/links/links-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
   AddLinkDialog,
@@ -37,14 +38,17 @@ interface HomeLinkManagerProps {
 }
 
 /**
- * 루트(/) 홈 화면에서 링크 목록 조회·Firestore 모달 추가(AddLinkDialog)·인라인 편집·삭제를 관리하는 컴포넌트.
+ * 루트(/) 홈 화면에서 Firestore(users/anonymous/links) 링크 목록 조회·모달 추가(AddLinkDialog) 및
+ * 인라인 편집·삭제 UI를 관리하는 컴포넌트.
  */
 export function HomeLinkManager({
   githubHref,
   email,
   intro,
 }: HomeLinkManagerProps) {
-  const [links, setLinks] = useState<HomeLinkItem[]>(() => [...dummyLinks]);
+  const [links, setLinks] = useState<HomeLinkItem[]>([]);
+  const [isLoadingLinks, setIsLoadingLinks] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,11 +60,58 @@ export function HomeLinkManager({
   const toastTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
+    async function loadInitialLinks() {
+      try {
+        const fetchedLinks = await fetchAnonymousLinks();
+        if (!isCancelled) {
+          setLinks(fetchedLinks);
+          setLoadError(null);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setLoadError(
+            formatFirestoreErrorMessage(
+              error,
+              "링크 목록을 불러오는 중 오류가 발생했습니다."
+            )
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingLinks(false);
+        }
+      }
+    }
+
+    void loadInitialLinks();
+
     return () => {
+      isCancelled = true;
       if (toastTimerRef.current !== null) {
         window.clearTimeout(toastTimerRef.current);
       }
     };
+  }, []);
+
+  const refreshLinks = useCallback(async () => {
+    setIsLoadingLinks(true);
+    setLoadError(null);
+    try {
+      const fetchedLinks = await fetchAnonymousLinks();
+      setLinks(fetchedLinks);
+    } catch (error) {
+      setLoadError(
+        formatFirestoreErrorMessage(
+          error,
+          "링크 목록을 불러오는 중 오류가 발생했습니다."
+        )
+      );
+      throw error;
+    } finally {
+      setIsLoadingLinks(false);
+    }
   }, []);
 
   const showToast = (message: string) => {
@@ -87,7 +138,13 @@ export function HomeLinkManager({
 
     try {
       const createdItem = await createAnonymousLink(draft);
-      setLinks((prev) => [createdItem, ...prev]);
+      try {
+        await refreshLinks();
+      } catch {
+        // Firestore 저장 성공 직후 재조회만 실패한 경우 중복 저장 방지를 위해 목록 선두에 반영한다.
+        setLinks((prev) => [createdItem, ...prev]);
+        setLoadError(null);
+      }
       showToast(`링크가 추가되었습니다 (${createdItem.title})`);
       return { ok: true };
     } catch (error) {
@@ -208,15 +265,49 @@ export function HomeLinkManager({
                 variant="secondary"
                 className="rounded-full bg-card px-2.5 py-0.5 text-[12px] font-semibold text-muted-foreground"
               >
-                전체 {links.length}개
+                {isLoadingLinks && links.length === 0
+                  ? "불러오는 중"
+                  : `전체 ${links.length}개`}
               </Badge>
             </div>
             <p className="text-[12px] tracking-[-0.01em] text-muted-foreground">
-              로컬 메모리 상태 · 모달 추가 &amp; 인라인 편집
+              Firestore 연동 · createdAt 최신순
             </p>
           </div>
 
-          {links.length === 0 ? (
+          {isLoadingLinks && links.length === 0 ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex min-h-[168px] flex-col items-center justify-center gap-3 rounded-[18px] border border-border/80 bg-card px-5 py-10 text-center"
+            >
+              <Spinner decorative className="size-6 text-muted-foreground" />
+              <p className="text-[14px] font-normal tracking-[-0.016em] text-muted-foreground">
+                링크를 불러오는 중...
+              </p>
+            </div>
+          ) : loadError && links.length === 0 ? (
+            <div
+              role="alert"
+              className="flex flex-col items-center justify-center gap-3 rounded-[18px] border border-destructive/25 bg-card px-5 py-8 text-center"
+            >
+              <p className="text-[14px] font-semibold text-destructive">
+                {loadError}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                shape="pill"
+                onClick={() => {
+                  void refreshLinks().catch(() => {});
+                }}
+                className="min-h-9 px-4 text-[13px] font-normal"
+              >
+                다시 시도
+              </Button>
+            </div>
+          ) : links.length === 0 ? (
             <div className="rounded-[18px] border border-dashed border-border bg-card px-5 py-8 text-center">
               <p className="text-[15px] font-semibold text-foreground">
                 등록된 링크가 없습니다
@@ -226,7 +317,13 @@ export function HomeLinkManager({
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <div className="relative">
+              <ul
+                className={cn(
+                  "flex flex-col gap-3 transition-opacity duration-150",
+                  isLoadingLinks && "pointer-events-none opacity-45"
+                )}
+              >
               {links.map((item) => {
                 const isEditing = editingId === item.id;
 
@@ -361,7 +458,23 @@ export function HomeLinkManager({
                   </li>
                 );
               })}
-            </ul>
+              </ul>
+
+              {isLoadingLinks ? (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="absolute inset-0 flex items-center justify-center rounded-[18px]"
+                >
+                  <div className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card/95 px-4 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+                    <Spinner decorative className="size-4 text-muted-foreground" />
+                    <span className="text-[13px] font-normal tracking-[-0.016em] text-muted-foreground">
+                      목록 불러오는 중...
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           )}
         </Card>
       </section>
