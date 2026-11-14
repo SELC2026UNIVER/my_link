@@ -23,13 +23,13 @@ export interface HomeLinkItem {
   category: string;
 }
 
-export interface CreateAnonymousLinkInput {
+export interface CreateUserLinkInput {
   title: string;
   url: string;
   icon: LinkIcon;
 }
 
-export interface UpdateAnonymousLinkInput {
+export interface UpdateUserLinkInput {
   id: string;
   title: string;
   url: string;
@@ -39,12 +39,20 @@ export interface UpdateAnonymousLinkInput {
 
 const VALID_LINK_ICON_SET = new Set<string>(LINK_ICON_VALUES);
 
-function getAnonymousLinksCollection() {
-  return collection(getFirestoreDb(), "users", "anonymous", "links");
+function assertValidUid(uid: string): string {
+  const trimmed = uid.trim();
+  if (!trimmed) {
+    throw new Error("로그인한 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+  }
+  return trimmed;
 }
 
-function getAnonymousLinkDoc(linkId: string) {
-  return doc(getFirestoreDb(), "users", "anonymous", "links", linkId);
+function getUserLinksCollection(uid: string) {
+  return collection(getFirestoreDb(), "users", assertValidUid(uid), "links");
+}
+
+function getUserLinkDoc(uid: string, linkId: string) {
+  return doc(getFirestoreDb(), "users", assertValidUid(uid), "links", linkId);
 }
 
 function resolveValidLinkIcon(rawIcon: unknown, url: string): LinkIcon {
@@ -94,7 +102,7 @@ export function formatFirestoreErrorMessage(
 ): string {
   if (error instanceof FirebaseError) {
     if (error.code === "permission-denied") {
-      return "Firestore 접근 권한이 없습니다. 보안 규칙을 확인해 주세요.";
+      return "Firestore 접근 권한이 없습니다. 로그인 상태와 보안 규칙(users/{uid}/links)을 확인해 주세요.";
     }
     if (error.code === "unavailable") {
       return "네트워크 연결을 확인한 뒤 다시 시도해 주세요.";
@@ -110,11 +118,11 @@ export function formatFirestoreErrorMessage(
 }
 
 /**
- * Firestore users/anonymous/links 컬렉션에서 createdAt 최신순으로 링크 목록을 일회성 조회(getDocs)한다.
+ * Firestore users/{uid}/links 컬렉션에서 createdAt 최신순으로 링크 목록을 일회성 조회(getDocs)한다.
  */
-export async function fetchAnonymousLinks(): Promise<HomeLinkItem[]> {
+export async function fetchUserLinks(uid: string): Promise<HomeLinkItem[]> {
   const linksQuery = query(
-    getAnonymousLinksCollection(),
+    getUserLinksCollection(uid),
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(linksQuery);
@@ -143,13 +151,14 @@ export async function fetchAnonymousLinks(): Promise<HomeLinkItem[]> {
 }
 
 /**
- * Firestore users/anonymous/links 컬렉션에 새 링크 문서를 저장한다.
+ * Firestore users/{uid}/links 컬렉션에 새 링크 문서를 저장한다.
  */
-export async function createAnonymousLink(
-  input: CreateAnonymousLinkInput
+export async function createUserLink(
+  uid: string,
+  input: CreateUserLinkInput
 ): Promise<HomeLinkItem> {
   const category = LINK_ICON_LABELS[input.icon];
-  const docRef = await addDoc(getAnonymousLinksCollection(), {
+  const docRef = await addDoc(getUserLinksCollection(uid), {
     title: input.title,
     url: input.url,
     icon: input.icon,
@@ -167,12 +176,13 @@ export async function createAnonymousLink(
 }
 
 /**
- * Firestore users/anonymous/links/{id} 문서를 수정하고 updatedAt 서버 타임스탬프를 갱신한다.
+ * Firestore users/{uid}/links/{id} 문서를 수정하고 updatedAt 서버 타임스탬프를 갱신한다.
  */
-export async function updateAnonymousLink(
-  input: UpdateAnonymousLinkInput
+export async function updateUserLink(
+  uid: string,
+  input: UpdateUserLinkInput
 ): Promise<HomeLinkItem> {
-  await updateDoc(getAnonymousLinkDoc(input.id), {
+  await updateDoc(getUserLinkDoc(uid, input.id), {
     title: input.title,
     url: input.url,
     icon: input.icon,
@@ -190,8 +200,11 @@ export async function updateAnonymousLink(
 }
 
 /**
- * Firestore users/anonymous/links/{id} 문서를 삭제한다.
+ * Firestore users/{uid}/links/{id} 문서를 삭제한다.
  */
-export async function deleteAnonymousLink(linkId: string): Promise<void> {
-  await deleteDoc(getAnonymousLinkDoc(linkId));
+export async function deleteUserLink(
+  uid: string,
+  linkId: string
+): Promise<void> {
+  await deleteDoc(getUserLinkDoc(uid, linkId));
 }

@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v4.2 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v4.3 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v4.3 변경: **데이터 개인화 마이그레이션 (`users/{uid}/links`) & 비로그인 로그인 안내 화면** — 기존 익명(`users/anonymous/links`) 경로 대신 로그인한 사용자의 고유 `uid` 기반 **`users/{uid}/links`** 경로로 조회(`getDocs`)·추가(`addDoc`)·수정(`updateDoc`)·삭제(`deleteDoc`)를 전면 마이그레이션하고, 비로그인 상태일 때는 내 링크 목록 대신 로그인 안내 화면(`로그인하고 나만의 링크를 관리하세요` + `Google로 로그인하기` CTA)을 표시 (`1`, `F-01~F-04`, `3`, `5.1`, `9`, `10` 반영)
 > v4.2 변경: **Firebase Authentication Google 소셜 로그인 연동** — `lib/firebase.ts`(`getAuth`, `GoogleAuthProvider`) · `app/lib/firebase-auth.ts` · `AuthProvider`(`onAuthStateChanged` 실시간 감지 및 `browserLocalPersistence` 세션 유지) 추가, 개인 URL 주소로 활용 가능하도록 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용(`deriveDefaultDisplayName`), 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) `로그인` / `로그아웃` 버튼 배치 (`F-11`, `3`, `7.2`, `8`, `9`, `10` 반영)
 > v4.1 변경: **Firestore 인라인 수정(`updateDoc` + `updatedAt: serverTimestamp()`) & 삭제 확인 모달(`DeleteLinkDialog` + `deleteDoc`) 동시 연동** 반영 — 링크 카드 우측 `수정`(연필)·`삭제`(휴지통) 버튼을 호버 여부에 관계없이 항상 표시하고, 인라인 수정 저장 시 `updateDoc` + `updatedAt: serverTimestamp()` 갱신(저장 버튼 내부 스피너·비활성화, 취소 시 원래 값 복구) 및 삭제 버튼 클릭 시 `'정말 삭제하시겠습니까?'` 확인 모달(링크명, 빨간색 `'이 작업은 되돌릴 수 없습니다'` 경고, `shadcn/ui` destructive 빨간색 `삭제하기` 버튼 내부 스피너·비활성화, `deleteDoc` 후 목록 제거)을 `F-03`, `F-04`, `5.1`, `6.3`, `7.2`, `8`, `9`, `10`에 반영
 > v4.0 변경: **Firebase SDK 연동 및 Firestore 영속화(Create · Read)** 명세 반영 — API 키 등 Firebase 설정은 `.env.local`(`NEXT_PUBLIC_FIREBASE_*`)로 분리 관리하고, 루트(`/`)의 `내 링크 목록` 추가(`addDoc`)·조회(`getDocs`, `onSnapshot` 미사용)를 **`users/anonymous/links`** 컬렉션(`createdAt` 내림차순 정렬)으로 마이그레이션. 빈 컬렉션 시 더미 데이터 없이 `'등록된 링크가 없습니다'` 빈 상태를 표시하며, 목록 중앙 그레이 스피너 및 저장 버튼 내부 스피너·비활성화(애플 미니멀 모노톤 테마) 규칙을 `F-01`, `F-02`, `5.1`, `6.3`, `7.2`, `9`, `10`에 추가
@@ -24,7 +25,7 @@
 | **대상** | 개인 크리에이터, SNS 사용자, 일반 사용자, 인플루언서, 프리랜서, 소상공인 |
 | **핵심** | **메인 페이지(루트 `/`)** 상단 프라이머리 `링크 추가` 버튼 기반 **모달(다이얼로그) 링크 추가 + 카드 인라인 편집·삭제**, 공용 링크 목록 뷰(`/links`), 개인 공개 프로필(`/[username]`, `/gildong`) |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
-| **구현 형태 (Firestore 연동)** | **Firebase Firestore(`users/anonymous/links`) 영속 저장소와 연동하는 풀스택 프론트엔드 애플리케이션** — 루트(`/`)가 실제 Firestore 데이터를 조회(`getDocs`, `createdAt` 최신순)·추가(`addDoc`)·인라인 수정(`updateDoc`, `updatedAt: serverTimestamp()`)·확인 모달 삭제(`deleteDoc`)하는 단일 진입점 역할을 수행하며, 컬렉션이 비어 있을 때는 더미 데이터 없이 빈 상태를 표시함 (별도 `/links` 정적 데모 페이지는 기존 상태 유지) |
+| **구현 형태 (Auth + Firestore 연동)** | **Firebase Authentication(Google) + Firestore(`users/{uid}/links`) 개인화 영속 저장소와 연동하는 풀스택 프론트엔드 애플리케이션** — 로그인 사용자(`uid`)에 한해 루트(`/`)가 Firestore 데이터를 조회(`getDocs`, `createdAt` 최신순)·추가(`addDoc`)·인라인 수정(`updateDoc`, `updatedAt: serverTimestamp()`)·확인 모달 삭제(`deleteDoc`)하며, 비로그인 시 로그인 안내 화면을 표시함 (별도 `/links` 정적 데모 페이지는 기존 상태 유지) |
 | **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Firebase SDK (Authentication · Firestore)** · `.env.local` 환경 변수 (`NEXT_PUBLIC_FIREBASE_*`) · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **React Hook Form + Zod** (`@hookform/resolvers/zod`) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
 | **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`)·모달(`app/components/AddLinkDialog.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (모노톤 다크 그레이 `#1d1d1f` 프라이머리 CTA 버튼 · 둥근 모서리 & 은은한 그림자, 다크 타일 위 `#2997ff`, 18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
@@ -47,10 +48,10 @@
 
 | ID | 구분 | 기능명 | 설명 | 우선순위 |
 |---|---|---|---|---|
-| F-01 | 링크 | 링크 목록 표시 | 루트(`/`)에서는 Firestore(`users/anonymous/links`, `getDocs`, `createdAt` 최신순) 데이터를 불러와 `LinkCard`로 표시하고, `/links`·`/[username]`에서는 정적·시드 목록을 표시 | **필수 (P0)** |
-| F-02 | 링크 | 모달 링크 추가 | 루트(`/`) 상단 모노톤 다크 그레이(`#1d1d1f`) `링크 추가` 버튼 → **`shadcn/ui Dialog` 모달**에서 **Zod + React Hook Form** 검증을 거쳐 Firestore `users/anonymous/links`에 저장(`addDoc`)하고 저장 중 버튼 스피너·비활성화 후 목록 자동 갱신 및 입력 칸 초기화 | **필수 (P0)** |
-| F-03 | 링크 | 인라인 링크 수정 | 루트(`/`) 링크 목록 카드 우측에 항상 표시되는 `수정`(연필 아이콘) 버튼을 눌러 해당 행을 제목·주소 입력 칸으로 전환(기존 값 자동 채움)하고, `저장` 시 버튼 스피너·비활성화와 함께 Firestore `updateDoc` 및 `updatedAt: serverTimestamp()` 갱신 (`취소` 시 원래 값 복구) | **필수 (P0)** |
-| F-04 | 링크 | 확인 모달 링크 삭제 | 루트(`/`) 링크 목록 카드 우측에 항상 표시되는 `삭제`(휴지통 아이콘) 버튼 클릭 시 확인 모달(`DeleteLinkDialog`: `'정말 삭제하시겠습니까?'`, 대상 링크명, 빨간색 `'이 작업은 되돌릴 수 없습니다'`, `취소`/`삭제하기` destructive 버튼)을 띄우고, `삭제하기` 클릭 시 버튼 스피너·비활성화와 함께 Firestore `deleteDoc`으로 문서 삭제 및 목록 제거 | **필수 (P0)** |
+| F-01 | 링크 | 링크 목록 표시 | 루트(`/`)에서는 로그인 시 Firestore(`users/{uid}/links`, `getDocs`, `createdAt` 최신순) 데이터를 불러와 `LinkCard`로 표시하고, 비로그인 시 로그인 안내 화면을 표시하며, `/links`·`/[username]`에서는 정적·시드 목록을 표시 | **필수 (P0)** |
+| F-02 | 링크 | 모달 링크 추가 | 루트(`/`) 로그인 상태 상단 모노톤 다크 그레이(`#1d1d1f`) `링크 추가` 버튼 → **`shadcn/ui Dialog` 모달**에서 **Zod + React Hook Form** 검증을 거쳐 Firestore `users/{uid}/links`에 저장(`addDoc`)하고 저장 중 버튼 스피너·비활성화 후 목록 자동 갱신 및 입력 칸 초기화 | **필수 (P0)** |
+| F-03 | 링크 | 인라인 링크 수정 | 루트(`/`) 링크 목록 카드 우측에 항상 표시되는 `수정`(연필 아이콘) 버튼을 눌러 해당 행을 제목·주소 입력 칸으로 전환(기존 값 자동 채움)하고, `저장` 시 버튼 스피너·비활성화와 함께 Firestore `users/{uid}/links/{docId}` `updateDoc` 및 `updatedAt: serverTimestamp()` 갱신 (`취소` 시 원래 값 복구) | **필수 (P0)** |
+| F-04 | 링크 | 확인 모달 링크 삭제 | 루트(`/`) 링크 목록 카드 우측에 항상 표시되는 `삭제`(휴지통 아이콘) 버튼 클릭 시 확인 모달(`DeleteLinkDialog`: `'정말 삭제하시겠습니까?'`, 대상 링크명, 빨간색 `'이 작업은 되돌릴 수 없습니다'`, `취소`/`삭제하기` destructive 버튼)을 띄우고, `삭제하기` 클릭 시 버튼 스피너·비활성화와 함께 Firestore `users/{uid}/links/{docId}` `deleteDoc`으로 문서 삭제 및 목록 제거 | **필수 (P0)** |
 | F-05 | 공유 | 개인 URL (`/[username]`) | 사용자별 고유 공개 프로필 뷰 (`/gildong` 예시 포함, 대문자/이전 주소 리다이렉트 및 404 처리) | **필수 (P0)** |
 | F-06 | 프로필 | 프로필 및 공부/작품 소개 | 루트(`/`) 상단 프로필(아바타·이름·소개)·공부 기록·연습 작품 쇼케이스 표시 | **필수 (P0)** |
 | F-07 | UI | URL 안전성 및 도메인 아이콘 추천 | `http://`, `https://`, `mailto:`만 허용하고 도메인별 13종 아이콘을 자동 추천 | **필수 (P0)** |
@@ -67,7 +68,7 @@
 
 | 경로 | 화면 | 접근 권한 | 설명 |
 |---|---|---|---|
-| `/` | 메인 페이지 (프로필 & 링크 관리 홈) *(구현됨)* | 누구나 | 프로필 소개 히어로 + **상단 모노톤 다크 그레이(`#1d1d1f`, 둥근 모서리 & 은은한 그림자) `링크 추가` 프라이머리 버튼** + **`내 링크 목록` (Firestore `users/anonymous/links` `getDocs` 조회 · `addDoc` 추가 · `updateDoc` 인라인 수정 · `deleteDoc` 확인 모달 삭제 · 로딩 스피너)** + 공부 기록/연습 작품 타일 + 연락처 푸터 |
+| `/` | 메인 페이지 (프로필 & 링크 관리 홈) *(구현됨)* | 누구나 (관리 기능은 로그인 필요) | 프로필 소개 히어로 + **로그인 상태별 링크 관리 영역** (비로그인 시 `Google로 로그인하기` 안내 화면 / 로그인 시 상단 `링크 추가` CTA + **`내 링크 목록` Firestore `users/{uid}/links` `getDocs` 조회 · `addDoc` 추가 · `updateDoc` 인라인 수정 · `deleteDoc` 확인 모달 삭제**) + 공부 기록/연습 작품 타일 + 연락처 푸터 |
 | `/links` | 링크 목록 전용 유틸리티 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 모노톤 다크 그레이 `#1d1d1f` CTA) 기반 정적 데모 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 유지 |
 | `/[username]` | 공개 프로필 페이지 *(구현됨)* | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 공용 `LinkCard` 링크 목록 (`PublicProfileView` 기반). `/gildong` 기본 시드, 대문자/이전 username 리다이렉트 및 404 처리 포함 (세션 자동 주입 없음) |
 
@@ -88,15 +89,15 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | **설명** | 사용자가 등록한 기본 URL 링크를 공용 `LinkCard`(`shadcn/ui Card`) 목록으로 표시 |
-| **동작 방식** | • **루트(`/`)**: 페이지 로드 시 Firestore **`users/anonymous/links`** 컬렉션에서 실시간 리스너(`onSnapshot`) 대신 **`getDocs` + `orderBy("createdAt", "desc")`** 방식으로 최신순 목록을 불러오며, 불러오는 동안 목록 영역 중앙에 애플 미니멀 모노톤 그레이 스피너를 표시<br>• **`/links`**: `app/links/links-data.ts`의 `dummyLinks` 정적 데모 카드 유지<br>• **`/[username]`**: `PublicProfileView`를 통해 공개 프로필 섹션·링크 카드 표시<br>• **모바일 미니 반응형(`≤ 400px`)**: 가로 폭이 400px 이하로 줄어들면 말줄임표(`...`) 발생을 막기 위해 제목·카테고리 배지·URL 텍스트·우측 화살표를 시각적으로 숨기고(`min-[401px]:block`) **대표 아이콘(`LinkGlyph`)만 카드 중앙에 표시** (`aria-label`·`title` 접근성 유지) |
+| **동작 방식** | • **루트(`/`)**: 로그인 상태 확인 후 비로그인 시 `'로그인하고 나만의 링크를 관리하세요'` 로그인 안내 화면을 표시하고, 로그인 시 Firestore **`users/{uid}/links`** 컬렉션에서 실시간 리스너(`onSnapshot`) 대신 **`getDocs` + `orderBy("createdAt", "desc")`** 방식으로 최신순 목록을 불러오며, 불러오는 동안 목록 영역 중앙에 애플 미니멀 모노톤 그레이 스피너를 표시<br>• **`/links`**: `app/links/links-data.ts`의 `dummyLinks` 정적 데모 카드 유지<br>• **`/[username]`**: `PublicProfileView`를 통해 공개 프로필 섹션·링크 카드 표시<br>• **모바일 미니 반응형(`≤ 400px`)**: 가로 폭이 400px 이하로 줄어들면 말줄임표(`...`) 발생을 막기 위해 제목·카테고리 배지·URL 텍스트·우측 화살표를 시각적으로 숨기고(`min-[401px]:block`) **대표 아이콘(`LinkGlyph`)만 카드 중앙에 표시** (`aria-label`·`title` 접근성 유지) |
 | **예외 처리** | • 루트(`/`) Firestore 컬렉션 항목이 0개일 때: 더미 데이터 없이 `"등록된 링크가 없습니다"` 빈 상태 안내 문구 표시<br>• 조회 실패 시: 오류 안내 배너와 `'다시 시도'` 버튼 표시 |
 
 ### F-02. 모달 링크 추가 (`AddLinkDialog`) — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 루트(`/`) 상단의 애플 모노톤 다크 그레이(`#1d1d1f`) 프라이머리 `링크 추가` 버튼을 통해 **모달 다이얼로그(`shadcn/ui Dialog`)** 를 열고, **Zod + React Hook Form** 검증을 거쳐 **Firestore `users/anonymous/links` 컬렉션에 문서를 저장(`addDoc`)** |
-| **동작 방식** | 루트(`/`) 상단 `링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 `AddLinkDialog` 열림** → `zodResolver(addLinkFormSchema)` + `useForm`으로 입력 검증 → URL 입력/블러 시 프로토콜(`https://`) 자동 보정 및 도메인 맞춤 아이콘 자동 추천 → `저장` 클릭 → **저장 버튼 내부 스피너 회전 및 버튼 비활성화(중복 클릭 방지)** → Firestore `users/anonymous/links`에 `{ title, url, icon, category, createdAt: serverTimestamp() }` 저장(`addDoc`) → **저장 성공 시 `getDocs`로 목록 자동 갱신(최신순 반영) · 폼 입력 칸 초기화(`reset()`)** → 다이얼로그 닫힘 + `"링크가 추가되었습니다 (제목)"` 토스트 |
+| **설명** | 루트(`/`) 상단의 애플 모노톤 다크 그레이(`#1d1d1f`) 프라이머리 `링크 추가` 버튼을 통해 **모달 다이얼로그(`shadcn/ui Dialog`)** 를 열고, **Zod + React Hook Form** 검증을 거쳐 **Firestore `users/{uid}/links` 컬렉션에 문서를 저장(`addDoc`)** |
+| **동작 방식** | 루트(`/`) 상단 `링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 `AddLinkDialog` 열림** → `zodResolver(addLinkFormSchema)` + `useForm`으로 입력 검증 → URL 입력/블러 시 프로토콜(`https://`) 자동 보정 및 도메인 맞춤 아이콘 자동 추천 → `저장` 클릭 → **저장 버튼 내부 스피너 회전 및 버튼 비활성화(중복 클릭 방지)** → Firestore `users/{uid}/links`에 `{ title, url, icon, category, createdAt: serverTimestamp() }` 저장(`addDoc`) → **저장 성공 시 `getDocs`로 목록 자동 갱신(최신순 반영) · 폼 입력 칸 초기화(`reset()`)** → 다이얼로그 닫힘 + `"링크가 추가되었습니다 (제목)"` 토스트 |
 | **취소 / 실패** | • 저장 중이 아닐 때 `취소` 버튼, 닫기(`X`), 배경 클릭 또는 `Esc` 키 → `reset()`으로 입력값·오류 상태 초기화 후 다이얼로그 닫힘<br>• Firestore 저장 실패 시: 모달을 닫지 않고 모달 내 에러 알림(`role="alert"`) 표시 |
 
 **입력 항목**
@@ -129,7 +130,7 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | **설명** | 별도 페이지 이동 없이 루트(`/`) 링크 카드 우측에 **항상 표시되는 `수정`(연필 아이콘) 버튼**을 눌러 해당 행을 인라인 편집 폼으로 전환해 수정하고 Firestore에 반영 |
-| **동작 방식** | 카드 우측 `수정`(연필 아이콘) 클릭 → 그 자리에서 기존 제목·주소 값이 채워진 `제목`·`주소 (URL)` 입력 칸으로 전환 → 수정 후 `저장` 클릭 → 유효성 검사 및 URL 변경 시 도메인 기반 아이콘·카테고리 갱신 → **`저장` 버튼 내부 회전 스피너 표시 및 비활성화** → Firestore `users/anonymous/links/{docId}`에 **`updateDoc(..., { title, url, icon, category, updatedAt: serverTimestamp() })`** 호출 → 성공 시 목록 갱신, 편집 종료 및 `"링크가 수정되었습니다 (제목)"` 토스트 |
+| **동작 방식** | 카드 우측 `수정`(연필 아이콘) 클릭 → 그 자리에서 기존 제목·주소 값이 채워진 `제목`·`주소 (URL)` 입력 칸으로 전환 → 수정 후 `저장` 클릭 → 유효성 검사 및 URL 변경 시 도메인 기반 아이콘·카테고리 갱신 → **`저장` 버튼 내부 회전 스피너 표시 및 비활성화** → Firestore `users/{uid}/links/{docId}`에 **`updateDoc(..., { title, url, icon, category, updatedAt: serverTimestamp() })`** 호출 → 성공 시 목록 갱신, 편집 종료 및 `"링크가 수정되었습니다 (제목)"` 토스트 |
 | **취소 / 예외** | `취소` 버튼 클릭(또는 `Esc` 키) 시 입력 중이던 변경을 버리고 원래 값의 링크 카드로 복구 · 제목/URL 유효성 오류 또는 Firestore 오류 시 인라인 빨간 오류 메시지(`#e30000`) 표시 및 폼 유지 |
 
 ### F-04. 확인 모달 기반 링크 삭제 (`DeleteLinkDialog` · `deleteDoc`) — 필수 (P0)
@@ -137,7 +138,7 @@ flowchart LR
 | 항목 | 내용 |
 |---|---|
 | **설명** | 루트(`/`) 링크 카드 우측에 **항상 표시되는 `삭제`(휴지통 아이콘) 버튼** 클릭 시 삭제 확인 모달을 띄우고, 최종 확인 시 Firestore에서 문서를 삭제 |
-| **동작 방식** | `삭제`(휴지통 아이콘) 버튼 클릭 → `DeleteLinkDialog` 모달 열림(**`'정말 삭제하시겠습니까?'` 제목**, **삭제할 링크 이름**, **빨간색(`#e30000`) `'이 작업은 되돌릴 수 없습니다'` 경고 문구**, `취소` 버튼 및 **`shadcn/ui` `destructive` 빨간색 `삭제하기` 버튼** 포함) → `삭제하기` 클릭 → **`삭제하기` 버튼 내부 회전 스피너 표시 및 비활성화(모달 닫기 차단)** → Firestore `users/anonymous/links/{docId}`에 **`deleteDoc`** 호출 → 성공 시 목록에서 제거, 모달 닫힘 및 `"링크가 삭제되었습니다 (제목)"` 토스트 표시 |
+| **동작 방식** | `삭제`(휴지통 아이콘) 버튼 클릭 → `DeleteLinkDialog` 모달 열림(**`'정말 삭제하시겠습니까?'` 제목**, **삭제할 링크 이름**, **빨간색(`#e30000`) `'이 작업은 되돌릴 수 없습니다'` 경고 문구**, `취소` 버튼 및 **`shadcn/ui` `destructive` 빨간색 `삭제하기` 버튼** 포함) → `삭제하기` 클릭 → **`삭제하기` 버튼 내부 회전 스피너 표시 및 비활성화(모달 닫기 차단)** → Firestore `users/{uid}/links/{docId}`에 **`deleteDoc`** 호출 → 성공 시 목록에서 제거, 모달 닫힘 및 `"링크가 삭제되었습니다 (제목)"` 토스트 표시 |
 | **취소 / 예외** | 삭제 중이 아닐 때 `취소`, 닫기(`X`), `Esc`, 배경 클릭으로 삭제 취소 · Firestore `deleteDoc` 실패 시 모달을 닫지 않고 모달 내 빨간 오류 안내(`role="alert"`) 표시 |
 
 ### F-05. 개인 URL (`/[username]`) — 필수 (P0)
@@ -152,12 +153,13 @@ flowchart LR
 
 ## 5. 상태 관리 및 데이터 구조 (Firebase Firestore 기준)
 
-### 5.1 루트(`/`) 링크 영속화 — Firebase Firestore (`users/anonymous/links`)
+### 5.1 루트(`/`) 링크 영속화 — Firebase Firestore (`users/{uid}/links`)
 
-- **컬렉션 경로**: `users/anonymous/links` (`collection(db, "users", "anonymous", "links")`)
-- **조회 정책**: 페이지 초기 마운트 및 링크 추가 직후 **`getDocs` + `orderBy("createdAt", "desc")`** 로 일회성 조회를 수행해 최신순 목록을 반영하며, 실시간 리스너(`onSnapshot`)는 불필요한 리소스 낭비를 막기 위해 사용하지 않습니다.
+- **컬렉션 경로**: `users/{uid}/links` (`collection(db, "users", uid, "links")`)
+- **인증 연동 정책**: 비로그인 상태에서는 Firestore를 조회하지 않고 로그인 안내 화면을 표시하며, 로그인된 사용자의 고유 `uid`에 귀속된 컬렉션만 조회/수정합니다.
+- **조회 정책**: 로그인 직후 및 링크 추가 직후 **`getDocs` + `orderBy("createdAt", "desc")`** 로 일회성 조회를 수행해 최신순 목록을 반영하며, 실시간 리스너(`onSnapshot`)는 불필요한 리소스 낭비를 막기 위해 사용하지 않습니다.
 - **빈 상태 정책**: 컬렉션에 저장된 문서가 0건일 때 `dummyLinks`를 채우지 않고 빈 목록(`[]`)으로 두어 `"등록된 링크가 없습니다"` 안내를 표시합니다.
-- **문서 스키마 (`users/anonymous/links/{docId}`)**:
+- **문서 스키마 (`users/{uid}/links/{docId}`)**:
 
 | 필드명 | 타입 | 필수 | 설명 | 예시 |
 |---|---|---|---|---|
@@ -241,17 +243,17 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 
 ---
 
-## 9. 수용 기준 (Acceptance Criteria, v4.2 Google Auth 연동 기준)
+## 9. 수용 기준 (Acceptance Criteria, v4.3 개인화 마이그레이션 기준)
 
 - [x] Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider`)으로 구글 소셜 로그인 및 로그아웃이 동작한다.
 - [x] `onAuthStateChanged`로 로그인 상태를 감지하고 `browserLocalPersistence`로 새로고침 이후에도 세션이 유지된다.
 - [x] 구글 이메일 앞부분(영문 아이디)을 개인 URL 주소용 기본 디스플레이 네임(`displayName`)으로 정규화해 사용한다.
 - [x] 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) 로그인/로그아웃 버튼이 표시된다.
-
+- [x] 비로그인 상태일 때는 `'내 링크 목록'` 대신 `'로그인하고 나만의 링크를 관리하세요'` 로그인 안내 화면과 `'Google로 로그인하기'` CTA가 표시된다.
 - [x] Firebase SDK(`firebase`)가 설치되고, 모든 Firebase 설정값이 `.env.local`의 `NEXT_PUBLIC_FIREBASE_*` 환경 변수로 분리되어 Git 추적에서 제외된다.
-- [x] 루트(`/`) 진입 시 `getDocs` + `orderBy("createdAt", "desc")` 방식으로 `users/anonymous/links` 컬렉션을 불러오며(`onSnapshot` 미사용), 컬렉션이 비어 있을 때 더미 데이터 없이 `'등록된 링크가 없습니다'` 안내가 표시된다.
+- [x] 로그인 후 루트(`/`) 진입 시 `getDocs` + `orderBy("createdAt", "desc")` 방식으로 `users/{uid}/links` 컬렉션을 불러오며(`onSnapshot` 미사용), 컬렉션이 비어 있을 때 더미 데이터 없이 `'등록된 링크가 없습니다'` 안내가 표시된다.
 - [x] `'링크 추가'` 모달(`AddLinkDialog`)에서 **Zod + React Hook Form** 검증 통과 후 `'저장'` 클릭 시 **저장 버튼 내부 스피너가 회전하며 버튼이 비활성화(중복 클릭 방지)** 된다.
-- [x] Firestore `users/anonymous/links`에 문서가 저장(`addDoc`, `createdAt: serverTimestamp()`)되면 `getDocs`로 목록이 자동 갱신(최신순)되고 입력 칸 초기화·모달 닫힘·토스트 알림이 동작한다.
+- [x] Firestore `users/{uid}/links`에 문서가 저장(`addDoc`, `createdAt: serverTimestamp()`)되면 `getDocs`로 목록이 자동 갱신(최신순)되고 입력 칸 초기화·모달 닫힘·토스트 알림이 동작한다.
 - [x] 링크 카드 우측의 연필(`수정`)·휴지통(`삭제`) 버튼이 호버 시에만 나타나는 것이 아니라 **항상 표시**된다.
 - [x] 연필(`수정`) 버튼 클릭 시 해당 행이 기존 제목·주소가 채워진 인라인 편집 폼으로 전환되고, `저장` 시 버튼 내부 스피너·비활성화와 함께 Firestore `updateDoc` 및 `updatedAt: serverTimestamp()`가 갱신되며, `취소` 시 원래 값으로 복구된다.
 - [x] 휴지통(`삭제`) 버튼 클릭 시 `'정말 삭제하시겠습니까?'` 제목, 삭제할 링크 이름, 빨간색 `'이 작업은 되돌릴 수 없습니다'` 경고 문구, `취소` 및 `shadcn/ui` `destructive`(빨간색) `삭제하기` 버튼이 포함된 확인 모달(`DeleteLinkDialog`)이 열린다.
@@ -296,7 +298,7 @@ my_link/
 │   ├── lib/
 │   │   ├── types.ts              # LinkIcon, LinkItem, ThemePreset 등 도메인 타입
 │   │   ├── firebase-auth.ts      # Google 소셜 로그인/로그아웃, onAuthStateChanged용 AuthUser 매핑, 이메일 앞부분 기본 디스플레이 네임 정규화
-│   │   ├── firestore-links.ts    # users/anonymous/links Firestore CRUD(addDoc · getDocs · updateDoc · deleteDoc) 서비스
+│   │   ├── firestore-links.ts    # users/{uid}/links Firestore CRUD(addDoc · getDocs · updateDoc · deleteDoc) 서비스
 │   │   ├── mock-seed.ts          # /gildong 공개 뷰 시드 데이터
 │   │   ├── validators.ts         # URL(http/https/mailto)·제목(1~50자)·예약어 검증 및 https 보정
 │   │   ├── icon-matcher.ts       # 도메인·스킴 기반 13종 아이콘 자동 추천
@@ -304,7 +306,7 @@ my_link/
 │   └── components/
 │       ├── AuthProvider.tsx      # onAuthStateChanged 실시간 인증 상태 감지 & 세션 유지 Context Provider
 │       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (애플 모노톤 회색 로그인/로그아웃 버튼 포함)
-│       ├── HomeLinkManager.tsx   # 루트(/) Firestore(users/anonymous/links) 조회·추가·인라인 수정·삭제 모달 관리
+│       ├── HomeLinkManager.tsx   # 루트(/) Firestore(users/{uid}/links) 조회·추가·인라인 수정·삭제 모달 및 비로그인 안내 관리
 │       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 모달 (저장 중 스피너·비활성화)
 │       ├── DeleteLinkDialog.tsx  # shadcn/ui Dialog + destructive 버튼 기반 삭제 확인 모달 (삭제 중 스피너·비활성화)
 │       ├── LinkCard.tsx          # shadcn/ui Card + Badge + Tailwind CSS 공용 링크 카드
@@ -322,16 +324,17 @@ my_link/
 | **M3** *(완료 · v4.0)*<br>Firebase SDK & Firestore Create/Read & 로딩 스피너 | • `firebase` SDK 설치 및 `.env.local` 분리 (`lib/firebase.ts`)<br>• 루트(`/`) `users/anonymous/links` `addDoc` 저장 + `getDocs`(`createdAt` 내림차순) 조회·자동 갱신<br>• 목록 중앙 그레이 스피너 & 모달 저장 버튼 스피너·비활성화 | • `.env.local` 미추적 상태에서 빌드·런타임 동작<br>• 빈 컬렉션 시 `'등록된 링크가 없습니다'` 표시, 새 링크 저장 후 새로고침 시에도 최신순 유지 |
 | **M4** *(완료 · v4.1)*<br>Firestore Update/Delete 동시 연동 | • 링크 카드 우측 항상 노출 `수정`(연필)·`삭제`(휴지통) 버튼<br>• 인라인 수정 `updateDoc` + `updatedAt: serverTimestamp()` + 취소 시 원복<br>• `DeleteLinkDialog` 확인 모달 + `destructive` 삭제하기 + `deleteDoc` + 버튼 스피너·비활성화 | • 새로고침 후에도 수정/삭제 결과 영속 유지<br>• 저장/삭제 중 버튼 내부 스피너 회전 및 비활성화 |
 | **M5** *(완료 · v4.2)*<br>Google 소셜 로그인 연동 | • `firebase/auth`(`signInWithPopup`, `GoogleAuthProvider`, `onAuthStateChanged`) 및 `AuthProvider` 구축<br>• 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용<br>• 헤더 우측 애플 모노톤 회색 톤 로그인/로그아웃 버튼 | • 새로고침 후에도 `onAuthStateChanged`로 세션 유지<br>• 로그인/로그아웃 동작 및 오류 안내 표시 |
+| **M6** *(완료 · v4.3)*<br>UID 기반 데이터 개인화 마이그레이션 | • `users/anonymous/links` → `users/{uid}/links` 경로 전면 전환<br>• 비로그인 시 내 링크 목록 대신 로그인 안내 화면(`Google로 로그인하기`) 표시 | • 로그인 사용자별 고유 UID 경로에만 링크 저장·조회<br>• 로그아웃 시 즉시 개인 링크 목록 숨김 및 안내 화면 전환 |
 
-### 10.3 핵심 사용자 시나리오 (v4.1 Firestore CRUD 기준)
+### 10.3 핵심 사용자 시나리오 (v4.3 Auth + Firestore CRUD 기준)
 
-1. **루트(`/`) 진입 및 Firestore 초기 로드**:
-   - 홈 화면 진입 시 `내 링크 목록` 중앙에 미니멀한 그레이 로딩 스피너가 표시된 뒤, `getDocs`(`orderBy("createdAt", "desc")`)로 `users/anonymous/links` 데이터를 불러온다.
-   - 데이터가 0건이면 더미 데이터 없이 `'등록된 링크가 없습니다'` 빈 상태 안내가 표시된다.
+1. **루트(`/`) 진입 및 로그인 상태 분기**:
+   - 홈 화면 진입 시 `onAuthStateChanged`로 인증 상태를 확인한 뒤, 비로그인 상태면 `'내 링크 목록'` 대신 `'로그인하고 나만의 링크를 관리하세요'` 안내 화면과 `'Google로 로그인하기'` 버튼을 표시한다.
+   - 로그인 상태면 `getDocs`(`orderBy("createdAt", "desc")`)로 `users/{uid}/links` 데이터를 불러오며, 0건이면 `'등록된 링크가 없습니다'` 빈 상태 안내가 표시된다.
 2. **모달(`AddLinkDialog`) 검증 & Firestore 저장 & 자동 갱신**:
    - `링크 추가` 버튼 클릭 → `새 링크 추가` 다이얼로그가 열린다.
    - 유효성 실패 시 `'제목을 입력해 주세요'` / `'올바른 URL 형식이 아닙니다'` 빨간 문구와 함께 제출이 중단된다.
-   - 유효한 입력 후 `저장` 클릭 → **버튼 내부 스피너가 회전하며 버튼이 비활성화**되고, Firestore `users/anonymous/links`에 문서가 추가(`addDoc`)된 뒤 `getDocs`로 목록이 자동 갱신되어 새 링크가 최상단에 표시된다.
+   - 유효한 입력 후 `저장` 클릭 → **버튼 내부 스피너가 회전하며 버튼이 비활성화**되고, Firestore `users/{uid}/links`에 문서가 추가(`addDoc`)된 뒤 `getDocs`로 목록이 자동 갱신되어 새 링크가 최상단에 표시된다.
 3. **인라인 수정 & Firestore `updateDoc` + `updatedAt: serverTimestamp()`**:
    - 항상 표시되는 연필 아이콘(`수정`) 버튼을 클릭하면 해당 카드 자리가 기존 제목과 주소 값이 채워진 입력 칸으로 바뀐다.
    - `취소`를 누르면 원래 값으로 복구되고, `저장`을 누르면 버튼 내부 스피너가 돌며 비활성화된 상태에서 Firestore `updateDoc`(`updatedAt: serverTimestamp()` 포함)이 실행되어 목록에 즉시 반영된다.
