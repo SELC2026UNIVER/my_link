@@ -175,10 +175,10 @@ export function HomeLinkManager({
           type="button"
           shape="pill"
           onClick={() => setDialogOpen(true)}
-          className="h-auto min-h-11 cursor-pointer gap-2 bg-primary px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-primary-foreground shadow-none transition-all duration-150 hover:bg-primary hover:brightness-110 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+          className="h-auto min-h-11 cursor-pointer gap-2 rounded-full border border-black/10 bg-primary px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16),0_2px_4px_rgba(0,0,0,0.08)] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
         >
           <span
-            className="inline-flex size-5 items-center justify-center rounded-full bg-white/18 text-white"
+            className="inline-flex size-5 items-center justify-center rounded-full bg-white/15 text-white"
             aria-hidden="true"
           >
             <Plus className="size-3.5 stroke-[2.25]" />
@@ -190,7 +190,7 @@ export function HomeLinkManager({
           href={githubHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-[var(--color-primary)] bg-transparent px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-[var(--color-primary)] transition-all duration-150 hover:bg-[var(--color-primary)] hover:text-white active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+          className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-[var(--color-primary)] bg-background px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-[var(--color-primary)] shadow-[0_1px_4px_rgba(0,0,0,0.05)] transition-all duration-150 hover:bg-[var(--color-primary)] hover:text-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.10)] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
         >
           GitHub
         </a>
@@ -318,7 +318,7 @@ export function HomeLinkManager({
                             type="submit"
                             size="sm"
                             shape="pill"
-                            className="h-8 bg-primary px-4 text-[13px] text-primary-foreground shadow-none hover:bg-primary hover:brightness-110"
+                            className="h-8 bg-primary px-4 text-[13px] text-primary-foreground shadow-[0_1px_6px_rgba(0,0,0,0.12)] hover:bg-[#333336]"
                           >
                             저장
                           </Button>

@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.8 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v3.9 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v3.9 변경: 프라이머리 CTA 버튼(`+ 링크 추가`, 다이얼로그/인라인 `저장`) 색상을 **애플 모노톤 다크 그레이(`#1d1d1f` / `--primary`)** 로 전환하고 깔끔한 둥근 모서리(`rounded-full`)·은은한 그림자 스타일을 반영. `F-02` 링크 추가 다이얼로그(`AddLinkDialog`)에 **`Zod` + `React Hook Form`(`@hookform/resolvers/zod`)** 검증 규칙(`'제목을 입력해 주세요'`, `'올바른 URL 형식이 아닙니다'`, 통과 시 입력 칸 자동 초기화) 명세 추가
 > v3.8 변경: 별도의 `/admin` 관리자 페이지·대시보드 및 임시 데모 계정(`@gildong`) 자동 세션·가짜 로그인(`/login`, `/onboarding`) 우회 스펙을 완전히 제거하고, **강의 표준 7주차 요구사항**에 맞춰 재정렬. 링크 목록 관리(모달 다이얼로그 `AddLinkDialog` 추가·인라인 편집·삭제)는 **메인 페이지(루트 `/`)** 에서 직접 수행하며, 현재 7주차 단계에서는 서버 연동 없이 **브라우저 로컬 메모리 상태(`React useState`)** 로 링크를 관리함을 명시
 > v3.7 변경: `F-02` 링크 추가 폼을 **다이얼로그(`shadcn/ui Dialog`)** 방식으로 확정하고 Action Blue(`#0066cc`) CTA 기준 정렬
 > v3.6 변경: 전체 스타일링을 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일하고, **shadcn/ui (`Card`, `Badge`, `Button`, `Separator`) 기반 공용 `LinkCard` (`app/components/LinkCard.tsx`)** 재사용 아키텍처 반영
@@ -20,8 +21,8 @@
 | **핵심** | **메인 페이지(루트 `/`)** 상단 프라이머리 `링크 추가` 버튼 기반 **모달(다이얼로그) 링크 추가 + 카드 인라인 편집·삭제**, 공용 링크 목록 뷰(`/links`), 개인 공개 프로필(`/[username]`, `/gildong`) |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태 (7주차)** | **서버·DB·임시 세션 연동 없이 브라우저 로컬 메모리 상태(`React useState`)로 동작하는 프론트엔드 애플리케이션** — 루트(`/`)에서 `dummyLinks` 초기 시드를 불러와 모달 추가·인라인 편집·삭제 시 목록에 즉시 반영됨 (새로고침 시 초기 목록으로 복원, 향후 주차에 서버/DB API 연동 예정) |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · React `useState` (루트 `/` 링크 로컬 메모리 상태) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
-| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`)·모달(`app/components/AddLinkDialog.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **React Hook Form + Zod** (`@hookform/resolvers/zod`) · React `useState` (루트 `/` 링크 로컬 메모리 상태) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
+| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`)·모달(`app/components/AddLinkDialog.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (모노톤 다크 그레이 `#1d1d1f` 프라이머리 CTA 버튼 · 둥근 모서리 & 은은한 그림자, 다크 타일 위 `#2997ff`, 18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
 ### 1.1 성공 지표 (KPI)
 
@@ -43,7 +44,7 @@
 | ID | 구분 | 기능명 | 설명 | 우선순위 |
 |---|---|---|---|---|
 | F-01 | 링크 | 링크 목록 표시 | 루트(`/`)·`/links`·`/[username]`에서 등록된 링크를 `LinkCard` 형태로 순서대로 표시 | **필수 (P0)** |
-| F-02 | 링크 | 모달 링크 추가 | 루트(`/`) 상단 프라이머리(`#0066cc`) `링크 추가` 버튼 → **`shadcn/ui Dialog` 모달**에서 제목·URL·아이콘(도메인 자동 추천)을 입력해 브라우저 로컬 메모리 상태(`useState`)에 즉시 추가 | **필수 (P0)** |
+| F-02 | 링크 | 모달 링크 추가 | 루트(`/`) 상단 모노톤 다크 그레이(`#1d1d1f`) `링크 추가` 버튼 → **`shadcn/ui Dialog` 모달**에서 **Zod + React Hook Form** 검증을 거쳐 제목·URL·아이콘(도메인 자동 추천)을 로컬 메모리(`useState`)에 즉시 추가 및 입력 칸 초기화 | **필수 (P0)** |
 | F-03 | 링크 | 인라인 링크 수정 | 루트(`/`) 링크 목록 카드의 `수정` 버튼을 눌러 해당 항목을 인라인 편집 폼으로 전환해 제목·URL(아이콘 자동 매칭) 즉시 수정 | **필수 (P0)** |
 | F-04 | 링크 | 링크 삭제 | 루트(`/`) 링크 목록 카드의 `삭제` 버튼 클릭 시 브라우저 로컬 메모리 목록에서 즉시 제거 | **필수 (P0)** |
 | F-05 | 공유 | 개인 URL (`/[username]`) | 사용자별 고유 공개 프로필 뷰 (`/gildong` 예시 포함, 대문자/이전 주소 리다이렉트 및 404 처리) | **필수 (P0)** |
@@ -62,8 +63,8 @@
 
 | 경로 | 화면 | 접근 권한 | 설명 |
 |---|---|---|---|
-| `/` | 메인 페이지 (프로필 & 링크 관리 홈) *(구현됨)* | 누구나 | 프로필 소개 히어로 + **상단 프라이머리(`#0066cc`) `링크 추가` 버튼** + **`내 링크 목록` (브라우저 로컬 메모리 상태 `useState`, 모달 추가 `AddLinkDialog` · 카드 인라인 편집 · 삭제)** + 공부 기록/연습 작품 타일 + 연락처 푸터 |
-| `/links` | 링크 목록 전용 유틸리티 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 사용 |
+| `/` | 메인 페이지 (프로필 & 링크 관리 홈) *(구현됨)* | 누구나 | 프로필 소개 히어로 + **상단 모노톤 다크 그레이(`#1d1d1f`, 둥근 모서리 & 은은한 그림자) `링크 추가` 프라이머리 버튼** + **`내 링크 목록` (브라우저 로컬 메모리 상태 `useState`, 모달 추가 `AddLinkDialog` · 카드 인라인 편집 · 삭제)** + 공부 기록/연습 작품 타일 + 연락처 푸터 |
+| `/links` | 링크 목록 전용 유틸리티 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 모노톤 다크 그레이 `#1d1d1f` CTA) 기반 중앙 정렬 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 사용 |
 | `/[username]` | 공개 프로필 페이지 *(구현됨)* | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 공용 `LinkCard` 링크 목록 (`PublicProfileView` 기반). `/gildong` 기본 시드, 대문자/이전 username 리다이렉트 및 404 처리 포함 (세션 자동 주입 없음) |
 
 ```mermaid
@@ -90,9 +91,9 @@ flowchart LR
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 루트(`/`) 상단의 프라이머리(`#0066cc`) `링크 추가` 버튼을 통해 **모달 다이얼로그(`shadcn/ui Dialog`)** 를 열고, 제목·URL·아이콘을 입력받아 브라우저 로컬 메모리 목록에 추가 |
-| **동작 방식** | 루트(`/`) 상단 `링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 `AddLinkDialog` 열림** → URL 입력/블러 시 프로토콜(`https://`) 자동 보정 및 도메인 맞춤 아이콘 자동 추천 → `저장` 클릭 → 유효성 검사 → **부모(`HomeLinkManager`)의 `React useState` 로컬 메모리 목록 끝에 새 항목 즉시 추가** → 다이얼로그 닫힘 + `"링크가 추가되었습니다 (제목)"` 토스트 |
-| **취소** | `취소` 버튼, 닫기(`X`), 배경 클릭 또는 `Esc` 키 → 입력값·오류 상태 초기화 후 다이얼로그 닫힘 |
+| **설명** | 루트(`/`) 상단의 애플 모노톤 다크 그레이(`#1d1d1f`) 프라이머리 `링크 추가` 버튼을 통해 **모달 다이얼로그(`shadcn/ui Dialog`)** 를 열고, **Zod + React Hook Form** 검증을 거쳐 제목·URL·아이콘을 브라우저 로컬 메모리 목록에 추가 |
+| **동작 방식** | 루트(`/`) 상단 `링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 `AddLinkDialog` 열림** → `zodResolver(addLinkFormSchema)` + `useForm`으로 입력 검증 → URL 입력/블러 시 프로토콜(`https://`) 자동 보정 및 도메인 맞춤 아이콘 자동 추천 → `저장` 클릭 → 검증 통과 시 **부모(`HomeLinkManager`)의 `React useState` 로컬 메모리 목록 끝에 새 항목 즉시 추가 · 폼 입력 칸 초기화(`reset()`)** → 다이얼로그 닫힘 + `"링크가 추가되었습니다 (제목)"` 토스트 |
+| **취소** | `취소` 버튼, 닫기(`X`), 배경 클릭 또는 `Esc` 키 → `reset()`으로 입력값·오류 상태 초기화 후 다이얼로그 닫힘 |
 
 **입력 항목**
 
@@ -112,12 +113,11 @@ flowchart LR
 
 | 상황 | 처리 |
 |---|---|
-| URL 형식 오류 | 입력창 테두리 **빨간색(`#e30000`)** + 아래 빨간 글씨 `"올바른 URL 형식이 아닙니다 (예: https://example.com 또는 mailto:name@example.com)"` |
+| URL 형식 오류 / 빈 URL / 위험 스킴 | 입력창 테두리 **빨간색(`#e30000`)** + 아래 빨간 글씨 **`"올바른 URL 형식이 아닙니다"`** 및 제출 중단 |
 | 프로토콜 누락 (`youtube.com/@mystudio`) | 포커스 아웃(blur) 또는 저장 시 자동으로 `https://`를 앞에 붙여 보정 후 검사 |
-| `mailto:` 형식 오류 (`mailto:abc`) | 올바른 이메일 형식이 아니면 빨간색 경고 `"올바른 이메일 주소 형식이 아닙니다"` |
-| 제목 미입력 | 입력창 빨간색 + `"제목을 입력해 주세요"` |
+| `mailto:` 형식 오류 (`mailto:abc`) | 올바른 이메일 형식이 아니면 빨간색 경고 **`"올바른 URL 형식이 아닙니다"`** 및 제출 중단 |
+| 제목 미입력 / 공백 | 입력창 빨간색 + **`"제목을 입력해 주세요"`** 및 제출 중단 |
 | 제목 50자 초과 | 입력 제한 + 글자 수 카운터(`50/50`) 빨간색 |
-| `javascript:`, `data:`, `vbscript:` 등 위험 스킴 | 저장 거부 + `"허용되지 않는 URL입니다"` |
 | 최대 등록 수(50개) 초과 | 추가 버튼 비활성화 + `"항목은 최대 50개까지 등록할 수 있습니다"` |
 
 ### F-03. 인라인 링크 수정 — 필수 (P0)
@@ -208,14 +208,14 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 | 구분 | 기준 | 적용 범위 및 원칙 |
 |---|---|---|
 | **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Badge`, `Button`, `Card`, `Dialog`, `Input`, `Label`, `Select`, `Separator`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 루트(`/`), `/links`, `/[username]`(`PublicProfileView`)에서 재사용한다.<br>• 스타일링은 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일한다. |
-| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 단일 액센트 블루 `#0066cc`(`--color-primary` / `bg-primary`), 포커스 링 `#0071e3`, 카드 18px 둥근 모서리 · 헤어라인 보더 · 버튼/카드 무그림자 원칙을 유지한다.<br>• 루트(`/`) 상단 **`링크 추가`** 버튼은 프라이머리 `#0066cc` 필 버튼(`shape="pill"`, `min-h-11 px-[22px] py-[11px]`, 원형 `+` 배지)으로 시각적 최우선 위계를 부여한다. |
+| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 프라이머리 버튼(`--primary` / `bg-primary`)은 **애플 모노톤 다크 그레이(`#1d1d1f`)** + 순백 텍스트(`#ffffff`) + **깔끔한 둥근 모서리(`rounded-full`) · 은은한 그림자(`shadow-[0_2px_10px_rgba(0,0,0,0.12)]`)** 를 적용하고, 포커스 링 `#0071e3` · 다크 타일 위 보조 블루(`#2997ff`, `--color-action-blue: #0066cc`) · 카드 `18px` 둥근 모서리를 유지한다.<br>• 루트(`/`) 상단 **`링크 추가`** 버튼은 히어로 CTA 행 최전방에 배치해 시각적 최우선 위계를 부여한다. |
 
 ### 7.2 화면별 시각 가이드
 
 | 화면 / 요소 | 적용 스타일 |
 |---|---|
-| **메인 페이지(`/`)** | 상단 라이트 히어로(아바타 · 이름 · **`링크 추가` 프라이머리 필 CTA** · 보조 `GitHub` · `이메일 복사` · **`내 링크 목록`** 로컬 상태 카드) ↔ 하단 다크 타일 교차 레이아웃 (`design.md` 기준) |
-| **`AddLinkDialog` 모달** | White(`#ffffff`) 배경 `18px` 둥근 모서리, `shadcn/ui Input`/`Select`, 오류 시 Error Red(`#e30000`), 하단 Action Blue(`#0066cc`) 필형 `저장` 버튼 |
+| **메인 페이지(`/`)** | 상단 라이트 히어로(아바타 · 이름 · **`링크 추가` 모노톤 다크 그레이 `#1d1d1f` 필 CTA + 은은한 그림자** · 보조 `GitHub` · `이메일 복사` · **`내 링크 목록`** 로컬 상태 카드) ↔ 하단 다크 타일 교차 레이아웃 (`design.md` 기준) |
+| **`AddLinkDialog` 모달** | White(`#ffffff`) 배경 `18px` 둥근 모서리, `shadcn/ui Input`/`Select`, `Zod + React Hook Form` 검증(오류 시 `#e30000` 경고), 하단 모노톤 다크 그레이(`#1d1d1f`) 필형 + 은은한 그림자 `저장` 버튼 |
 | **오류 색상** | Error Red(`#e30000`) — 유효성 오류 테두리(`--destructive`) 및 안내 문구 |
 
 ---
@@ -232,9 +232,9 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 
 - [x] 프로젝트에 별도 `/admin` 관리자 라우트 및 `@gildong` 임시 데모 세션 우회 로직이 존재하지 않는다.
 - [x] `TopNav` 등 내비게이션에 `'대시보드(/admin)'` 링크가 표시되지 않는다.
-- [x] 메인 페이지(루트 `/`) 상단에 프라이머리(`#0066cc`) 색상의 `'링크 추가'` 버튼이 배치된다.
-- [x] `'링크 추가'` 클릭 시 `shadcn/ui Dialog`(`AddLinkDialog`) 모달이 열리고, 제목·URL(예: `youtube.com/@mystudio` → `https://` 자동 보정 + `youtube` 아이콘 추천)을 입력해 저장하면 서버 연동 없이 **브라우저 로컬 메모리 상태(`React useState`)** 에 반영되어 `/` 목록에 즉시 추가된다.
-- [x] 잘못된 URL 또는 위험 스킴(`javascript:`) 입력 시 입력창 테두리와 안내 문구가 빨간색(`#e30000`)으로 표시되고 저장이 차단된다.
+- [x] 메인 페이지(루트 `/`) 상단에 **애플 모노톤 다크 그레이(`#1d1d1f`)**, 둥근 모서리(`rounded-full`), 은은한 그림자 스타일의 `'링크 추가'` 버튼이 배치된다.
+- [x] `'링크 추가'` 클릭 시 `shadcn/ui Dialog`(`AddLinkDialog`) 모달이 열리고, **Zod + React Hook Form** 검증을 통과해 저장하면 입력 칸이 비워지고 **브라우저 로컬 메모리 상태(`React useState`)** 에 반영되어 `/` 목록에 즉시 추가된다.
+- [x] 제목 미입력 시 `'제목을 입력해 주세요'`, 잘못된 URL 또는 위험 스킴(`javascript:`) 입력 시 `'올바른 URL 형식이 아닙니다'` 빨간 에러 문구(`#e30000`)가 표시되고 제출이 중단된다.
 - [x] `/` 목록 카드에서 `수정` 클릭 시 인라인 편집 폼으로 전환되어 수정할 수 있고, `삭제` 클릭 시 로컬 목록에서 즉시 삭제된다.
 - [x] `/links`와 `/gildong` 공개 뷰가 공용 `LinkCard`와 Tailwind CSS 4로 정상 렌더링된다.
 - [x] `npx tsc --noEmit`, `npm run lint`, `npm run build`가 오류 없이 통과한다.
@@ -289,18 +289,18 @@ my_link/
 | 단계 | 핵심 구현 목표 | 완료 기준 (Definition of Done) |
 |---|---|---|
 | **M1** *(완료)*<br>스타일 & 공용 컴포넌트 | • Tailwind CSS 4 단일 스타일링 및 `shadcn/ui Card` 기반 공용 `LinkCard` 구축<br>• `/links` 유틸리티 뷰 및 `/gildong` 공개 프로필 뷰 구현 | • CSS Modules 없이 Tailwind 4 단일 체계 동작<br>• `/links`, `/gildong`, `/`에서 동일한 `LinkCard` 재사용 |
-| **M2** *(완료 · 7주차 정렬)*<br>홈(`/`) 모달 추가 · 인라인 편집 · 정리 | • `/admin` 라우트·컴포넌트 및 `@gildong` 임시 세션 자동 주입 완전 제거<br>• 루트(`/`) 상단 프라이머리(`#0066cc`) `링크 추가` 버튼 + `AddLinkDialog` 모달 구현<br>• `HomeLinkManager`에서 React `useState` 로컬 메모리 상태로 목록 추가 · 인라인 수정 · 삭제 반영 | • TopNav 및 전체 경로에서 `/admin` 제거(접속 시 404)<br>• 루트(`/`)에서 모달로 추가·인라인 수정한 항목이 목록에 즉시 반영되고, URL 오류 시 `#e30000` 경고 출력 |
+| **M2** *(완료 · 7주차 정렬)*<br>홈(`/`) 모달 추가 · 인라인 편집 · 검증 | • `/admin` 라우트·컴포넌트 및 `@gildong` 임시 세션 자동 주입 완전 제거<br>• 루트(`/`) 상단 모노톤 다크 그레이(`#1d1d1f`, 둥근 모서리 & 은은한 그림자) `링크 추가` 버튼 + `AddLinkDialog` 모달 구현<br>• `Zod + React Hook Form` 검증(`'제목을 입력해 주세요'`, `'올바른 URL 형식이 아닙니다'`, 성공 시 입력값 초기화) 및 `HomeLinkManager` `React useState` 로컬 메모리 목록 반영 | • TopNav 및 전체 경로에서 `/admin` 제거(접속 시 404)<br>• 루트(`/`)에서 모달 추가·인라인 수정이 목록에 즉시 반영되고, 유효성 오류 시 제출 중단 및 `#e30000` 경고 출력 |
 | **M3** *(향후 주차)*<br>백엔드 · 실제 인증 · 영속화 | • 실제 API/DB 연동 및 정식 사용자 인증(OAuth / 이메일) 도입 | • 브라우저 새로고침·다른 기기에서도 데이터 영구 저장 |
 
 ### 10.3 핵심 사용자 시나리오 (7주차 기준)
 
 1. **루트(`/`) 진입 및 초기 로컬 상태 확인**:
-   - 홈 화면 상단에 프라이머리(`#0066cc`) 색상의 `링크 추가` 버튼과, 초기 `dummyLinks` 6개가 채워진 `내 링크 목록`이 표시된다.
+   - 홈 화면 상단에 애플 모노톤 다크 그레이(`#1d1d1f`)·둥근 모서리·은은한 그림자의 `링크 추가` 버튼과, 초기 `dummyLinks` 6개가 채워진 `내 링크 목록`이 표시된다.
    - 상단 `TopNav`에 `대시보드(/admin)` 링크가 없음을 확인한다.
-2. **모달(`AddLinkDialog`) 유효성 검증 & 링크 추가**:
+2. **모달(`AddLinkDialog`) Zod + RHF 유효성 검증 & 링크 추가**:
    - `링크 추가` 버튼 클릭 → `새 링크 추가` 다이얼로그가 열린다.
-   - `javascript:alert(1)` 등 위험 URL 입력 시 빨간 테두리(`#e30000`)와 안내 문구가 표시되며 저장이 차단된다.
-   - 프로토콜 없이 `youtube.com/@mystudio` 입력 후 포커스 아웃 시 `https://youtube.com/@mystudio` 보정 및 `YouTube` 아이콘 자동 선택. 제목 `'내 유튜브 채널'` 입력 후 `저장` → 모달 닫힘 + 토스트 + `내 링크 목록`에 7번째 카드로 즉시 추가된다.
+   - 제목을 비우고 저장 시 `'제목을 입력해 주세요'`, 잘못된 URL(`not-a-url`) 또는 위험 스킴(`javascript:alert(1)`) 입력 시 `'올바른 URL 형식이 아닙니다'` 빨간 문구와 함께 제출이 중단된다.
+   - 프로토콜 없이 `youtube.com/@mystudio` 입력 후 포커스 아웃 시 `https://youtube.com/@mystudio` 보정 및 `YouTube` 아이콘 자동 선택. 제목 `'내 유튜브 채널'` 입력 후 `저장` → 입력 칸이 비워지고 모달 닫힘 + 토스트 + `내 링크 목록`에 7번째 카드로 즉시 추가된다.
 3. **인라인 수정 & 삭제 & 새로고침 동작**:
    - 카드 우측 `수정` 클릭 → 인라인 입력 폼 전환 → 제목 수정 후 `저장` 시 즉시 반영된다.
    - `삭제` 클릭 시 로컬 목록에서 즉시 제거된다.

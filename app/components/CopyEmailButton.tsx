@@ -36,10 +36,10 @@ export default function CopyEmailButton({
 
   const variantClasses =
     variant === "primary"
-      ? "bg-[var(--color-primary)] text-white border border-transparent hover:brightness-105"
+      ? "bg-[var(--color-primary)] text-white border border-black/10 shadow-[0_2px_10px_rgba(0,0,0,0.12)] hover:bg-[#333336]"
       : variant === "pearl"
-        ? "bg-[var(--color-surface-pearl)] text-[var(--color-ink-muted-80)] border border-black/[0.08] hover:bg-white"
-        : "bg-transparent text-[var(--color-primary)] border border-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white";
+        ? "bg-[var(--color-surface-pearl)] text-[var(--color-ink-muted-80)] border border-black/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:bg-white"
+        : "bg-background text-[var(--color-primary)] border border-[var(--color-primary)] shadow-[0_1px_4px_rgba(0,0,0,0.05)] hover:bg-[var(--color-primary)] hover:text-white";
 
   return (
     <button

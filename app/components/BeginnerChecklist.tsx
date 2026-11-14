@@ -65,7 +65,7 @@ export default function BeginnerChecklist({ items }: BeginnerChecklistProps) {
                 aria-hidden="true"
                 className={`mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
                   goal.done
-                    ? "bg-[var(--color-primary)] text-white"
+                    ? "bg-[var(--color-action-blue)] text-white"
                     : "border border-white/40 bg-transparent group-hover:border-white/75"
                 }`}
               >

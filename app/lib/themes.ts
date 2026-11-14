@@ -134,28 +134,28 @@ export const THEME_PRESETS: Record<ThemePreset, ThemeTokens> = {
     topTitleClass: "text-[var(--color-ink)]",
     topHandleClass: "text-[#4b5e77]",
     topBioClass: "text-[var(--color-ink-muted-80)]",
-    avatarFallbackClass: "bg-[#eef4fb] text-[var(--color-primary)]",
+    avatarFallbackClass: "bg-[#eef4fb] text-[var(--color-action-blue)]",
     socialButtonClass:
-      "border border-[#d5e2f2] bg-[#f4f8fd] text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:bg-[#e8f1fc] hover:text-[var(--color-primary)] focus-visible:outline-[var(--color-primary-focus)]",
+      "border border-[#d5e2f2] bg-[#f4f8fd] text-[var(--color-ink)] hover:border-[var(--color-action-blue)] hover:bg-[#e8f1fc] hover:text-[var(--color-action-blue)] focus-visible:outline-[var(--color-primary-focus)]",
     topUtilityPillClass:
-      "border border-[#d5e2f2] bg-[#f4f8fd] text-[#4b5e77] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+      "border border-[#d5e2f2] bg-[#f4f8fd] text-[#4b5e77] hover:border-[var(--color-action-blue)] hover:text-[var(--color-action-blue)]",
     bottomSurfaceClass:
       "border-t border-[#dce7f5] bg-[#eef4fb] text-[var(--color-ink)]",
     isBottomDark: false,
     headerTextClass: "text-[#4b5e77]",
     headerLineClass: "bg-[#c6d7eb]",
     cardClass:
-      "border border-[#d5e2f2] bg-[var(--color-canvas)] hover:border-[var(--color-primary)]/55 hover:bg-[#f8fbff] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[var(--color-primary-focus)] has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-[#eef4fb]",
+      "border border-[#d5e2f2] bg-[var(--color-canvas)] hover:border-[var(--color-action-blue)]/55 hover:bg-[#f8fbff] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[var(--color-primary-focus)] has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-[#eef4fb]",
     iconBadgeClass:
-      "border border-[#dce7f5] bg-[#f4f8fd] text-[var(--color-primary)] group-hover:border-[var(--color-primary)]/30 group-hover:bg-[var(--color-primary)]/12",
-    cardTitleClass: "text-[var(--color-ink)] group-hover:text-[var(--color-primary)]",
+      "border border-[#dce7f5] bg-[#f4f8fd] text-[var(--color-action-blue)] group-hover:border-[var(--color-action-blue)]/30 group-hover:bg-[var(--color-action-blue)]/12",
+    cardTitleClass: "text-[var(--color-ink)] group-hover:text-[var(--color-action-blue)]",
     cardSubtitleClass: "text-[#4b5e77]",
     chevronClass:
-      "text-[#4b5e77] group-hover:translate-x-0.5 group-hover:text-[var(--color-primary)]",
+      "text-[#4b5e77] group-hover:translate-x-0.5 group-hover:text-[var(--color-action-blue)]",
     emptyTextClass: "text-[#4b5e77]",
     footerBorderClass: "border-[#d5e2f5]",
     footerLinkClass:
-      "text-[var(--color-primary)] hover:underline focus-visible:outline-[var(--color-primary-focus)]",
+      "text-[var(--color-action-blue)] hover:underline focus-visible:outline-[var(--color-primary-focus)]",
     footerMetaClass: "text-[#4b5e77]",
   },
 };

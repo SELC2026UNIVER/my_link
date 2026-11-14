@@ -20,7 +20,7 @@
   --popover: oklch(1 0 0); /* #ffffff */
   --popover-foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f */
 
-  --primary: oklch(0.522 0.1771 255.83); /* #0066cc Action Blue */
+  --primary: oklch(0.2316 0.0038 286.1); /* #1d1d1f Apple Monotone Dark Gray */
   --primary-foreground: oklch(1 0 0); /* #ffffff */
 
   --secondary: oklch(0.9707 0.0027 286.35); /* #f5f5f7 Parchment */
@@ -161,6 +161,7 @@
 
 @theme static {
   /* MyLink / design.md static palette & shadow tokens */
+  --color-action-blue: #0066cc;
   --color-primary-focus: #0071e3;
   --color-primary-on-dark: #2997ff;
   --color-canvas: #ffffff;

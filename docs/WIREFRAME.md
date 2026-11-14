@@ -1,7 +1,7 @@
 # 마이링크 (MyLink) — 텍스트 와이어프레임
 
-> 문서 버전: v1.1 · 작성일: 2026-11-15
-> 기준 문서: [PRD.md](./PRD.md) (`v3.8`) · [design.md](../design.md)
+> 문서 버전: v1.2 · 작성일: 2026-11-15
+> 기준 문서: [PRD.md](./PRD.md) (`v3.9`) · [design.md](../design.md)
 
 ---
 
@@ -35,7 +35,8 @@
                        초보 웹 개발자 · @gildong_study
 
        ( + 링크 추가 )        ( GitHub )        ( 이메일 복사 )
-       ^ Primary #0066cc      ^ Outline Pill    ^ Outline Pill
+       ^ Monotone Dark Gray   ^ Outline Pill    ^ Outline Pill
+         #1d1d1f · 둥근모서리 · 은은한 그림자
 
          [ 내 링크 목록 ]  (전체 6개)   로컬 메모리 상태 · 모달 추가 & 인라인 편집
          +------------------------------------------------------------+
@@ -65,7 +66,7 @@
   |                                                          |
   |  URL *                                                   |
   |  [ youtube.com/@mystudio -> https://youtube.com/...    ] |
-  |  (!) 오류 시 #e30000 테두리 + 빨간 안내 문구             |
+  |  (!) 검증 실패 시: '제목을 입력해 주세요' / '올바른 URL 형식이 아닙니다' |
   |                                                          |
   |  아이콘                                                  |
   |  [ YouTube (자동 추천)                              ▾ ] |

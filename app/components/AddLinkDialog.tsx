@@ -1,15 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
-import { useState, type FocusEvent, type FormEvent } from "react";
+import { useState, type FocusEvent } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
 import type { LinkIcon } from "@/app/lib/types";
 import {
+  addLinkFormSchema,
+  LINK_ICON_VALUES,
   MAX_ACTIVE_ITEMS,
   MAX_LINK_TITLE_LENGTH,
   normalizeUrlInput,
-  validateLinkTitle,
   validateLinkUrl,
+  type AddLinkFormValues,
 } from "@/app/lib/validators";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,22 +36,6 @@ import {
 import { cn } from "@/lib/utils";
 import { LinkGlyph } from "./LinkGlyph";
 
-const SELECTABLE_LINK_ICONS: LinkIcon[] = [
-  "link",
-  "instagram",
-  "youtube",
-  "tiktok",
-  "x",
-  "threads",
-  "github",
-  "kakao",
-  "naver",
-  "blog",
-  "email",
-  "shop",
-  "portfolio",
-];
-
 export interface AddLinkDraft {
   title: string;
   url: string;
@@ -65,9 +53,15 @@ interface AddLinkDialogProps {
   onAddLink: (draft: AddLinkDraft) => AddLinkSubmitResult;
 }
 
+const DEFAULT_FORM_VALUES: AddLinkFormValues = {
+  title: "",
+  url: "",
+  icon: "link",
+};
+
 /**
- * PRD F-02 규칙(제목 1~50자, URL 스킴/자동 보정, 도메인 아이콘 자동 추천,
- * 오류 피드백 #e30000)을 따르는 shadcn/ui Dialog 기반 링크 추가 폼.
+ * Zod + React Hook Form 기반 링크 추가 모달 다이얼로그.
+ * 제목 공백, URL 형식 검증 및 성공 시 입력값 초기화를 수행한다.
  */
 export function AddLinkDialog({
   open,
@@ -75,132 +69,104 @@ export function AddLinkDialog({
   activeItemCount,
   onAddLink,
 }: AddLinkDialogProps) {
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
-  const [icon, setIcon] = useState<LinkIcon>("link");
   const [iconManuallySelected, setIconManuallySelected] = useState(false);
-
-  const [titleError, setTitleError] = useState<string | null>(null);
-  const [urlError, setUrlError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const isAtLimit = activeItemCount >= MAX_ACTIVE_ITEMS;
-  const isTitleAtLimit = title.length >= MAX_LINK_TITLE_LENGTH;
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    setError,
+    reset,
+    formState: { errors },
+  } = useForm<AddLinkFormValues>({
+    resolver: zodResolver(addLinkFormSchema),
+    defaultValues: DEFAULT_FORM_VALUES,
+    mode: "onBlur",
+    reValidateMode: "onChange",
+  });
 
-  const resetForm = () => {
-    setTitle("");
-    setUrl("");
-    setIcon("link");
+  const watchedTitle = useWatch({ control, name: "title" }) ?? "";
+  const watchedIcon = useWatch({ control, name: "icon" }) ?? "link";
+
+  const isAtLimit = activeItemCount >= MAX_ACTIVE_ITEMS;
+  const isTitleAtLimit = watchedTitle.length >= MAX_LINK_TITLE_LENGTH;
+
+  const resetDialogForm = () => {
+    reset(DEFAULT_FORM_VALUES);
     setIconManuallySelected(false);
-    setTitleError(null);
-    setUrlError(null);
     setSubmitError(null);
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      resetForm();
+      resetDialogForm();
     }
     onOpenChange(nextOpen);
   };
 
-  const handleTitleChange = (nextValue: string) => {
-    const clamped = nextValue.slice(0, MAX_LINK_TITLE_LENGTH);
-    setTitle(clamped);
-    setSubmitError(null);
-    if (titleError) {
-      const check = validateLinkTitle(clamped);
-      setTitleError(check.valid ? null : (check.error ?? null));
-    }
-  };
+  const titleField = register("title");
+  const urlField = register("url");
 
   const handleTitleBlur = (event: FocusEvent<HTMLInputElement>) => {
     if (event.relatedTarget?.getAttribute("data-cancel-action") === "true") {
       return;
     }
-    const check = validateLinkTitle(title);
-    setTitleError(check.valid ? null : (check.error ?? null));
-  };
-
-  const handleUrlChange = (nextValue: string) => {
-    setUrl(nextValue);
-    setSubmitError(null);
-    if (!iconManuallySelected) {
-      setIcon(recommendIconForUrl(nextValue));
-    }
-    if (urlError) {
-      const check = validateLinkUrl(nextValue);
-      setUrlError(check.valid ? null : (check.error ?? null));
-    }
+    titleField.onBlur(event);
   };
 
   const handleUrlBlur = (event: FocusEvent<HTMLInputElement>) => {
     if (event.relatedTarget?.getAttribute("data-cancel-action") === "true") {
       return;
     }
-    const trimmed = url.trim();
-    if (!trimmed) {
-      const check = validateLinkUrl("");
-      setUrlError(check.error ?? null);
-      return;
-    }
-
-    const normalized = normalizeUrlInput(trimmed);
-    const check = validateLinkUrl(normalized);
-    if (check.valid) {
-      setUrl(check.normalized);
-      setUrlError(null);
-      if (!iconManuallySelected) {
-        setIcon(recommendIconForUrl(check.normalized));
+    const trimmed = event.target.value.trim();
+    if (trimmed) {
+      const check = validateLinkUrl(trimmed);
+      if (check.valid) {
+        setValue("url", check.normalized, { shouldValidate: true });
+        if (!iconManuallySelected) {
+          setValue("icon", recommendIconForUrl(check.normalized), {
+            shouldValidate: false,
+          });
+        }
+        return;
       }
-      return;
     }
-
-    setUrlError(check.error ?? null);
+    urlField.onBlur(event);
   };
 
-  const handleIconChange = (nextValue: string | null) => {
-    if (!nextValue) return;
-    setIcon(nextValue as LinkIcon);
-    setIconManuallySelected(true);
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onValidSubmit = (values: AddLinkFormValues) => {
     setSubmitError(null);
-
-    const titleCheck = validateLinkTitle(title);
-    const urlCheck = validateLinkUrl(url);
-
-    setTitleError(titleCheck.valid ? null : (titleCheck.error ?? null));
-    setUrlError(urlCheck.valid ? null : (urlCheck.error ?? null));
-
-    if (!titleCheck.valid || !urlCheck.valid) {
-      return;
-    }
+    const urlCheck = validateLinkUrl(values.url);
+    const normalizedUrl = urlCheck.valid
+      ? urlCheck.normalized
+      : normalizeUrlInput(values.url);
 
     const resolvedIcon = iconManuallySelected
-      ? icon
-      : recommendIconForUrl(urlCheck.normalized);
+      ? values.icon
+      : recommendIconForUrl(normalizedUrl);
 
     const result = onAddLink({
-      title: titleCheck.normalized,
-      url: urlCheck.normalized,
+      title: values.title.trim(),
+      url: normalizedUrl,
       icon: resolvedIcon,
     });
 
     if (!result.ok) {
       if (result.field === "title") {
-        setTitleError(result.error);
+        setError("title", { type: "manual", message: result.error });
       } else if (result.field === "url") {
-        setUrlError(result.error);
+        setError("url", { type: "manual", message: result.error });
       } else {
         setSubmitError(result.error);
       }
       return;
     }
 
-    handleDialogOpenChange(false);
+    // 검증 및 추가 성공 시 모든 입력 칸을 비우고 다이얼로그를 닫는다.
+    resetDialogForm();
+    onOpenChange(false);
   };
 
   return (
@@ -215,7 +181,11 @@ export function AddLinkDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <form
+          onSubmit={handleSubmit(onValidSubmit)}
+          noValidate
+          className="flex flex-col gap-4"
+        >
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <Label
@@ -230,37 +200,40 @@ export function AddLinkDialog({
               <span
                 className={cn(
                   "text-[12px] tabular-nums",
-                  isTitleAtLimit || titleError
+                  isTitleAtLimit || errors.title
                     ? "font-semibold text-destructive"
                     : "text-muted-foreground"
                 )}
               >
-                {title.length}/{MAX_LINK_TITLE_LENGTH}
+                {watchedTitle.length}/{MAX_LINK_TITLE_LENGTH}
               </span>
             </div>
 
             <Input
               id="add-link-title"
               type="text"
-              value={title}
               maxLength={MAX_LINK_TITLE_LENGTH}
-              onChange={(event) => handleTitleChange(event.target.value)}
-              onBlur={handleTitleBlur}
               placeholder="예: 내 인스타그램"
               aria-required="true"
-              aria-invalid={Boolean(titleError)}
-              aria-describedby={titleError ? "add-link-title-error" : undefined}
+              aria-invalid={Boolean(errors.title)}
+              aria-describedby={errors.title ? "add-link-title-error" : undefined}
               className="h-10 rounded-[10px] border-border bg-background px-3 text-[15px]"
               autoFocus
+              {...titleField}
+              onChange={(event) => {
+                titleField.onChange(event);
+                setSubmitError(null);
+              }}
+              onBlur={handleTitleBlur}
             />
 
-            {titleError ? (
+            {errors.title?.message ? (
               <p
                 id="add-link-title-error"
                 role="alert"
                 className="text-[13px] font-normal text-destructive"
               >
-                {titleError}
+                {errors.title.message}
               </p>
             ) : null}
           </div>
@@ -280,25 +253,33 @@ export function AddLinkDialog({
               id="add-link-url"
               type="text"
               inputMode="url"
-              value={url}
-              onChange={(event) => handleUrlChange(event.target.value)}
-              onBlur={handleUrlBlur}
               placeholder="https://example.com 또는 mailto:name@example.com"
               aria-required="true"
-              aria-invalid={Boolean(urlError)}
+              aria-invalid={Boolean(errors.url)}
               aria-describedby={
-                urlError ? "add-link-url-error" : "add-link-url-hint"
+                errors.url ? "add-link-url-error" : "add-link-url-hint"
               }
               className="h-10 rounded-[10px] border-border bg-background px-3 text-[15px]"
+              {...urlField}
+              onChange={(event) => {
+                urlField.onChange(event);
+                setSubmitError(null);
+                if (!iconManuallySelected) {
+                  setValue("icon", recommendIconForUrl(event.target.value), {
+                    shouldValidate: false,
+                  });
+                }
+              }}
+              onBlur={handleUrlBlur}
             />
 
-            {urlError ? (
+            {errors.url?.message ? (
               <p
                 id="add-link-url-error"
                 role="alert"
                 className="text-[13px] font-normal text-destructive"
               >
-                {urlError}
+                {errors.url.message}
               </p>
             ) : (
               <p
@@ -321,45 +302,58 @@ export function AddLinkDialog({
               <span className="text-[12px] text-muted-foreground">
                 {iconManuallySelected
                   ? "직접 선택"
-                  : icon === "link"
+                  : watchedIcon === "link"
                     ? "기본 아이콘"
                     : "도메인 자동 추천"}
               </span>
             </div>
 
-            <Select value={icon} onValueChange={handleIconChange}>
-              <SelectTrigger
-                id="add-link-icon"
-                aria-label="링크 아이콘 선택"
-                className="h-10 w-full rounded-[10px] border-border bg-background px-3 text-[15px]"
-              >
-                <SelectValue>
-                  <span className="flex items-center gap-2 text-foreground">
-                    <LinkGlyph
-                      icon={icon}
-                      className="size-4 text-primary"
-                    />
-                    <span>{LINK_ICON_LABELS[icon]}</span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent className="rounded-[12px] border border-border bg-card shadow-product">
-                {SELECTABLE_LINK_ICONS.map((iconKey) => (
-                  <SelectItem
-                    key={iconKey}
-                    value={iconKey}
-                    className="min-h-9 rounded-lg px-2.5 text-[14px]"
+            <Controller
+              control={control}
+              name="icon"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(nextValue) => {
+                    if (!nextValue) return;
+                    field.onChange(nextValue as LinkIcon);
+                    setIconManuallySelected(true);
+                  }}
+                >
+                  <SelectTrigger
+                    id="add-link-icon"
+                    aria-label="링크 아이콘 선택"
+                    className="h-10 w-full rounded-[10px] border-border bg-background px-3 text-[15px]"
                   >
-                    <LinkGlyph
-                      icon={iconKey}
-                      className="size-4 text-muted-foreground"
-                    />
-                    <span>{LINK_ICON_LABELS[iconKey]}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                    <SelectValue>
+                      <span className="flex items-center gap-2 text-foreground">
+                        <LinkGlyph
+                          icon={field.value}
+                          className="size-4 text-primary"
+                        />
+                        <span>{LINK_ICON_LABELS[field.value]}</span>
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+
+                  <SelectContent className="rounded-[12px] border border-border bg-card shadow-product">
+                    {LINK_ICON_VALUES.map((iconKey) => (
+                      <SelectItem
+                        key={iconKey}
+                        value={iconKey}
+                        className="min-h-9 rounded-lg px-2.5 text-[14px]"
+                      >
+                        <LinkGlyph
+                          icon={iconKey}
+                          className="size-4 text-muted-foreground"
+                        />
+                        <span>{LINK_ICON_LABELS[iconKey]}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {submitError || isAtLimit ? (
@@ -386,7 +380,7 @@ export function AddLinkDialog({
               data-cancel-action="true"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleDialogOpenChange(false)}
-              className="min-h-10 px-4 text-[14px] font-normal"
+              className="min-h-10 px-4 text-[14px] font-normal shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
               취소
             </Button>
@@ -395,7 +389,7 @@ export function AddLinkDialog({
               variant="default"
               shape="pill"
               disabled={isAtLimit}
-              className="min-h-11 min-w-[92px] bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground transition-all duration-150 hover:bg-primary hover:brightness-110 active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0"
+              className="min-h-11 min-w-[92px] border border-black/10 bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16)] active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0"
             >
               저장
             </Button>

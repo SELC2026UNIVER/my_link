@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
 const DANGEROUS_SCHEME_PATTERN = /^(javascript|data|vbscript|file):/i;
 const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -252,3 +254,48 @@ export function formatDisplayUrl(rawUrl?: string): string {
     return safe;
   }
 }
+
+export const LINK_ICON_VALUES = [
+  "link",
+  "instagram",
+  "youtube",
+  "tiktok",
+  "x",
+  "threads",
+  "github",
+  "kakao",
+  "naver",
+  "blog",
+  "email",
+  "shop",
+  "portfolio",
+] as const;
+
+/**
+ * 링크 추가 다이얼로그용 Zod 검증 스키마.
+ * 제목 공백/길이 제한과 안전한 URL 형식을 검사한다.
+ */
+export const addLinkFormSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "제목을 입력해 주세요")
+    .max(
+      MAX_LINK_TITLE_LENGTH,
+      `제목은 최대 ${MAX_LINK_TITLE_LENGTH}자까지 입력할 수 있습니다`
+    ),
+  url: z
+    .string()
+    .trim()
+    .superRefine((raw, ctx) => {
+      if (!raw || !validateLinkUrl(raw).valid) {
+        ctx.addIssue({
+          code: "custom",
+          message: "올바른 URL 형식이 아닙니다",
+        });
+      }
+    }),
+  icon: z.enum(LINK_ICON_VALUES),
+});
+
+export type AddLinkFormValues = z.infer<typeof addLinkFormSchema>;
