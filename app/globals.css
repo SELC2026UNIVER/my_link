@@ -1,7 +1,166 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Semantic Design Tokens (shadcn/ui + MyLink design.md / PRD.md)
+ * Light mode maps to Apple Pure White (#ffffff), Parchment (#f5f5f7),
+ * Near-Black Ink (#1d1d1f), Action Blue (#0066cc), Focus Blue (#0071e3),
+ * and Error Red (#e30000).
+ */
 :root {
-  --color-primary: #0066cc;
+  --background: oklch(1 0 0); /* #ffffff Pure White */
+  --foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f Near-Black Ink */
+
+  --card: oklch(1 0 0); /* #ffffff */
+  --card-foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f */
+
+  --popover: oklch(1 0 0); /* #ffffff */
+  --popover-foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f */
+
+  --primary: oklch(0.522 0.1771 255.83); /* #0066cc Action Blue */
+  --primary-foreground: oklch(1 0 0); /* #ffffff */
+
+  --secondary: oklch(0.9707 0.0027 286.35); /* #f5f5f7 Parchment */
+  --secondary-foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f */
+
+  --muted: oklch(0.9707 0.0027 286.35); /* #f5f5f7 Parchment */
+  --muted-foreground: oklch(0.5399 0.0077 286.14); /* #6e6e73 (AA 5.07:1 on white) */
+
+  --accent: oklch(0.9707 0.0027 286.35); /* #f5f5f7 Parchment */
+  --accent-foreground: oklch(0.2316 0.0038 286.1); /* #1d1d1f */
+
+  --destructive: oklch(0.5751 0.236 29.23); /* #e30000 Error Red */
+  --destructive-foreground: oklch(1 0 0); /* #ffffff */
+
+  --border: oklch(0.9067 0 0); /* #e0e0e0 Hairline */
+  --input: oklch(0.9067 0 0); /* #e0e0e0 Hairline */
+  --ring: oklch(0.5629 0.1933 256.16); /* #0071e3 Focus Blue */
+
+  --chart-1: oklch(0.522 0.1771 255.83); /* #0066cc Action Blue */
+  --chart-2: oklch(0.669 0.1808 251.84); /* #2997ff Sky Link Blue */
+  --chart-3: oklch(0.2316 0.0038 286.1); /* #1d1d1f Ink */
+  --chart-4: oklch(0.5399 0.0077 286.14); /* #6e6e73 Muted Slate */
+  --chart-5: oklch(0.8617 0.0067 286.25); /* #d2d2d7 Translucent Chip Gray */
+
+  --radius: 0.625rem; /* 10px base; cards use radius-xl (18px) per design.md */
+
+  --sidebar: oklch(0.9707 0.0027 286.35); /* #f5f5f7 Parchment */
+  --sidebar-foreground: oklch(0.2316 0.0038 286.1);
+  --sidebar-primary: oklch(0.522 0.1771 255.83);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(1 0 0);
+  --sidebar-accent-foreground: oklch(0.2316 0.0038 286.1);
+  --sidebar-border: oklch(0.9067 0 0);
+  --sidebar-ring: oklch(0.5629 0.1933 256.16);
+}
+
+/*
+ * Dark mode & dark full-bleed product tiles:
+ * Tile 1 (#272729), Tile 2 (#2a2a2c), Tile 3 (#252527),
+ * Body on dark (#ffffff), Body muted (#cccccc), Sky Link Blue (#2997ff).
+ */
+.dark {
+  --background: oklch(0.2735 0.0036 286.16); /* #272729 Near-Black Tile 1 */
+  --foreground: oklch(1 0 0); /* #ffffff Body On Dark */
+
+  --card: oklch(0.2858 0.0036 286.17); /* #2a2a2c Near-Black Tile 2 */
+  --card-foreground: oklch(1 0 0);
+
+  --popover: oklch(0.2653 0.0037 286.15); /* #252527 Near-Black Tile 3 */
+  --popover-foreground: oklch(1 0 0);
+
+  --primary: oklch(0.522 0.1771 255.83); /* #0066cc Action Blue (5.57:1 with #ffffff) */
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.2858 0.0036 286.17); /* #2a2a2c */
+  --secondary-foreground: oklch(1 0 0);
+
+  --muted: oklch(0.2653 0.0037 286.15); /* #252527 */
+  --muted-foreground: oklch(0.8452 0 0); /* #cccccc Body Muted */
+
+  --accent: oklch(0.2858 0.0036 286.17); /* #2a2a2c */
+  --accent-foreground: oklch(1 0 0);
+
+  --destructive: oklch(0.7073 0.1847 25.94); /* #ff6961 (AA 5.29:1 on #272729) */
+  --destructive-foreground: oklch(0.2316 0.0038 286.1);
+
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.669 0.1808 251.84); /* #2997ff Sky Link Blue */
+
+  --chart-1: oklch(0.522 0.1771 255.83);
+  --chart-2: oklch(0.669 0.1808 251.84);
+  --chart-3: oklch(1 0 0);
+  --chart-4: oklch(0.8452 0 0);
+  --chart-5: oklch(0.5399 0.0077 286.14);
+
+  --sidebar: oklch(0.2653 0.0037 286.15);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.669 0.1808 251.84);
+  --sidebar-primary-foreground: oklch(0.2316 0.0038 286.1);
+  --sidebar-accent: oklch(0.2858 0.0036 286.17);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.669 0.1808 251.84);
+}
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", var(--font-inter), var(--font-noto-kr), sans-serif;
+  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", var(--font-inter), var(--font-noto-kr), sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-xs: 0.3125rem; /* 5px */
+  --radius-sm: calc(var(--radius) * 0.8); /* 8px */
+  --radius-md: 0.6875rem; /* 11px */
+  --radius-lg: var(--radius); /* 10px */
+  --radius-xl: 1.125rem; /* 18px */
+  --radius-2xl: calc(var(--radius) * 2.2); /* 22px */
+  --radius-3xl: calc(var(--radius) * 2.6); /* 26px */
+  --radius-4xl: calc(var(--radius) * 3); /* 30px */
+  --radius-pill: 9999px;
+}
+
+@theme static {
+  /* MyLink / design.md static palette & shadow tokens */
   --color-primary-focus: #0071e3;
   --color-primary-on-dark: #2997ff;
   --color-canvas: #ffffff;
@@ -20,177 +179,161 @@
   --color-ink-muted-48: #7a7a7a;
   --color-divider-soft: rgba(0, 0, 0, 0.04);
   --color-hairline: #e0e0e0;
+  --color-error: #e30000;
+
+  /* design.md에 정의된 유일한 드롭 섀도우 (제품/쇼케이스 이미지 전용) */
   --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
 }
 
-@theme inline {
-  --color-background: var(--color-canvas);
-  --color-foreground: var(--color-ink);
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "SF Pro Text", var(--font-inter), var(--font-noto-kr), sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth font-sans;
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss03";
+  }
 }
 
-html {
-  scroll-behavior: smooth;
-  color-scheme: light;
-}
-
-body {
-  background-color: var(--color-canvas);
-  color: var(--color-body);
-  font-family: var(--font-sans);
-  font-feature-settings: "ss03";
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Apple design.md 타이포그래피 계층 */
-.type-hero-display {
+/* Apple design.md 타이포그래피 계층 (Tailwind v4 @utility) */
+@utility type-hero-display {
   font-size: 28px;
   font-weight: 600;
   line-height: 1.07;
   letter-spacing: -0.28px;
-}
 
-@media (min-width: 420px) {
-  .type-hero-display {
+  @media (min-width: 420px) {
     font-size: 34px;
   }
-}
 
-@media (min-width: 641px) {
-  .type-hero-display {
+  @media (min-width: 641px) {
     font-size: 40px;
   }
-}
 
-@media (min-width: 1069px) {
-  .type-hero-display {
+  @media (min-width: 1069px) {
     font-size: 56px;
   }
 }
 
-.type-display-lg {
+@utility type-display-lg {
   font-size: 32px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: 0;
-}
 
-@media (min-width: 641px) {
-  .type-display-lg {
+  @media (min-width: 641px) {
     font-size: 40px;
   }
 }
 
-.type-display-md {
+@utility type-display-md {
   font-size: 28px;
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.374px;
-}
 
-@media (min-width: 641px) {
-  .type-display-md {
+  @media (min-width: 641px) {
     font-size: 34px;
     line-height: 1.47;
   }
 }
 
-.type-lead {
+@utility type-lead {
   font-size: 21px;
   font-weight: 400;
   line-height: 1.2;
   letter-spacing: 0.196px;
-}
 
-@media (min-width: 641px) {
-  .type-lead {
+  @media (min-width: 641px) {
     font-size: 28px;
     line-height: 1.14;
   }
 }
 
-.type-lead-airy {
+@utility type-lead-airy {
   font-size: 20px;
   font-weight: 300;
   line-height: 1.5;
   letter-spacing: 0;
-}
 
-@media (min-width: 641px) {
-  .type-lead-airy {
+  @media (min-width: 641px) {
     font-size: 24px;
   }
 }
 
-.type-tagline {
+@utility type-tagline {
   font-size: 21px;
   font-weight: 600;
   line-height: 1.19;
   letter-spacing: 0.231px;
 }
 
-.type-body-strong {
+@utility type-body-strong {
   font-size: 17px;
   font-weight: 600;
   line-height: 1.24;
   letter-spacing: -0.374px;
 }
 
-.type-body {
+@utility type-body {
   font-size: 17px;
   font-weight: 400;
   line-height: 1.44;
   letter-spacing: -0.374px;
 }
 
-.type-dense-link {
+@utility type-dense-link {
   font-size: 17px;
   font-weight: 400;
   line-height: 2.41;
   letter-spacing: 0;
 }
 
-.type-caption {
+@utility type-caption {
   font-size: 14px;
   font-weight: 400;
   line-height: 1.43;
   letter-spacing: -0.224px;
 }
 
-.type-caption-strong {
+@utility type-caption-strong {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.29;
   letter-spacing: -0.224px;
 }
 
-.type-button-utility {
+@utility type-button-utility {
   font-size: 14px;
   font-weight: 400;
   line-height: 1.29;
   letter-spacing: -0.224px;
 }
 
-.type-fine-print {
+@utility type-fine-print {
   font-size: 12px;
   font-weight: 400;
   line-height: 1.3;
   letter-spacing: -0.12px;
 }
 
-.type-nav-link {
+@utility type-nav-link {
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.12px;
 }
 
-/* design.md에 정의된 유일한 드롭 섀도우 (제품/쇼케이스 이미지 전용) */
-.shadow-product {
-  box-shadow: var(--shadow-product);
-}
-
-.numeric-spec {
+@utility numeric-spec {
   font-variant-numeric: numerator;
 }

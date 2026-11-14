@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,10 +36,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={`${inter.variable} ${notoSansKr.variable} h-full antialiased`}
+      className={cn("h-full antialiased", inter.variable, notoSansKr.variable)}
     >
-      <body className="min-h-full flex flex-col bg-[#ffffff] text-[#1d1d1f] selection:bg-[#0066cc]/15 selection:text-[#1d1d1f]">
-        {children}
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/15 selection:text-foreground">
+        <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
   );
