@@ -179,7 +179,7 @@ export default function TopNav({
       </nav>
 
       <header className="sticky top-0 z-40 h-[52px] w-full border-b border-black/[0.08] bg-[rgba(245,245,247,0.8)] backdrop-blur-[20px] backdrop-saturate-[180%]">
-        <div className="mx-auto flex h-full max-w-[980px] items-center justify-between gap-4 px-5 sm:px-6">
+        <div className="mx-auto flex h-full max-w-[980px] items-center justify-between gap-3 px-4 min-[401px]:gap-4 min-[401px]:px-5 sm:px-6">
           <div className="flex min-w-0 items-baseline gap-2.5">
             <a
               href="#about"
@@ -192,7 +192,7 @@ export default function TopNav({
             </span>
           </div>
 
-          <div className="flex shrink-0 items-center gap-5">
+          <div className="flex shrink-0 items-center gap-3 min-[401px]:gap-5">
             <Link
               href="/links"
               className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
@@ -201,7 +201,7 @@ export default function TopNav({
             </Link>
             <Link
               href="/gildong"
-              className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+              className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] min-[401px]:inline"
             >
               공개 프로필
             </Link>

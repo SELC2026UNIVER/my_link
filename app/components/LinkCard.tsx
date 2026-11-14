@@ -75,23 +75,28 @@ export function LinkCard({
         target={isExternal && !isPreview ? "_blank" : undefined}
         rel={isExternal && !isPreview ? "noopener noreferrer" : undefined}
         onClick={onClick}
+        aria-label={title}
+        title={url ? `${title} (${url})` : title}
         className={cn(
-          "flex min-h-[64px] w-full items-center gap-3.5 px-4 py-3.5 outline-none",
+          "flex min-h-[64px] w-full items-center justify-center gap-3.5 px-4 py-3.5 outline-none min-[401px]:justify-start",
           cardRadiusClass
         )}
       >
         <span
           aria-hidden="true"
           className={cn(
-            "flex size-10 shrink-0 items-center justify-center transition-colors duration-150",
+            "flex size-11 shrink-0 items-center justify-center transition-colors duration-150 min-[401px]:size-10",
             isPillButton ? "rounded-full" : "rounded-[10px]",
             styleTokens.iconBadgeClass
           )}
         >
-          <LinkGlyph icon={icon} className="size-[18px]" />
+          <LinkGlyph
+            icon={icon}
+            className="size-5 min-[401px]:size-[18px]"
+          />
         </span>
 
-        <span className="min-w-0 flex-1 text-left">
+        <span className="hidden min-w-0 flex-1 text-left min-[401px]:block">
           <span className="flex items-center gap-2">
             <span
               className={cn(
@@ -127,7 +132,7 @@ export function LinkCard({
         <ChevronRight
           aria-hidden="true"
           className={cn(
-            "size-[18px] shrink-0 transition-all duration-150",
+            "hidden size-[18px] shrink-0 transition-all duration-150 min-[401px]:block",
             styleTokens.chevronClass
           )}
           strokeWidth={1.75}
