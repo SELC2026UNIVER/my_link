@@ -50,7 +50,9 @@ interface AddLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeItemCount: number;
-  onAddLink: (draft: AddLinkDraft) => AddLinkSubmitResult;
+  onAddLink: (
+    draft: AddLinkDraft
+  ) => Promise<AddLinkSubmitResult> | AddLinkSubmitResult;
 }
 
 const DEFAULT_FORM_VALUES: AddLinkFormValues = {
@@ -71,6 +73,7 @@ export function AddLinkDialog({
 }: AddLinkDialogProps) {
   const [iconManuallySelected, setIconManuallySelected] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -100,6 +103,9 @@ export function AddLinkDialog({
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isSubmitting) {
+      return;
+    }
     if (!nextOpen) {
       resetDialogForm();
     }
@@ -136,37 +142,44 @@ export function AddLinkDialog({
     urlField.onBlur(event);
   };
 
-  const onValidSubmit = (values: AddLinkFormValues) => {
+  const onValidSubmit = async (values: AddLinkFormValues) => {
+    if (isSubmitting) return;
     setSubmitError(null);
-    const urlCheck = validateLinkUrl(values.url);
-    const normalizedUrl = urlCheck.valid
-      ? urlCheck.normalized
-      : normalizeUrlInput(values.url);
+    setIsSubmitting(true);
 
-    const resolvedIcon = iconManuallySelected
-      ? values.icon
-      : recommendIconForUrl(normalizedUrl);
+    try {
+      const urlCheck = validateLinkUrl(values.url);
+      const normalizedUrl = urlCheck.valid
+        ? urlCheck.normalized
+        : normalizeUrlInput(values.url);
 
-    const result = onAddLink({
-      title: values.title.trim(),
-      url: normalizedUrl,
-      icon: resolvedIcon,
-    });
+      const resolvedIcon = iconManuallySelected
+        ? values.icon
+        : recommendIconForUrl(normalizedUrl);
 
-    if (!result.ok) {
-      if (result.field === "title") {
-        setError("title", { type: "manual", message: result.error });
-      } else if (result.field === "url") {
-        setError("url", { type: "manual", message: result.error });
-      } else {
-        setSubmitError(result.error);
+      const result = await onAddLink({
+        title: values.title.trim(),
+        url: normalizedUrl,
+        icon: resolvedIcon,
+      });
+
+      if (!result.ok) {
+        if (result.field === "title") {
+          setError("title", { type: "manual", message: result.error });
+        } else if (result.field === "url") {
+          setError("url", { type: "manual", message: result.error });
+        } else {
+          setSubmitError(result.error);
+        }
+        return;
       }
-      return;
-    }
 
-    // 검증 및 추가 성공 시 모든 입력 칸을 비우고 다이얼로그를 닫는다.
-    resetDialogForm();
-    onOpenChange(false);
+      // 검증 및 Firestore 저장 성공 시 모든 입력 칸을 비우고 다이얼로그를 닫는다.
+      resetDialogForm();
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -378,6 +391,7 @@ export function AddLinkDialog({
               variant="outline"
               shape="pill"
               data-cancel-action="true"
+              disabled={isSubmitting}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleDialogOpenChange(false)}
               className="min-h-10 px-4 text-[14px] font-normal shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
@@ -388,10 +402,11 @@ export function AddLinkDialog({
               type="submit"
               variant="default"
               shape="pill"
-              disabled={isAtLimit}
-              className="min-h-11 min-w-[92px] border border-black/10 bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16)] active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0"
+              disabled={isAtLimit || isSubmitting}
+              aria-busy={isSubmitting}
+              className="min-h-11 min-w-[92px] border border-black/10 bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] transition-all duration-150 hover:bg-[#333336] hover:shadow-[0_4px_14px_rgba(0,0,0,0.16)] active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-65"
             >
-              저장
+              {isSubmitting ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </form>

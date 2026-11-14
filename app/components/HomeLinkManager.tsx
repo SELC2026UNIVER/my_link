@@ -2,8 +2,12 @@
 
 import { CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  createAnonymousLink,
+  formatFirestoreErrorMessage,
+  type HomeLinkItem,
+} from "@/app/lib/firestore-links";
 import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
-import type { LinkIcon } from "@/app/lib/types";
 import {
   formatDisplayUrl,
   MAX_ACTIVE_ITEMS,
@@ -26,21 +30,6 @@ import {
 import CopyEmailButton from "./CopyEmailButton";
 import { LinkCard } from "./LinkCard";
 
-let localLinkSeq = 0;
-
-function createLocalLinkId(): string {
-  localLinkSeq += 1;
-  return `link-local-${localLinkSeq}`;
-}
-
-interface HomeLinkItem {
-  id: string;
-  title: string;
-  url: string;
-  icon: LinkIcon;
-  category: string;
-}
-
 interface HomeLinkManagerProps {
   githubHref: string;
   email: string;
@@ -48,8 +37,7 @@ interface HomeLinkManagerProps {
 }
 
 /**
- * 루트(/) 홈 화면에서 서버 연동 없이 브라우저 로컬 메모리 상태(React useState)로
- * 링크 목록을 조회·모달 추가(AddLinkDialog)·인라인 편집·삭제하는 컴포넌트.
+ * 루트(/) 홈 화면에서 링크 목록 조회·Firestore 모달 추가(AddLinkDialog)·인라인 편집·삭제를 관리하는 컴포넌트.
  */
 export function HomeLinkManager({
   githubHref,
@@ -86,7 +74,9 @@ export function HomeLinkManager({
     }, 3500);
   };
 
-  const handleAddLink = (draft: AddLinkDraft): AddLinkSubmitResult => {
+  const handleAddLink = async (
+    draft: AddLinkDraft
+  ): Promise<AddLinkSubmitResult> => {
     if (links.length >= MAX_ACTIVE_ITEMS) {
       return {
         ok: false,
@@ -95,19 +85,20 @@ export function HomeLinkManager({
       };
     }
 
-    const generatedId = createLocalLinkId();
-
-    const newItem: HomeLinkItem = {
-      id: generatedId,
-      title: draft.title,
-      url: draft.url,
-      icon: draft.icon,
-      category: LINK_ICON_LABELS[draft.icon],
-    };
-
-    setLinks((prev) => [...prev, newItem]);
-    showToast(`링크가 추가되었습니다 (${newItem.title})`);
-    return { ok: true };
+    try {
+      const createdItem = await createAnonymousLink(draft);
+      setLinks((prev) => [createdItem, ...prev]);
+      showToast(`링크가 추가되었습니다 (${createdItem.title})`);
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: formatFirestoreErrorMessage(
+          error,
+          "링크를 저장하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        ),
+      };
+    }
   };
 
   const startInlineEdit = (item: HomeLinkItem) => {
