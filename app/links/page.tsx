@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CopyPageUrlButton } from "./components/CopyPageUrlButton";
@@ -28,12 +27,12 @@ export default function LinksPage() {
             <span>프로필 홈</span>
           </Link>
 
-          <Badge
-            variant="outline"
-            className="h-6 rounded-full border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-foreground"
+          <Link
+            href="/gildong"
+            className="inline-flex h-6 items-center rounded-full border border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-primary transition-colors hover:border-primary/40 hover:bg-[var(--color-surface-pearl)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
-            MyLink
-          </Badge>
+            /gildong 공개 뷰 ›
+          </Link>
         </div>
 
         {/* Apple 유틸리티 카드 (18px 둥근 모서리 · 헤어라인 보더 · 아바타에만 shadow-product 적용) */}

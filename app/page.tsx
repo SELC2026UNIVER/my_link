@@ -299,6 +299,14 @@ export default function Home() {
                     링크 목록 보기
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/gildong"
+                    className="type-dense-link text-[var(--color-primary)] hover:underline"
+                  >
+                    공개 프로필 (/gildong)
+                  </Link>
+                </li>
               </ul>
             </div>
 
