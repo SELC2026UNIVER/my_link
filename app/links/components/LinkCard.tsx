@@ -13,31 +13,32 @@ interface LinkCardProps {
 }
 
 /**
- * shadcn/ui Card 기반 토스(TDS) 스타일 링크 목록 카드 컴포넌트.
+ * shadcn/ui Card + Apple 디자인 시스템(design.md) 기반 링크 목록 카드 컴포넌트.
+ * 카드 그림자 없이 18px 둥근 모서리와 1px 헤어라인 보더를 사용한다.
  */
 export function LinkCard({ item }: LinkCardProps) {
   const href = resolveSafeHref(item.url);
   const isExternal = isExternalHttpUrl(href);
 
   return (
-    <Card className="group gap-0 rounded-[20px] border border-black/[0.04] bg-white p-0 py-0 shadow-[0_2px_12px_rgba(15,23,42,0.04)] ring-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3182f6]/25 hover:bg-[#fcfdff] hover:shadow-[0_8px_24px_rgba(49,130,246,0.10)] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[#3182f6] has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-[#f2f4f6] active:translate-y-0 active:scale-[0.985]">
+    <Card className="group gap-0 rounded-[18px] border border-border bg-card p-0 py-0 shadow-none ring-0 transition-all duration-150 hover:border-primary/40 hover:bg-[var(--color-surface-pearl)] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-secondary active:scale-[0.985]">
       <a
         href={href}
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
-        className="flex w-full items-center gap-3.5 rounded-[20px] px-4 py-3.5 outline-none"
+        className="flex min-h-[68px] w-full items-center gap-3.5 rounded-[18px] px-4 py-3.5 outline-none"
       >
         <LinkIconBadge icon={item.icon} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[16px] font-semibold leading-snug tracking-[-0.02em] text-[#191f28] transition-colors group-hover:text-[#1b64da]">
+            <span className="truncate text-[17px] font-semibold leading-[1.24] tracking-[-0.022em] text-foreground transition-colors group-hover:text-primary">
               {item.title}
             </span>
             {item.category ? (
               <Badge
                 variant="secondary"
-                className="h-5 shrink-0 rounded-full bg-[#f2f4f6] px-2 text-[11px] font-medium text-[#4e5968]"
+                className="h-5 shrink-0 rounded-full bg-secondary px-2 text-[11px] font-normal text-muted-foreground"
               >
                 {item.category}
               </Badge>
@@ -45,7 +46,7 @@ export function LinkCard({ item }: LinkCardProps) {
           </div>
 
           <p
-            className="mt-0.5 truncate text-[13px] font-normal leading-normal text-[#6b7684]"
+            className="mt-0.5 truncate text-[13px] font-normal leading-[1.4] tracking-[-0.01em] text-muted-foreground"
             title={item.url}
           >
             {item.url}
@@ -54,7 +55,8 @@ export function LinkCard({ item }: LinkCardProps) {
 
         <ChevronRight
           aria-hidden="true"
-          className="size-5 shrink-0 text-[#b0b8c1] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#3182f6]"
+          className="size-[18px] shrink-0 text-muted-foreground/70 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary"
+          strokeWidth={1.75}
         />
       </a>
     </Card>

@@ -11,40 +11,14 @@ import {
 import { cn } from "@/lib/utils";
 import type { LinkIconKey } from "../links-data";
 
-interface IconBadgeConfig {
-  Icon: LucideIcon;
-  containerClass: string;
-}
-
-const ICON_STYLE_MAP: Record<LinkIconKey, IconBadgeConfig> = {
-  github: {
-    Icon: Code2,
-    containerClass: "bg-[#f2f4f6] text-[#191f28]",
-  },
-  blog: {
-    Icon: BookOpen,
-    containerClass: "bg-[#e8f3ff] text-[#1b64da]",
-  },
-  portfolio: {
-    Icon: FolderCode,
-    containerClass: "bg-[#ecfbf2] text-[#0b7a4b]",
-  },
-  youtube: {
-    Icon: Video,
-    containerClass: "bg-[#ffefef] text-[#c82829]",
-  },
-  instagram: {
-    Icon: Camera,
-    containerClass: "bg-[#f8effe] text-[#7b2cbf]",
-  },
-  email: {
-    Icon: Mail,
-    containerClass: "bg-[#fff6e6] text-[#9c5700]",
-  },
-  link: {
-    Icon: Link2,
-    containerClass: "bg-[#e8f3ff] text-[#1b64da]",
-  },
+const ICON_COMPONENT_MAP: Record<LinkIconKey, LucideIcon> = {
+  github: Code2,
+  blog: BookOpen,
+  portfolio: FolderCode,
+  youtube: Video,
+  instagram: Camera,
+  email: Mail,
+  link: Link2,
 };
 
 interface LinkIconBadgeProps {
@@ -53,21 +27,21 @@ interface LinkIconBadgeProps {
 }
 
 /**
- * TDS 스타일 스쿼클(squircle) 파스텔 아이콘 배지.
+ * Apple 유틸리티 카드 스타일의 단색 아이콘 컨테이너.
+ * design.md 단일 액센트(#0066cc) 원칙에 따라 기본은 뉴트럴(Parchment), 호버 시 Action Blue로 전환된다.
  */
 export function LinkIconBadge({ icon, className }: LinkIconBadgeProps) {
-  const { Icon, containerClass } = ICON_STYLE_MAP[icon] ?? ICON_STYLE_MAP.link;
+  const Icon = ICON_COMPONENT_MAP[icon] ?? ICON_COMPONENT_MAP.link;
 
   return (
     <div
       aria-hidden="true"
       className={cn(
-        "flex size-11 shrink-0 items-center justify-center rounded-[14px] transition-transform duration-200 group-hover:scale-105",
-        containerClass,
+        "flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-black/[0.05] bg-secondary text-foreground transition-colors duration-150 group-hover:border-primary/20 group-hover:bg-primary/10 group-hover:text-primary",
         className
       )}
     >
-      <Icon className="size-5" strokeWidth={2} />
+      <Icon className="size-[18px]" strokeWidth={1.75} />
     </div>
   );
 }

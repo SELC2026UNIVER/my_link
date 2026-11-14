@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 /**
- * 현재 마이링크 페이지 URL을 클립보드에 복사하는 TDS 스타일 필 버튼.
+ * 현재 마이링크 페이지 URL을 클립보드에 복사하는 Apple Action Blue 필 버튼.
  */
 export function CopyPageUrlButton() {
   const [copied, setCopied] = useState(false);
@@ -47,17 +47,17 @@ export function CopyPageUrlButton() {
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant="default"
       size="sm"
       shape="pill"
       onClick={handleCopy}
       aria-live="polite"
-      className="h-8 gap-1.5 bg-[#e8f3ff] px-3 text-[13px] font-semibold text-[#1b64da] hover:bg-[#d8ebff] active:scale-95 focus-visible:ring-[#3182f6]"
+      className="h-8 gap-1.5 px-3.5 text-[13px] font-normal tracking-[-0.016em] active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {copied ? (
         <>
           <Check className="size-3.5" aria-hidden="true" />
-          <span>주소 복사됨</span>
+          <span>복사됨</span>
         </>
       ) : (
         <>

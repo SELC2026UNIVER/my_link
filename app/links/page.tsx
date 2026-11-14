@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -12,35 +12,34 @@ import { dummyLinks, linkListProfile } from "./links-data";
 export const metadata: Metadata = {
   title: `${linkListProfile.name} | MyLink 링크 목록`,
   description:
-    "제목, URL, 아이콘으로 정리된 홍길동의 MyLink 추천 링크 목록 페이지입니다.",
+    "제목, URL, 아이콘으로 정리된 홍길동의 MyLink Apple 스타일 링크 목록 페이지입니다.",
 };
 
 export default function LinksPage() {
   return (
-    <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-[#f2f4f6] px-4 py-10 text-[#191f28] sm:py-14">
+    <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-secondary px-4 py-10 text-foreground sm:py-16">
       <main className="w-full max-w-[460px]">
         <div className="mb-4 flex items-center justify-between px-1">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium text-[#4e5968] transition-colors hover:bg-black/[0.04] hover:text-[#191f28] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3182f6]"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[14px] font-normal tracking-[-0.016em] text-muted-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <ArrowLeft className="size-3.5" aria-hidden="true" />
             <span>프로필 홈</span>
           </Link>
 
           <Badge
-            variant="secondary"
-            className="h-6 gap-1 rounded-full bg-white px-2.5 text-[12px] font-semibold text-[#1b64da] shadow-[0_1px_4px_rgba(15,23,42,0.05)] ring-1 ring-black/[0.04]"
+            variant="outline"
+            className="h-6 rounded-full border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-foreground"
           >
-            <Sparkles className="size-3" aria-hidden="true" />
-            <span>MyLink</span>
+            MyLink
           </Badge>
         </div>
 
-        {/* TDS Profile Summary Card */}
-        <Card className="gap-4 rounded-[24px] border border-black/[0.04] bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.05)] ring-0">
-          <div className="flex items-center gap-3.5">
-            <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-[#f2f4f6] ring-1 ring-black/[0.06]">
+        {/* Apple 유틸리티 카드 (18px 둥근 모서리 · 헤어라인 보더 · 아바타에만 shadow-product 적용) */}
+        <Card className="gap-4 rounded-[18px] border border-border bg-card p-6 shadow-none ring-0">
+          <div className="flex items-center gap-4">
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-secondary shadow-product">
               <Image
                 src={linkListProfile.avatar}
                 alt={linkListProfile.avatarAlt}
@@ -53,27 +52,27 @@ export default function LinksPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <h1 className="text-[20px] font-bold leading-tight tracking-[-0.03em] text-[#191f28]">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <h1 className="text-[21px] font-semibold leading-[1.19] tracking-[-0.02em] text-foreground">
                   {linkListProfile.name}
                 </h1>
-                <span className="text-[13px] font-medium text-[#6b7684]">
+                <span className="text-[14px] font-normal text-muted-foreground">
                   {linkListProfile.handle}
                 </span>
               </div>
-              <p className="mt-1 text-[14px] leading-snug text-[#4e5968]">
+              <p className="mt-1.5 text-[14px] font-normal leading-[1.45] tracking-[-0.016em] text-muted-foreground">
                 {linkListProfile.bio}
               </p>
             </div>
           </div>
 
-          <Separator className="bg-[#f2f4f6]" />
+          <Separator className="bg-border/70" />
 
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-[13px] font-medium text-[#4e5968]">
+            <div className="flex items-center gap-2 text-[14px] font-normal tracking-[-0.016em] text-muted-foreground">
               <span
                 aria-hidden="true"
-                className="inline-block size-2 rounded-full bg-[#3182f6]"
+                className="inline-block size-1.5 rounded-full bg-primary"
               />
               <span>전체 링크 {dummyLinks.length}개</span>
             </div>
@@ -82,8 +81,8 @@ export default function LinksPage() {
           </div>
         </Card>
 
-        {/* TDS Link List Cards */}
-        <section aria-label="마이링크 목록" className="mt-4">
+        {/* 링크 목록 */}
+        <section aria-label="마이링크 목록" className="mt-3">
           <ul className="flex flex-col gap-3">
             {dummyLinks.map((item) => (
               <li key={item.id}>
@@ -94,7 +93,7 @@ export default function LinksPage() {
         </section>
 
         <footer className="mt-8 text-center">
-          <p className="text-[12px] font-medium text-[#6b7684]">
+          <p className="type-fine-print text-muted-foreground">
             © 2026 MyLink · {linkListProfile.name} ({linkListProfile.handle})
           </p>
         </footer>
