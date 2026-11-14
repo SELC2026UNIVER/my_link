@@ -22,8 +22,10 @@ const INITIAL_CLICK_COUNTS: Record<string, number> = {
   "link-github": 148,
   "link-blog": 112,
   "link-portfolio": 94,
+  "link-study-note": 82,
   "link-youtube": 76,
   "link-instagram": 65,
+  "link-threads": 53,
   "link-email": 41,
 };
 
@@ -75,8 +77,8 @@ export function createInitialSeedData(): MyLinkSeedData {
     },
   ];
 
-  const devLinks = dummyLinks.slice(0, 3);
-  const channelLinks = dummyLinks.slice(3);
+  const devLinks = dummyLinks.slice(0, 4);
+  const channelLinks = dummyLinks.slice(4);
 
   const links: LinkItem[] = [
     {

@@ -6,6 +6,8 @@ export type LinkIconKey =
   | "portfolio"
   | "youtube"
   | "instagram"
+  | "threads"
+  | "kakao"
   | "email"
   | "link";
 
@@ -26,7 +28,7 @@ export const linkListProfile = {
 };
 
 /**
- * 마이링크 목록 화면용 더미 데이터 (제목 · URL · 아이콘 · 카테고리).
+ * 마이링크 기본 예시 링크 데이터 8종 (제목 · URL · 아이콘 · 카테고리).
  */
 export const dummyLinks: MyLinkItem[] = [
   {
@@ -51,6 +53,13 @@ export const dummyLinks: MyLinkItem[] = [
     category: "작품",
   },
   {
+    id: "link-study-note",
+    title: "알고리즘 · CS 개념 정리 노트",
+    url: "https://github.com/gildong-study/cs-notes",
+    icon: "github",
+    category: "학습",
+  },
+  {
     id: "link-youtube",
     title: "유튜브 코딩 브이로그",
     url: "https://youtube.com/@gildong_dev",
@@ -63,6 +72,13 @@ export const dummyLinks: MyLinkItem[] = [
     url: "https://instagram.com/gildong_study",
     icon: "instagram",
     category: "SNS",
+  },
+  {
+    id: "link-threads",
+    title: "스레드 짧은 개발 단상",
+    url: "https://threads.net/@gildong_study",
+    icon: "threads",
+    category: "소통",
   },
   {
     id: "link-email",

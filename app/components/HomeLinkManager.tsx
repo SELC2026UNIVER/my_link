@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
   createUserLink,
+  DEFAULT_EXAMPLE_LINKS,
   deleteUserLink,
   fetchUserLinks,
   formatFirestoreErrorMessage,
@@ -756,7 +757,7 @@ export function HomeLinkManager({
                 {isAuthLoading
                   ? "인증 확인 중"
                   : !user
-                    ? "로그인 필요"
+                    ? `기본 예시 ${DEFAULT_EXAMPLE_LINKS.length}개 · 로그인 필요`
                     : isLoadingLinks && links.length === 0
                       ? "불러오는 중"
                       : `전체 ${links.length}개`}
@@ -781,49 +782,79 @@ export function HomeLinkManager({
               </p>
             </div>
           ) : !user ? (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-[18px] border border-dashed border-border bg-card px-6 py-10 text-center">
-              <div
-                aria-hidden="true"
-                className="flex size-12 items-center justify-center rounded-full border border-black/[0.06] bg-secondary text-foreground/75"
-              >
-                <Lock className="size-5" />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-center justify-center gap-4 rounded-[18px] border border-dashed border-border bg-card px-6 py-8 text-center">
+                <div
+                  aria-hidden="true"
+                  className="flex size-12 items-center justify-center rounded-full border border-black/[0.06] bg-secondary text-foreground/75"
+                >
+                  <Lock className="size-5" />
+                </div>
+                <div className="max-w-[380px]">
+                  <h3 className="text-[17px] font-semibold tracking-[-0.02em] text-foreground">
+                    로그인하고 나만의 링크를 관리하세요
+                  </h3>
+                  <p className="mt-1.5 text-[14px] leading-[1.5] text-muted-foreground">
+                    Google 계정으로 로그인하면 내 고유 계정에 링크가 안전하게
+                    저장되고, 언제든 수정·삭제할 수 있습니다.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  shape="pill"
+                  disabled={isAuthActionPending}
+                  aria-busy={isAuthActionPending}
+                  onClick={() => {
+                    void signInWithGoogle().then((signedIn) => {
+                      if (signedIn) {
+                        toast.success("Google 계정으로 로그인되었습니다");
+                      }
+                    });
+                  }}
+                  className="min-h-11 gap-2 rounded-full border border-black/[0.08] bg-[#e8e8ed] px-5 text-[15px] font-medium tracking-[-0.018em] text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all hover:bg-[#dcdce1] active:scale-95 disabled:opacity-60"
+                >
+                  {isAuthActionPending ? (
+                    <>
+                      <Spinner decorative className="size-4 text-[#1d1d1f]" />
+                      <span>로그인 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn
+                        className="size-4 text-[#515154]"
+                        aria-hidden="true"
+                      />
+                      <span>Google로 로그인하기</span>
+                    </>
+                  )}
+                </Button>
               </div>
-              <div className="max-w-[380px]">
-                <h3 className="text-[17px] font-semibold tracking-[-0.02em] text-foreground">
-                  로그인하고 나만의 링크를 관리하세요
-                </h3>
-                <p className="mt-1.5 text-[14px] leading-[1.5] text-muted-foreground">
-                  Google 계정으로 로그인하면 내 고유 계정에 링크가 안전하게
-                  저장되고, 언제든 이어서 관리할 수 있습니다.
-                </p>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[13px] font-semibold text-muted-foreground">
+                    기본 링크 예시 ({DEFAULT_EXAMPLE_LINKS.length}개)
+                  </span>
+                  <span className="text-[12px] text-muted-foreground">
+                    로그인 후 수정·삭제 가능
+                  </span>
+                </div>
+                <ul className="flex flex-col gap-3">
+                  {DEFAULT_EXAMPLE_LINKS.map((item) => (
+                    <li key={item.id}>
+                      <LinkCard
+                        title={item.title}
+                        url={item.url}
+                        subtitle={formatDisplayUrl(item.url)}
+                        icon={item.icon}
+                        category={item.category}
+                        buttonStyle="card"
+                      />
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                shape="pill"
-                disabled={isAuthActionPending}
-                aria-busy={isAuthActionPending}
-                onClick={() => {
-                  void signInWithGoogle().then((signedIn) => {
-                    if (signedIn) {
-                      toast.success("Google 계정으로 로그인되었습니다");
-                    }
-                  });
-                }}
-                className="min-h-11 gap-2 rounded-full border border-black/[0.08] bg-[#e8e8ed] px-5 text-[15px] font-medium tracking-[-0.018em] text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all hover:bg-[#dcdce1] active:scale-95 disabled:opacity-60"
-              >
-                {isAuthActionPending ? (
-                  <>
-                    <Spinner decorative className="size-4 text-[#1d1d1f]" />
-                    <span>로그인 중...</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="size-4 text-[#515154]" aria-hidden="true" />
-                    <span>Google로 로그인하기</span>
-                  </>
-                )}
-              </Button>
             </div>
           ) : isLoadingLinks && links.length === 0 ? (
             <div

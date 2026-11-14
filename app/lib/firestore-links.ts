@@ -8,11 +8,14 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
+  Timestamp,
   updateDoc,
 } from "firebase/firestore";
 import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
 import type { LinkIcon } from "@/app/lib/types";
 import { LINK_ICON_VALUES } from "@/app/lib/validators";
+import { dummyLinks } from "@/app/links/links-data";
 import { getFirestoreDb } from "@/lib/firebase";
 
 export interface HomeLinkItem {
@@ -38,11 +41,22 @@ export interface UpdateUserLinkInput {
 }
 
 const VALID_LINK_ICON_SET = new Set<string>(LINK_ICON_VALUES);
+const SEEDED_STORAGE_PREFIX = "mylink_seeded_8links_";
+
+export const DEFAULT_EXAMPLE_LINKS: HomeLinkItem[] = dummyLinks.map((item) => ({
+  id: item.id,
+  title: item.title,
+  url: item.url,
+  icon: item.icon,
+  category: item.category,
+}));
 
 function assertValidUid(uid: string): string {
   const trimmed = uid.trim();
   if (!trimmed) {
-    throw new Error("로그인한 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
+    throw new Error(
+      "로그인한 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요."
+    );
   }
   return trimmed;
 }
@@ -53,6 +67,24 @@ function getUserLinksCollection(uid: string) {
 
 function getUserLinkDoc(uid: string, linkId: string) {
   return doc(getFirestoreDb(), "users", assertValidUid(uid), "links", linkId);
+}
+
+function hasSeededForUid(uid: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(`${SEEDED_STORAGE_PREFIX}${uid}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markSeededForUid(uid: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`${SEEDED_STORAGE_PREFIX}${uid}`, "1");
+  } catch {
+    // localStorage 접근 불가 환경 무시
+  }
 }
 
 function resolveValidLinkIcon(rawIcon: unknown, url: string): LinkIcon {
@@ -118,14 +150,59 @@ export function formatFirestoreErrorMessage(
 }
 
 /**
+ * 최초 진입 사용자의 `users/{uid}/links` 컬렉션이 비어 있을 때
+ * 기본 예시 링크 8종을 초기 데이터로 시드한다.
+ */
+async function seedDefaultUserLinks(uid: string): Promise<HomeLinkItem[]> {
+  const baseMillis = Date.now();
+  try {
+    await Promise.all(
+      DEFAULT_EXAMPLE_LINKS.map((item, index) =>
+        setDoc(getUserLinkDoc(uid, item.id), {
+          title: item.title,
+          url: item.url,
+          icon: item.icon,
+          category: item.category,
+          createdAt: Timestamp.fromMillis(baseMillis - index * 1000),
+        })
+      )
+    );
+    markSeededForUid(uid);
+  } catch {
+    // 비로그인 방문자 조회 또는 권한 대기 시에도 화면에는 기본 8개 예시를 반환한다.
+  }
+
+  return [...DEFAULT_EXAMPLE_LINKS];
+}
+
+/**
  * Firestore users/{uid}/links 컬렉션에서 createdAt 최신순으로 링크 목록을 일회성 조회(getDocs)한다.
+ * 최초 진입 시 컬렉션이 비어 있으면 기본 링크 예시 8개를 시드해 반환한다.
  */
 export async function fetchUserLinks(uid: string): Promise<HomeLinkItem[]> {
   const linksQuery = query(
     getUserLinksCollection(uid),
     orderBy("createdAt", "desc")
   );
-  const snapshot = await getDocs(linksQuery);
+
+  let snapshot;
+  try {
+    snapshot = await getDocs(linksQuery);
+  } catch (error) {
+    if (error instanceof FirebaseError && error.code === "permission-denied") {
+      return [...DEFAULT_EXAMPLE_LINKS];
+    }
+    throw error;
+  }
+
+  if (snapshot.empty) {
+    if (!hasSeededForUid(uid)) {
+      return seedDefaultUserLinks(uid);
+    }
+    return [];
+  }
+
+  markSeededForUid(uid);
 
   return snapshot.docs.map((docSnap) => {
     const data = docSnap.data();

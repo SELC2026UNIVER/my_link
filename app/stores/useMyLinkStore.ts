@@ -11,7 +11,7 @@ import type {
   UsernameHistoryEntry,
 } from "@/app/lib/types";
 
-export const MYLINK_STORAGE_KEY = "mylink-demo-storage";
+export const MYLINK_STORAGE_KEY = "mylink-demo-storage-v2";
 
 interface PersistedMyLinkState {
   profiles: UserProfile[];
