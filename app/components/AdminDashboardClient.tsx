@@ -27,6 +27,38 @@ import { AddLinkDialog } from "./AddLinkDialog";
 import { LinkCard } from "./LinkCard";
 import { MobilePreviewFrame } from "./MobilePreviewFrame";
 
+function AddLinkCtaButton({
+  disabled = false,
+  onClick,
+  className,
+}: {
+  disabled?: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="default"
+      shape="pill"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "group/add min-h-11 shrink-0 gap-2 bg-primary px-[22px] py-[11px] text-[15px] font-normal leading-none tracking-[-0.022em] text-primary-foreground transition-all duration-150 hover:bg-primary hover:brightness-110 active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0",
+        className
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className="flex size-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-150 group-hover/add:scale-105 group-hover/add:bg-white/25"
+      >
+        <Plus className="size-3.5 stroke-[2.25]" />
+      </span>
+      <span>링크 추가</span>
+    </Button>
+  );
+}
+
 function AdminDashboardSkeleton() {
   return (
     <div
@@ -186,9 +218,9 @@ export function AdminDashboardClient() {
 
       {/* 링크 목록 관리 카드 */}
       <Card className="gap-4 rounded-[18px] border border-border bg-card p-5 shadow-none ring-0 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-foreground">
                 링크 목록
               </h2>
@@ -200,22 +232,16 @@ export function AdminDashboardClient() {
                 {MAX_ACTIVE_ITEMS}
               </Badge>
             </div>
-            <p className="mt-1 text-[13px] text-muted-foreground">
+            <p className="mt-1.5 text-[13px] leading-[1.45] text-muted-foreground">
               추가한 링크는 브라우저 로컬 저장소(useMyLinkStore)에 저장되며 미리보기와 /{activeProfile.username}에 즉시 반영됩니다.
             </p>
           </div>
 
-          <Button
-            type="button"
-            variant="default"
-            shape="pill"
+          <AddLinkCtaButton
             disabled={isAtItemLimit}
             onClick={() => setDialogOpen(true)}
-            className="min-h-11 gap-1.5 px-5 text-[14px] font-normal active:scale-95"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            <span>링크 추가</span>
-          </Button>
+            className="w-full sm:w-auto"
+          />
         </div>
 
         {isAtItemLimit ? (
@@ -240,16 +266,10 @@ export function AdminDashboardClient() {
             <p className="mt-1 text-[13px] text-muted-foreground">
               상단 &lsquo;+ 링크 추가&rsquo; 버튼을 눌러 나만의 링크 목록을 만들어 보세요.
             </p>
-            <Button
-              type="button"
-              variant="default"
-              shape="pill"
+            <AddLinkCtaButton
               onClick={() => setDialogOpen(true)}
-              className="mt-4 min-h-11 gap-1.5 px-5 text-[14px] font-normal active:scale-95"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              <span>링크 추가</span>
-            </Button>
+              className="mt-4"
+            />
           </div>
         ) : (
           <ul className="flex flex-col gap-3" aria-label="등록된 링크 및 섹션 목록">

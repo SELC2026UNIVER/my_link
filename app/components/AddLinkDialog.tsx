@@ -392,7 +392,7 @@ export function AddLinkDialog({
               variant="default"
               shape="pill"
               disabled={isAtLimit}
-              className="min-h-10 min-w-[88px] px-5 text-[14px] font-normal active:scale-95"
+              className="min-h-11 min-w-[92px] bg-primary px-[22px] text-[15px] font-normal tracking-[-0.022em] text-primary-foreground transition-all duration-150 hover:bg-primary hover:brightness-110 active:translate-y-0 active:scale-95 focus-visible:border-[var(--color-primary-focus)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)] focus-visible:ring-0"
             >
               저장
             </Button>
