@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.5 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v3.6 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v3.6 변경: 전체 스타일링을 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일하고, **shadcn/ui (`Card`, `Badge`, `Button`, `Separator`) 기반 공용 `LinkCard` (`app/components/LinkCard.tsx`)** 재사용 아키텍처 및 M1 구현 완료(`/gildong`·`/[username]`·`PublicProfileView`·`useMyLinkStore`) 상태를 반영
 > v3.5 변경: 링크 목록 페이지(`/links`) 및 기본 더미 데이터(`app/links/links-data.ts`의 `dummyLinks` 6종 · `linkListProfile`) 사용 명세를 라우팅, 데이터 모델, 폴더 설계에 반영
 > v3.4 변경: UI 컴포넌트 구현 기반을 **shadcn/ui (`https://ui.shadcn.com/create`)** + **Tailwind CSS 4 (CSS-first, `tailwind.config` 파일 미사용)** 로 정의하고, [`design.md`](../design.md)를 Apple 디자인 시스템 기준서로 유지·연동하는 원칙 명시
 > v3.3 변경: `10.3 사용자 시나리오 및 End-to-End 시연 시나리오` 확장 (페르소나별 정상·예외 시나리오 4종 및 발표용 6단계 데모 체크표 추가)
@@ -21,8 +22,8 @@
 | **핵심** | 링크·소셜·섹션 CRUD (Create · Read · Update · Delete) + 개인 URL(`/[username]`) 공유 + 실시간 라이브 프리뷰 대시보드 + 기본 통계 |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
 | **구현 형태** | **Next.js (App Router) 기반 클라이언트 완결형 데모** — 별도 백엔드 서버·DB 구축 없이 브라우저 `localStorage` 및 Mock 데이터 연동으로 즉시 동작 |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, 별도 `tailwind.config` 없음) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`) · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
-| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create)로 UI 프리미티브·폼·인터랙션 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
+| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
 ### 1.1 성공 지표 (KPI)
 
@@ -70,11 +71,11 @@
 | 경로 | 화면 | 접근 권한 | 설명 |
 |---|---|---|---|
 | `/` | 랜딩 페이지 | 누구나 | 마이링크 서비스 소개, `시작하기` 버튼, `예시 보기(/gildong)` 및 `링크 목록(/links)` 링크 |
-| `/links` | 링크 목록 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks`(제목·URL·아이콘·카테고리 6종) 및 `linkListProfile` 사용 |
+| `/links` | 링크 목록 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 사용 |
 | `/login` | 데모 이메일 로그인 | 비로그인 | ① 이메일 입력 → ② 화면 내 안내되는 Mock 6자리 코드 입력 (또는 `데모 계정으로 바로 체험하기` 버튼) |
 | `/onboarding` | username 설정 | 첫 로그인 사용자 | `username`만 입력받아 초기 설정 완료 (`이름`은 `username`으로 자동 초기화) |
 | `/admin` | 대시보드 (편집기) | 로그인/데모 사용자 | **PC**: 좌측 `[프로필·링크 | 테마 | 통계]` 편집 영역 · 우측 **실시간 모바일 목업 프리뷰** 2단 분할 / **모바일**: 상단 `[편집 | 미리보기]` 탭 전환 |
-| `/[username]` | 공개 프로필 페이지 | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 기본 URL 링크 버튼 (읽기 전용). 기존 홍길동 프로필을 `/gildong` 기본 Mock 데이터로 제공 |
+| `/[username]` | 공개 프로필 페이지 *(구현됨)* | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 공용 `LinkCard` 링크 목록 (`PublicProfileView` 기반). `/gildong` 기본 Mock 시드, 대문자/이전 username 리다이렉트 및 404 처리 포함 |
 
 ```mermaid
 flowchart LR
@@ -490,8 +491,8 @@ export interface AnalyticsData {
 
 | 구분 | 기준 | 적용 범위 및 원칙 |
 |---|---|---|
-| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 앞으로의 모든 UI 프리미티브(`Button`, `Card`, `Input`, `Textarea`, `Label`, `Dialog`, `Tabs`, `Select`, `Switch`, `Badge`, `Separator`, `Tooltip`, `Alert` 등)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 스타일링 엔진은 최신 **Tailwind CSS 4** CSS-first 규격(`tailwind.config` 파일 없이 `app/globals.css`의 `@import "tailwindcss";`, `@theme inline`/`@theme static`, `@utility` 사용)을 따른다. |
-| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 컬러, 타이포그래피 위계, 여백, 타일 교차 레이아웃, 모서리·그림자 철학은 `design.md`의 **Apple 웹 디자인 언어**처럼 일관되게 유지·구축한다.<br>• shadcn/ui 시맨틱 토큰(`--background`, `--foreground`, `--primary`, `--muted-foreground`, `--border`, `--ring`, `--destructive`)을 `design.md`의 Apple OKLCH/HEX 토큰에 매핑하고, `Button`의 `shape="pill"` 등 Apple 고유의 UI 문법을 확장 적용한다. |
+| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Badge`, `Button`, `Card`, `Dialog`, `Input`, `Label`, `Select`, `Separator`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 `/links`, `/[username]`(`PublicProfileView`), `/admin` 모바일 프리뷰에서 재사용한다 (`app/links/components/LinkCard.tsx`는 공용 컴포넌트 위임 래퍼).<br>• 스타일링은 CSS Modules(`.module.css`) 및 별도 커스텀 CSS를 일절 사용하지 않고 **Tailwind CSS 4** CSS-first 단일 체계(`app/globals.css`의 `@import "tailwindcss";`, `@theme inline`/`@theme static`, `@utility` 및 `cn()` 유틸리티)로 통일한다. |
+| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 컬러, 타이포그래피 위계, 여백, 타일 교차 레이아웃, 모서리·그림자 철학은 `design.md`의 **Apple 웹 디자인 언어**처럼 일관되게 유지·구축한다.<br>• shadcn/ui 시맨틱 토큰(`--background`, `--foreground`, `--primary`, `--muted-foreground`, `--border`, `--ring`, `--destructive`)을 `design.md`의 Apple OKLCH/HEX 토큰에 매핑하고, `Button`의 `shape="pill"` 및 `LinkCard`의 `buttonStyle="card" | "pill"` 등 Apple 고유의 UI 문법을 확장 적용한다. |
 
 ### 7.2 화면별 시각 가이드 (Apple 시스템 기준)
 
@@ -507,7 +508,7 @@ export interface AnalyticsData {
 
 ---
 
-## 8. 범위 외 (Out of Scope, 데모 v3.5)
+## 8. 범위 외 (Out of Scope, 데모 v3.6)
 
 - 실제 백엔드 서버·DB 구축 및 기기 간 실시간 원격 데이터 동기화
 - 실제 트랜잭션 이메일 발송 서버 연동 (브라우저 내 Mock 이메일 인증으로 대체)
@@ -519,7 +520,7 @@ export interface AnalyticsData {
 ## 9. 수용 기준 (Acceptance Criteria) — 데모 MVP
 
 - [ ] 서버/DB 없이 Next.js App Router + `localStorage` + Mock 데이터(`/gildong`)만으로 모든 기능이 브라우저에서 동작하며 새로고침 후에도 유지된다.
-- [ ] `/` 접속 시 마이링크 랜딩 페이지가 표시되며, `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·링크 버튼이 포함된 예시 공개 페이지를 볼 수 있다.
+- [x] `/` 접속 시 마이링크 랜딩 페이지가 표시되며, `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·링크 버튼이 포함된 예시 공개 페이지를 볼 수 있다.
 - [ ] `/login`에서 Mock 이메일 인증코드 입력 또는 `데모 계정 바로 체험`으로 `/admin` 대시보드에 진입할 수 있고, 첫 이메일 로그인 시 `/onboarding`을 거친다.
 - [ ] `/admin`에서 PC는 2단 분할(좌측 편집 · 우측 실시간 모바일 목업), 모바일은 `[편집 | 미리보기]` 탭 전환으로 동작한다.
 - [ ] 프로필 영역(아바타·이름·자기소개)과 소셜 미디어 아이콘 배치를 추가·수정·삭제하면 모바일 목업과 `/[username]`에 즉시 반영된다.
@@ -543,42 +544,49 @@ my_link/
 ├── lib/
 │   └── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
 ├── components/
-│   └── ui/                       # shadcn/ui (https://ui.shadcn.com/create) 기반 공용 프리미티브 (button, card, input 등)
+│   └── ui/                       # shadcn/ui 기반 공용 프리미티브 13종 구현 완료 (alert, badge, button, card, dialog, input, label, select, separator, switch, tabs, textarea, tooltip)
 ├── app/
-│   ├── globals.css               # Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
+│   ├── globals.css               # 유일한 CSS 파일 — Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑 (CSS Modules 미사용)
 │   ├── layout.tsx                # Inter · Noto Sans KR 폰트 & TooltipProvider 설정
-│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /links & /gildong 예시 링크
+│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /links & /gildong 예시 링크 (구현 완료)
 │   ├── links/                    # Apple 스타일 중앙 정렬 링크 목록 페이지 (/links, 구현 완료)
-│   │   ├── page.tsx              # 프로필 요약 카드 + 링크 카드 목록 화면
+│   │   ├── page.tsx              # 프로필 요약 카드 + 공용 LinkCard 목록 화면
 │   │   ├── links-data.ts         # 기본 더미 데이터 (dummyLinks 6종 · linkListProfile) & 안전 URL 검증
 │   │   └── components/
-│   │       ├── LinkCard.tsx      # shadcn/ui Card + Apple 18px 헤어라인 카드 컴포넌트
-│   │       ├── LinkIconBadge.tsx # Apple 단색/Action Blue 호버 아이콘 컨테이너
+│   │       ├── LinkCard.tsx      # app/components/LinkCard 재사용 위임 래퍼
+│   │       ├── LinkIconBadge.tsx # LinkGlyph + Tailwind CSS 아이콘 컨테이너
 │   │       └── CopyPageUrlButton.tsx # 현재 페이지 주소 복사 Action Blue 필 버튼
-│   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험
-│   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화)
-│   ├── admin/page.tsx            # 대시보드 (편집·테마·통계 탭 + 우측 실시간 모바일 목업)
-│   ├── [username]/page.tsx       # 공개 프로필 페이지 (대문자/이전 username 리다이렉트, 404 포함)
+│   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험 (예정)
+│   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화, 예정)
+│   ├── admin/page.tsx            # 대시보드 (편집·테마·통계 탭 + 우측 실시간 모바일 목업, 예정)
+│   ├── [username]/               # 공개 프로필 페이지 (구현 완료)
+│   │   ├── page.tsx              # Server Component (Cache Components / generateStaticParams)
+│   │   └── PublicProfileClient.tsx # 하이드레이션 가드·대문자/이전 username 리다이렉트·404·링크 클릭 통계 연동
 │   ├── stores/
-│   │   └── useMyLinkStore.ts     # Zustand 5 + persist 스토어 (hasHydrated 가드 포함)
+│   │   └── useMyLinkStore.ts     # Zustand 5 + persist 스토어 (hasHydrated 가드 포함, 구현 완료)
 │   ├── lib/
-│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (app/links/links-data.ts 더미 및 avatar.jpg 활용)
-│   │   ├── validators.ts         # URL(http/https/mailto)·이메일·username·예약어 검증 및 https 보정
-│   │   ├── icon-matcher.ts       # 도메인·스킴 기반 12종 아이콘 자동 추천
-│   │   ├── themes.ts             # 4종 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
-│   │   └── image-resize.ts       # 아바타 이미지 256×256px 리사이징·압축 (Data URL)
+│   │   ├── types.ts              # UserAccount, ProfileData, LinkItem, ThemePreset 등 도메인 타입 (구현 완료)
+│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (app/links/links-data.ts 더미 및 avatar.jpg 활용, 구현 완료)
+│   │   ├── validators.ts         # URL(http/https/mailto)·이메일·username·예약어 검증 및 https 보정 (구현 완료)
+│   │   ├── icon-matcher.ts       # 도메인·스킴 기반 12종 아이콘 자동 추천 (구현 완료)
+│   │   ├── themes.ts             # 4종 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일 (구현 완료)
+│   │   └── image-resize.ts       # 아바타 이미지 256×256px 리사이징·압축 Data URL (예정)
 │   └── components/
-│       ├── PublicProfileView.tsx # 공개 프로필 공용 뷰 (/[username] 및 모바일 목업 프리뷰에서 재사용)
-│       ├── MobilePreviewFrame.tsx# 대시보드 우측 스마트폰 목업 프레임
-│       ├── LinkEditorList.tsx    # 링크/섹션 인라인 CRUD + HTML5/Pointer 드래그 + ▲/▼ 이동 + Undo 토스트
-│       ├── SocialEditor.tsx      # 소셜 미디어 아이콘 배치 관리
-│       ├── ProfileEditor.tsx     # 아바타·이름·자기소개·username 변경 편집
-│       ├── ThemeSelector.tsx     # 테마 프리셋·버튼 스타일 선택기
-│       └── AnalyticsPanel.tsx    # 총 방문자·링크별 누적 클릭·경량 SVG 최근 7일 추이 차트
+│       ├── LinkCard.tsx          # shadcn/ui Card + Badge + Tailwind CSS 공용 링크 카드 (/links · /[username] · 프리뷰 재사용, 구현 완료)
+│       ├── LinkGlyph.tsx         # 12종 링크 아이콘 + 소셜 플랫폼 Lucide 통합 매핑 (구현 완료)
+│       ├── PublicProfileView.tsx # 공개 프로필 공용 뷰 — Button · Separator · LinkCard 조합 (/[username] 및 모바일 목업 프리뷰 재사용, 구현 완료)
+│       ├── PublicProfileSkeleton.tsx # SSR/CSR 하이드레이션 안전 스켈레톤 (구현 완료)
+│       ├── MobilePreviewFrame.tsx# 대시보드 우측 스마트폰 목업 프레임 (예정)
+│       ├── LinkEditorList.tsx    # 링크/섹션 인라인 CRUD + HTML5/Pointer 드래그 + ▲/▼ 이동 + Undo 토스트 (예정)
+│       ├── SocialEditor.tsx      # 소셜 미디어 아이콘 배치 관리 (예정)
+│       ├── ProfileEditor.tsx     # 아바타·이름·자기소개·username 변경 편집 (예정)
+│       ├── ThemeSelector.tsx     # 테마 프리셋·버튼 스타일 선택기 (예정)
+│       └── AnalyticsPanel.tsx    # 총 방문자·링크별 누적 클릭·경량 SVG 최근 7일 추이 차트 (예정)
 ```
 
 **핵심 구현 원칙**
-- **shadcn/ui 기반 + Apple 시스템 시각 통합**: 앞으로의 모든 UI는 `components/ui/*` (**shadcn/ui**, `https://ui.shadcn.com/create`) 기반으로 구축하며, 색상·타이포그래피·타일 여백·모서리 규칙은 [`design.md`](../design.md)의 Apple 디자인 시스템 기준으로 스타일링한다.
+- **Tailwind CSS 4 단일 스타일링 통일**: 모든 화면과 컴포넌트는 **Tailwind CSS 4**(`app/globals.css` CSS-first 토큰 + `cn()`)로만 스타일링하며, CSS Modules(`.module.css`)나 개별 컴포넌트 전용 CSS 파일을 두지 않는다.
+- **shadcn/ui 기반 공용 컴포넌트 재사용**: 모든 UI는 `components/ui/*` (**shadcn/ui**, `https://ui.shadcn.com/create`) 기반으로 구축하며, 특히 **`LinkCard` (`app/components/LinkCard.tsx`)** 는 `shadcn/ui Card`와 `Badge` 위에서 테마·버튼 스타일(`"card"`/`"pill"`)·프리뷰 분기를 prop으로 수용해 `/links`, `/[username]`, `/admin` 모바일 목업 전반에서 재사용한다. 색상·타이포그래피·타일 여백·모서리 규칙은 [`design.md`](../design.md)의 Apple 디자인 시스템 기준으로 스타일링한다.
 - **단일 뷰 재사용**: `PublicProfileView.tsx`를 `/[username]` 공개 페이지와 `/admin` 모바일 목업 프레임이 공유하여 편집 화면과 실제 결과의 디자인·동작 일치를 보장한다 (`isPreview` prop으로 통계 집계만 분기).
 - **외부 의존성 최소화**: UI 프리미티브는 `shadcn/ui`(`@base-ui/react` · `lucide-react`)로 구성하되, 드래그 앤 드롭은 브라우저 네이티브 HTML5 Drag/Pointer 이벤트(`▲`/`▼` 버튼과 병행)로, 최근 7일 추이 차트는 순수 반응형 **SVG 차트**로 직접 구현한다.
 - **하이드레이션 안전성**: `localStorage`에서 복원하는 모든 클라이언트 화면은 `hasHydrated` 완료 전까지 스켈레톤/기본 상태를 렌더링해 Next.js SSR 하이드레이션 경고를 방지한다.
@@ -587,7 +595,7 @@ my_link/
 
 | 단계 | 핵심 구현 목표 | 완료 기준 (Definition of Done) | 시연 포인트 |
 |---|---|---|---|
-| **M1**<br>기반 & 공개 프로필 | • Zustand 5(`persist`) 스토어 및 `/gildong` Mock 시드 구축<br>• 랜딩(`/`) 및 공개 프로필(`/[username]`) 구현<br>• `PublicProfileView` (`design.md` 상단 라이트 + 하단 다크 타일 교차) | • `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·링크 버튼 정상 표시<br>• 대문자 경로/이전 username 리다이렉트 및 미존재 시 404 표시 | **1차 시연**:<br>랜딩(`/`)에서 `예시 보기`를 눌러 `/gildong` 공개 프로필 레이아웃·외부 링크 동작 확인 |
+| **M1** *(구현 완료)*<br>기반 & 공개 프로필 | • Zustand 5(`persist`) 스토어 및 `/gildong` Mock 시드 구축<br>• 랜딩(`/`) 및 공개 프로필(`/[username]`) 구현<br>• `shadcn/ui Card` 기반 공용 `LinkCard` 및 `PublicProfileView` 구축 (Tailwind CSS 4 통일, `design.md` 상단 라이트 + 하단 다크 타일 교차) | • `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·공용 `LinkCard` 정상 표시<br>• 대문자 경로/이전 username 리다이렉트 및 미존재 시 404 표시 | **1차 시연**:<br>랜딩(`/`)에서 `예시 보기`를 눌러 `/gildong` 공개 프로필 레이아웃·외부 링크 동작 확인 |
 | **M2**<br>인증 · 대시보드 CRUD · 프리뷰 | • Mock 이메일 인증(`/login`) & 원클릭 데모 + `/onboarding`<br>• `/admin` PC 2단 분할(좌측 편집 · 우측 `MobilePreviewFrame`) + 모바일 탭 전환<br>• 프로필(아바타 리사이징·이름·소개), 소셜 배치, 섹션 헤더, 링크 인라인 CRUD<br>• URL 오류 빨간 경고(`#e30000`) + 삭제 확인·5초 Undo | • 잘못된 URL 입력 시 빨간 테두리·문구 출력 및 저장 차단<br>• 추가/수정/삭제/복구 시 모바일 목업과 새로고침 후에도 상태 유지<br>• `username` 변경 시 이전 주소 자동 리다이렉트 동작 | **2차 시연**:<br>이메일 로그인/온보딩부터 프로필·소셜·섹션·링크 추가, 오류 경고, 삭제 실행 취소, 목업 즉시 반영까지 시연 |
 | **M3**<br>정렬 · 테마 · 통계 & 최종 검증 | • 네이티브 드래그 앤 드롭 + `▲`/`▼` 순서 변경<br>• `[테마]` 4종 프리셋 및 카드/필 버튼 스타일 적용<br>• `[통계]` 총 방문자 수·링크별 클릭 수·경량 SVG 최근 7일 추이 차트<br>• 접근성(WCAG AA·키보드)·`next build`·ESLint 통과 | • 드래그/`▲`/`▼` 정렬, 테마 전환이 `/[username]`에 즉시 반영<br>• 미리보기 클릭은 제외하고 실제 `/[username]` 방문·클릭만 통계 및 SVG 차트에 누적<br>• `npm run lint` 및 `npm run build` 오류 0건 | **3차 최종 시연**:<br>아래 `10.3`·`10.4` 시나리오 전체 흐름 무중단 데모 |
 
