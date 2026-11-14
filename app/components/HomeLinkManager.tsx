@@ -2,14 +2,14 @@
 
 import {
   AlertCircle,
-  CheckCircle2,
   Lock,
   LogIn,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import {
   createUserLink,
   deleteUserLink,
@@ -99,8 +99,6 @@ export function HomeLinkManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
   const activeEditingId =
     activeUid && editingUid === activeUid ? editingId : null;
 
@@ -151,14 +149,6 @@ export function HomeLinkManager({
     };
   }, [activeUid]);
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current !== null) {
-        window.clearTimeout(toastTimerRef.current);
-      }
-    };
-  }, []);
-
   const refreshLinks = useCallback(async () => {
     if (!activeUid) return;
     const targetUid = activeUid;
@@ -180,17 +170,6 @@ export function HomeLinkManager({
       setIsRefreshing(false);
     }
   }, [activeUid]);
-
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    if (toastTimerRef.current !== null) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-    toastTimerRef.current = window.setTimeout(() => {
-      setToastMessage(null);
-      toastTimerRef.current = null;
-    }, 3500);
-  };
 
   const handleAddLink = async (
     draft: AddLinkDraft
@@ -225,7 +204,7 @@ export function HomeLinkManager({
         }));
         setLoadErrorState((prev) => (prev?.uid === activeUid ? null : prev));
       }
-      showToast(`링크가 추가되었습니다 (${createdItem.title})`);
+      toast.success(`링크가 추가되었습니다 (${createdItem.title})`);
       return { ok: true };
     } catch (error) {
       return {
@@ -322,7 +301,7 @@ export function HomeLinkManager({
           : prev
       );
       resetInlineEditState();
-      showToast(`링크가 수정되었습니다 (${updatedItem.title})`);
+      toast.success(`링크가 수정되었습니다 (${updatedItem.title})`);
     } catch (error) {
       setEditError(
         formatFirestoreErrorMessage(
@@ -373,7 +352,7 @@ export function HomeLinkManager({
       );
       setDeleteDialogOpen(false);
       setDeleteError(null);
-      showToast(`링크가 삭제되었습니다 (${target.title})`);
+      toast.success(`링크가 삭제되었습니다 (${target.title})`);
     } catch (error) {
       setDeleteError(
         formatFirestoreErrorMessage(
@@ -488,7 +467,11 @@ export function HomeLinkManager({
                 disabled={isAuthActionPending}
                 aria-busy={isAuthActionPending}
                 onClick={() => {
-                  void signInWithGoogle();
+                  void signInWithGoogle().then((signedIn) => {
+                    if (signedIn) {
+                      toast.success("Google 계정으로 로그인되었습니다");
+                    }
+                  });
                 }}
                 className="min-h-11 gap-2 rounded-full border border-black/[0.08] bg-[#e8e8ed] px-5 text-[15px] font-medium tracking-[-0.018em] text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all hover:bg-[#dcdce1] active:scale-95 disabled:opacity-60"
               >
@@ -783,20 +766,6 @@ export function HomeLinkManager({
         onOpenChange={handleDeleteDialogOpenChange}
         onConfirmDelete={handleConfirmDelete}
       />
-
-      {toastMessage ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed right-5 bottom-5 z-50 flex items-center gap-2 rounded-full border border-border bg-foreground px-4 py-2.5 text-[14px] font-normal tracking-[-0.016em] text-background"
-        >
-          <CheckCircle2
-            className="size-4 shrink-0 text-[#4cd964]"
-            aria-hidden="true"
-          />
-          <span>{toastMessage}</span>
-        </div>
-      ) : null}
     </>
   );
 }

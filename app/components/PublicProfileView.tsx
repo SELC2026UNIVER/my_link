@@ -4,6 +4,8 @@ import { Check, Copy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { toast } from "sonner";
+import { copyTextToClipboard } from "@/app/lib/clipboard";
 import { SOCIAL_PLATFORM_LABELS } from "@/app/lib/icon-matcher";
 import { getThemeTokens } from "@/app/lib/themes";
 import type { LinkItem, SocialLink, UserProfile } from "@/app/lib/types";
@@ -73,19 +75,16 @@ export function PublicProfileView({
 
   const handleCopyProfileUrl = async () => {
     const shareUrl = window.location.href;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = shareUrl;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+    const copied = await copyTextToClipboard(shareUrl);
+
+    if (!copied) {
+      toast.error("링크 복사에 실패했습니다. 다시 시도해 주세요.");
+      return;
     }
 
+    toast.success("공개 페이지 링크가 복사되었습니다", {
+      description: shareUrl,
+    });
     setCopiedUrl(true);
     if (copyTimerRef.current !== null) {
       window.clearTimeout(copyTimerRef.current);
@@ -142,9 +141,11 @@ export function PublicProfileView({
   };
 
   const HeadingTag = isPreview ? "h2" : "h1";
-  const isDataUrlAvatar =
+  const isUnoptimizedAvatar =
     profile.avatarUrl?.startsWith("data:") ||
-    profile.avatarUrl?.startsWith("blob:");
+    profile.avatarUrl?.startsWith("blob:") ||
+    profile.avatarUrl?.startsWith("http://") ||
+    profile.avatarUrl?.startsWith("https://");
 
   return (
     <div className="flex min-h-dvh w-full flex-col">
@@ -202,11 +203,12 @@ export function PublicProfileView({
             )}
           >
             {shouldRenderAvatarImage && profile.avatarUrl ? (
-              isDataUrlAvatar ? (
+              isUnoptimizedAvatar ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={profile.avatarUrl}
                   alt={`${profile.displayName} 프로필 아바타`}
+                  referrerPolicy="no-referrer"
                   className="size-full object-cover object-center"
                   onError={() => setAvatarErrorKey(profile.avatarUrl)}
                 />

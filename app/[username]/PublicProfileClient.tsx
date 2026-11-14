@@ -3,9 +3,12 @@
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/app/components/AuthProvider";
 import { PublicProfileSkeleton } from "@/app/components/PublicProfileSkeleton";
 import { PublicProfileView } from "@/app/components/PublicProfileView";
+import { fetchUserLinks, type HomeLinkItem } from "@/app/lib/firestore-links";
+import type { LinkItem, UserProfile } from "@/app/lib/types";
 import {
   resolveUsernameTarget,
   useMyLinkStore,
@@ -18,11 +21,32 @@ interface PublicProfileClientProps {
   rawUsername: string;
 }
 
+interface LiveLinksState {
+  uid: string;
+  items: HomeLinkItem[];
+}
+
+function decodeNormalizedUsername(raw: string): {
+  trimmed: string;
+  normalized: string;
+} {
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    decoded = raw;
+  }
+  const trimmed = decoded.trim();
+  return { trimmed, normalized: trimmed.toLowerCase() };
+}
+
 /**
- * Zustand persist 스토어에서 username을 조회하고 리다이렉트·404·방문/클릭 통계를 처리한다.
+ * 로그인한 사용자의 공개 URL(`/{displayName}`) 또는 Zustand 시드 프로필(`/gildong`)을 조회하고
+ * 리다이렉트·404·방문/클릭 통계를 처리한다.
  */
 export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   const router = useRouter();
+  const { user: authUser, isLoading: isAuthLoading } = useAuth();
 
   const hasHydrated = useMyLinkStore((state) => state._hasHydrated);
   const profiles = useMyLinkStore((state) => state.profiles);
@@ -36,6 +60,24 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   const recordVisit = useMyLinkStore((state) => state.recordVisit);
   const recordLinkClick = useMyLinkStore((state) => state.recordLinkClick);
 
+  const [liveLinksState, setLiveLinksState] = useState<LiveLinksState | null>(
+    null
+  );
+  const [liveLinksErrorUid, setLiveLinksErrorUid] = useState<string | null>(
+    null
+  );
+
+  const { trimmed: requestedTrimmed, normalized: requestedNormalized } =
+    decodeNormalizedUsername(rawUsername);
+
+  const isOwnedAuthProfile =
+    Boolean(authUser) &&
+    Boolean(requestedNormalized) &&
+    authUser!.displayName.toLowerCase() === requestedNormalized;
+
+  const needsCanonicalRedirect =
+    isOwnedAuthProfile && requestedTrimmed !== authUser!.displayName;
+
   useEffect(() => {
     if (!useMyLinkStore.persist.hasHydrated()) {
       void useMyLinkStore.persist.rehydrate();
@@ -44,9 +86,45 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
     }
   }, []);
 
-  const resolution = hasHydrated
-    ? resolveUsernameTarget({ profiles, usernameHistory }, rawUsername)
-    : null;
+  useEffect(() => {
+    if (!needsCanonicalRedirect || !authUser) return;
+    router.replace(`/${encodeURIComponent(authUser.displayName)}`);
+  }, [authUser, needsCanonicalRedirect, router]);
+
+  useEffect(() => {
+    if (!isOwnedAuthProfile || needsCanonicalRedirect || !authUser) {
+      return;
+    }
+
+    let isCancelled = false;
+    const targetUid = authUser.uid;
+
+    async function loadOwnedLinks() {
+      try {
+        const fetched = await fetchUserLinks(targetUid);
+        if (!isCancelled) {
+          setLiveLinksState({ uid: targetUid, items: fetched });
+          setLiveLinksErrorUid((prev) => (prev === targetUid ? null : prev));
+        }
+      } catch {
+        if (!isCancelled) {
+          setLiveLinksState({ uid: targetUid, items: [] });
+          setLiveLinksErrorUid(targetUid);
+        }
+      }
+    }
+
+    void loadOwnedLinks();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authUser, isOwnedAuthProfile, needsCanonicalRedirect]);
+
+  const resolution =
+    hasHydrated && !isOwnedAuthProfile
+      ? resolveUsernameTarget({ profiles, usernameHistory }, rawUsername)
+      : null;
 
   const targetRedirectUsername =
     resolution?.kind === "redirect" ? resolution.targetUsername : null;
@@ -59,10 +137,68 @@ export function PublicProfileClient({ rawUsername }: PublicProfileClientProps) {
   }, [router, targetRedirectUsername]);
 
   useEffect(() => {
+    if (isOwnedAuthProfile && authUser && !needsCanonicalRedirect) {
+      document.title = `${authUser.displayName} (@${authUser.displayName}) | MyLink`;
+      return;
+    }
     if (!activeProfile) return;
     document.title = `${activeProfile.displayName} (@${activeProfile.username}) | MyLink`;
     recordVisit(activeProfile.id);
-  }, [activeProfile, recordVisit]);
+  }, [activeProfile, authUser, isOwnedAuthProfile, needsCanonicalRedirect, recordVisit]);
+
+  if (isAuthLoading) {
+    return <PublicProfileSkeleton />;
+  }
+
+  if (isOwnedAuthProfile && authUser) {
+    if (
+      needsCanonicalRedirect ||
+      (liveLinksState?.uid !== authUser.uid && liveLinksErrorUid !== authUser.uid)
+    ) {
+      return <PublicProfileSkeleton />;
+    }
+
+    const nowIso = new Date().toISOString();
+    const ownedProfile: UserProfile = {
+      id: authUser.uid,
+      email: authUser.email ?? "",
+      username: authUser.displayName,
+      displayName: authUser.googleDisplayName || `@${authUser.displayName}`,
+      bio: `@${authUser.displayName}님의 MyLink 공개 프로필 페이지입니다.`,
+      avatarUrl: authUser.photoURL,
+      themePreset: "apple-classic",
+      buttonStyle: "card",
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+
+    const ownedItems: LinkItem[] = (liveLinksState?.items ?? []).map(
+      (item, index) => ({
+        id: item.id,
+        userId: authUser.uid,
+        kind: "link",
+        title: item.title,
+        url: item.url,
+        icon: item.icon,
+        order: index,
+        clickCount: 0,
+        isVisible: true,
+        deletedAt: null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      })
+    );
+
+    return (
+      <main className="flex min-h-dvh w-full flex-col">
+        <PublicProfileView
+          profile={ownedProfile}
+          socialLinks={[]}
+          items={ownedItems}
+        />
+      </main>
+    );
+  }
 
   if (!hasHydrated || resolution === null || resolution.kind === "redirect") {
     return <PublicProfileSkeleton />;

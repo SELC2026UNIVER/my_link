@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v4.3 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v4.4 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v4.4 변경: **프로필 아바타 드롭다운 메뉴, 공개 페이지 링크 복사 & `shadcn/ui` Sonner 토스트 알림 연동** — `shadcn/ui` `Avatar`, `DropdownMenu`, `Sonner`(`<Toaster />`)를 도입하고, 로그인 시 헤더 우측 프로필 아바타 클릭으로 드롭다운 메뉴(`@displayName`·이메일, `내 공개 페이지 링크 복사`, `내 공개 페이지 보기`, `로그아웃`)를 열며, 공개 페이지 URL(`/{displayName}`) 복사 및 링크 CRUD 피드백을 Sonner 토스트로 표시 (`F-10`, `F-11`, `6.3`, `7.1`, `7.2`, `9`, `10` 반영)
 > v4.3 변경: **데이터 개인화 마이그레이션 (`users/{uid}/links`) & 비로그인 로그인 안내 화면** — 기존 익명(`users/anonymous/links`) 경로 대신 로그인한 사용자의 고유 `uid` 기반 **`users/{uid}/links`** 경로로 조회(`getDocs`)·추가(`addDoc`)·수정(`updateDoc`)·삭제(`deleteDoc`)를 전면 마이그레이션하고, 비로그인 상태일 때는 내 링크 목록 대신 로그인 안내 화면(`로그인하고 나만의 링크를 관리하세요` + `Google로 로그인하기` CTA)을 표시 (`1`, `F-01~F-04`, `3`, `5.1`, `9`, `10` 반영)
 > v4.2 변경: **Firebase Authentication Google 소셜 로그인 연동** — `lib/firebase.ts`(`getAuth`, `GoogleAuthProvider`) · `app/lib/firebase-auth.ts` · `AuthProvider`(`onAuthStateChanged` 실시간 감지 및 `browserLocalPersistence` 세션 유지) 추가, 개인 URL 주소로 활용 가능하도록 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용(`deriveDefaultDisplayName`), 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) `로그인` / `로그아웃` 버튼 배치 (`F-11`, `3`, `7.2`, `8`, `9`, `10` 반영)
 > v4.1 변경: **Firestore 인라인 수정(`updateDoc` + `updatedAt: serverTimestamp()`) & 삭제 확인 모달(`DeleteLinkDialog` + `deleteDoc`) 동시 연동** 반영 — 링크 카드 우측 `수정`(연필)·`삭제`(휴지통) 버튼을 호버 여부에 관계없이 항상 표시하고, 인라인 수정 저장 시 `updateDoc` + `updatedAt: serverTimestamp()` 갱신(저장 버튼 내부 스피너·비활성화, 취소 시 원래 값 복구) 및 삭제 버튼 클릭 시 `'정말 삭제하시겠습니까?'` 확인 모달(링크명, 빨간색 `'이 작업은 되돌릴 수 없습니다'` 경고, `shadcn/ui` destructive 빨간색 `삭제하기` 버튼 내부 스피너·비활성화, `deleteDoc` 후 목록 제거)을 `F-03`, `F-04`, `5.1`, `6.3`, `7.2`, `8`, `9`, `10`에 반영
@@ -57,8 +58,8 @@
 | F-07 | UI | URL 안전성 및 도메인 아이콘 추천 | `http://`, `https://`, `mailto:`만 허용하고 도메인별 13종 아이콘을 자동 추천 | **필수 (P0)** |
 | F-08 | 링크 | 링크 순서 변경 | 목록 내 링크 순서 드래그 앤 드롭 또는 `▲`/`▼` 이동 버튼 지원 | 선택 (P1) |
 | F-09 | UI | 테마 프리셋 및 버튼 스타일 | 카드형(`18px`) / 필형(`9999px`) 및 라이트/다크 테마 전환 | 선택 (P1) |
-| F-10 | 공유 | URL 복사 / QR 코드 | 공개 프로필 주소 원클릭 복사 (`페이지 공유` 버튼 구현됨) | 선택 (P1) |
-| F-11 | 인증 | Google 소셜 로그인 및 세션 유지 | Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider` + `onAuthStateChanged`) 기반 로그인/로그아웃, 브라우저 세션 유지, 이메일 앞부분(영문 아이디) 기본 `displayName` 설정 및 헤더 모노톤 회색 버튼 UI | **필수 (P0)** |
+| F-10 | 공유 | URL 복사 / 프로필 드롭다운 | 헤더 우측 프로필 아바타 드롭다운(`내 공개 페이지 링크 복사` · `내 공개 페이지 보기` · `로그아웃`) 및 공개 프로필(`페이지 공유`) 원클릭 복사 + `shadcn/ui` Sonner 토스트 알림 | **필수 (P0)** |
+| F-11 | 인증 | Google 소셜 로그인 및 세션 유지 | Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider` + `onAuthStateChanged`) 기반 로그인/로그아웃, 브라우저 세션 유지, 이메일 앞부분(영문 아이디) 기본 `displayName` 설정, 헤더 모노톤 회색 로그인 버튼 및 로그인 시 프로필 아바타 드롭다운 UI | **필수 (P0)** |
 
 ---
 
@@ -207,7 +208,7 @@ flowchart LR
 | 접근성 | WCAG 2.1 AA 명도 대비 4.5:1 이상, 포커스 링(`#0071e3`), 아이콘 버튼 `aria-label` 필수, 스피너 `role="status"` / `aria-busy` 적용 |
 | 오류 표시 | 빨간색(`#e30000`) + 텍스트 메시지를 함께 사용, `aria-invalid` · `aria-describedby` 적용 |
 | 로딩 표시 | • 목록 조회/갱신 시: 카드 내부 중앙 그레이 미니멀 스피너<br>• 링크 추가/인라인 수정 시: `저장` 버튼 내부 스피너 회전 및 버튼 비활성화(중복 클릭 방지)<br>• 확인 모달 삭제 시: `삭제하기` 버튼 내부 스피너 회전 및 버튼 비활성화 |
-| 피드백 | 링크 추가·인라인 수정·삭제 결과를 `role="status"` 플로팅 토스트로 안내 |
+| 피드백 | 공개 페이지 링크 복사 및 링크 추가·인라인 수정·삭제 결과를 `shadcn/ui` **Sonner(`<Toaster />`)** 플로팅 토스트로 안내 |
 
 ---
 
@@ -219,7 +220,7 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 
 | 구분 | 기준 | 적용 범위 및 원칙 |
 |---|---|---|
-| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Badge`, `Button`, `Card`, `Dialog`, `Input`, `Label`, `Select`, `Separator`, `Spinner`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 루트(`/`), `/links`, `/[username]`(`PublicProfileView`)에서 재사용한다.<br>• 스타일링은 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일한다. |
+| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Avatar`, `Badge`, `Button`, `Card`, `Dialog`, `DropdownMenu`, `Input`, `Label`, `Select`, `Separator`, `Sonner`, `Spinner`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react` · `sonner`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 루트(`/`), `/links`, `/[username]`(`PublicProfileView`)에서 재사용한다.<br>• 스타일링은 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일한다. |
 | **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 프라이머리 버튼(`--primary` / `bg-primary`)은 **애플 모노톤 다크 그레이(`#1d1d1f`)** + 순백 텍스트(`#ffffff`) + **깔끔한 둥근 모서리(`rounded-full`) · 은은한 그림자(`shadow-[0_2px_10px_rgba(0,0,0,0.12)]`)** 를 적용하고, 포커스 링 `#0071e3` · 다크 타일 위 보조 블루(`#2997ff`, `--color-action-blue: #0066cc`) · 카드 `18px` 둥근 모서리를 유지한다.<br>• 루트(`/`) 상단 **`링크 추가`** 버튼은 히어로 CTA 행 최전방에 배치해 시각적 최우선 위계를 부여한다. |
 
 ### 7.2 화면별 시각 가이드
@@ -243,12 +244,14 @@ UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https:/
 
 ---
 
-## 9. 수용 기준 (Acceptance Criteria, v4.3 개인화 마이그레이션 기준)
+## 9. 수용 기준 (Acceptance Criteria, v4.4 프로필 드롭다운 & Sonner 연동 기준)
 
 - [x] Firebase Authentication(`signInWithPopup` + `GoogleAuthProvider`)으로 구글 소셜 로그인 및 로그아웃이 동작한다.
 - [x] `onAuthStateChanged`로 로그인 상태를 감지하고 `browserLocalPersistence`로 새로고침 이후에도 세션이 유지된다.
 - [x] 구글 이메일 앞부분(영문 아이디)을 개인 URL 주소용 기본 디스플레이 네임(`displayName`)으로 정규화해 사용한다.
-- [x] 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) 로그인/로그아웃 버튼이 표시된다.
+- [x] 비로그인 시 헤더 우측에 애플 미니멀 모노톤 회색 톤(`#e8e8ed` / `#1d1d1f`) 로그인 버튼이, 로그인 시 프로필 아바타 트리거가 표시된다.
+- [x] 헤더 우측 프로필 아바타를 클릭하면 드롭다운 메뉴(`@displayName`·이메일, `내 공개 페이지 링크 복사`, `내 공개 페이지 보기`, `로그아웃`)가 열린다.
+- [x] `내 공개 페이지 링크 복사` 클릭 시 클립보드에 개인 공개 URL(`${origin}/${displayName}`)이 복사되고 `shadcn/ui` Sonner 토스트 알림으로 완료 메시지가 표시된다.
 - [x] 비로그인 상태일 때는 `'내 링크 목록'` 대신 `'로그인하고 나만의 링크를 관리하세요'` 로그인 안내 화면과 `'Google로 로그인하기'` CTA가 표시된다.
 - [x] Firebase SDK(`firebase`)가 설치되고, 모든 Firebase 설정값이 `.env.local`의 `NEXT_PUBLIC_FIREBASE_*` 환경 변수로 분리되어 Git 추적에서 제외된다.
 - [x] 로그인 후 루트(`/`) 진입 시 `getDocs` + `orderBy("createdAt", "desc")` 방식으로 `users/{uid}/links` 컬렉션을 불러오며(`onSnapshot` 미사용), 컬렉션이 비어 있을 때 더미 데이터 없이 `'등록된 링크가 없습니다'` 안내가 표시된다.
@@ -278,10 +281,10 @@ my_link/
 │   ├── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
 │   ├── firebase.ts               # Firebase App 싱글톤 초기화, Auth(auth), Firestore(db) 인스턴스
 ├── components/
-│   └── ui/                       # shadcn/ui 공용 프리미티브 (alert, badge, button, card, dialog, input, label, select, separator, spinner, switch, tabs, textarea, tooltip)
+│   └── ui/                       # shadcn/ui 공용 프리미티브 (alert, avatar, badge, button, card, dialog, dropdown-menu, input, label, select, separator, sonner, spinner, switch, tabs, textarea, tooltip)
 ├── app/
 │   ├── globals.css               # 유일한 CSS 파일 — Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
-│   ├── layout.tsx                # Inter · Noto Sans KR 폰트, TooltipProvider & AuthProvider 설정
+│   ├── layout.tsx                # Inter · Noto Sans KR 폰트, TooltipProvider, AuthProvider & Sonner Toaster 설정
 │   ├── page.tsx                  # 메인 페이지 (/) — 프로필 히어로 + HomeLinkManager + 공부 기록 + 연습 작품 + 푸터
 │   ├── links/                    # 링크 카드 유틸리티 페이지 (/links, 정적 데모 유지)
 │   │   ├── page.tsx              # 프로필 요약 카드 + 공용 LinkCard 목록 화면
@@ -290,13 +293,14 @@ my_link/
 │   │       ├── LinkCard.tsx      # app/components/LinkCard 재사용 위임 래퍼
 │   │       ├── LinkIconBadge.tsx # LinkGlyph + Tailwind CSS 아이콘 컨테이너
 │   │       └── CopyPageUrlButton.tsx # 현재 페이지 주소 복사 Action Blue 필 버튼
-│   ├── [username]/               # 공개 프로필 페이지 (/gildong 등)
+│   ├── [username]/               # 공개 프로필 페이지 (/{displayName}, /gildong 등)
 │   │   ├── page.tsx              # Server Component (generateStaticParams)
-│   │   └── PublicProfileClient.tsx # 하이드레이션 가드·리다이렉트·404·읽기 전용 뷰
+│   │   └── PublicProfileClient.tsx # 로그인 사용자 라이브 조회(users/{uid}/links)·Zustand 시드·리다이렉트·404·읽기 전용 뷰
 │   ├── stores/
 │   │   └── useMyLinkStore.ts     # /[username] 공개 뷰 상태 (임시 데모 세션/로그인 우회 미포함)
 │   ├── lib/
 │   │   ├── types.ts              # LinkIcon, LinkItem, ThemePreset 등 도메인 타입
+│   │   ├── clipboard.ts          # 클립보드 복사(navigator.clipboard + textarea 폴백) 공용 헬퍼
 │   │   ├── firebase-auth.ts      # Google 소셜 로그인/로그아웃, onAuthStateChanged용 AuthUser 매핑, 이메일 앞부분 기본 디스플레이 네임 정규화
 │   │   ├── firestore-links.ts    # users/{uid}/links Firestore CRUD(addDoc · getDocs · updateDoc · deleteDoc) 서비스
 │   │   ├── mock-seed.ts          # /gildong 공개 뷰 시드 데이터
@@ -305,7 +309,7 @@ my_link/
 │   │   └── themes.ts             # 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
 │   └── components/
 │       ├── AuthProvider.tsx      # onAuthStateChanged 실시간 인증 상태 감지 & 세션 유지 Context Provider
-│       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (애플 모노톤 회색 로그인/로그아웃 버튼 포함)
+│       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (비로그인 회색 로그인 버튼 / 로그인 프로필 아바타 드롭다운 메뉴)
 │       ├── HomeLinkManager.tsx   # 루트(/) Firestore(users/{uid}/links) 조회·추가·인라인 수정·삭제 모달 및 비로그인 안내 관리
 │       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 모달 (저장 중 스피너·비활성화)
 │       ├── DeleteLinkDialog.tsx  # shadcn/ui Dialog + destructive 버튼 기반 삭제 확인 모달 (삭제 중 스피너·비활성화)
@@ -325,6 +329,7 @@ my_link/
 | **M4** *(완료 · v4.1)*<br>Firestore Update/Delete 동시 연동 | • 링크 카드 우측 항상 노출 `수정`(연필)·`삭제`(휴지통) 버튼<br>• 인라인 수정 `updateDoc` + `updatedAt: serverTimestamp()` + 취소 시 원복<br>• `DeleteLinkDialog` 확인 모달 + `destructive` 삭제하기 + `deleteDoc` + 버튼 스피너·비활성화 | • 새로고침 후에도 수정/삭제 결과 영속 유지<br>• 저장/삭제 중 버튼 내부 스피너 회전 및 비활성화 |
 | **M5** *(완료 · v4.2)*<br>Google 소셜 로그인 연동 | • `firebase/auth`(`signInWithPopup`, `GoogleAuthProvider`, `onAuthStateChanged`) 및 `AuthProvider` 구축<br>• 구글 이메일 앞부분(영문 아이디)을 기본 `displayName`으로 정규화·적용<br>• 헤더 우측 애플 모노톤 회색 톤 로그인/로그아웃 버튼 | • 새로고침 후에도 `onAuthStateChanged`로 세션 유지<br>• 로그인/로그아웃 동작 및 오류 안내 표시 |
 | **M6** *(완료 · v4.3)*<br>UID 기반 데이터 개인화 마이그레이션 | • `users/anonymous/links` → `users/{uid}/links` 경로 전면 전환<br>• 비로그인 시 내 링크 목록 대신 로그인 안내 화면(`Google로 로그인하기`) 표시 | • 로그인 사용자별 고유 UID 경로에만 링크 저장·조회<br>• 로그아웃 시 즉시 개인 링크 목록 숨김 및 안내 화면 전환 |
+| **M7** *(완료 · v4.4)*<br>프로필 드롭다운 · 링크 복사 · Sonner 연동 | • `shadcn/ui` `Avatar`, `DropdownMenu`, `Sonner` 설치 및 `<Toaster />` 마운트<br>• 헤더 우측 프로필 아바타 클릭 드롭다운 메뉴(`내 공개 페이지 링크 복사`, `내 공개 페이지 보기`, `로그아웃`) 구현<br>• `/{displayName}` 공개 페이지 링크 복사 및 CRUD 토스트 알림을 Sonner로 통합 | • 아바타 클릭 시 드롭다운 열림 및 링크 복사 시 Sonner 토스트 알림 표시<br>• 복사한 `/{displayName}` 경로에서 본인 링크 실시간 조회 가능 |
 
 ### 10.3 핵심 사용자 시나리오 (v4.3 Auth + Firestore CRUD 기준)
 

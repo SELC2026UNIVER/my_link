@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/app/components/AuthProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/15 selection:text-foreground">
         <TooltipProvider>
           <AuthProvider>{children}</AuthProvider>
+          <Toaster position="bottom-right" />
         </TooltipProvider>
       </body>
     </html>
