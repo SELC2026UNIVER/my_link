@@ -1,14 +1,16 @@
 "use client";
 
-import { CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   createAnonymousLink,
+  deleteAnonymousLink,
   fetchAnonymousLinks,
   formatFirestoreErrorMessage,
+  resolveUpdatedLinkIcon,
+  updateAnonymousLink,
   type HomeLinkItem,
 } from "@/app/lib/firestore-links";
-import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
 import {
   formatDisplayUrl,
   MAX_ACTIVE_ITEMS,
@@ -29,6 +31,7 @@ import {
   type AddLinkSubmitResult,
 } from "./AddLinkDialog";
 import CopyEmailButton from "./CopyEmailButton";
+import { DeleteLinkDialog } from "./DeleteLinkDialog";
 import { LinkCard } from "./LinkCard";
 
 interface HomeLinkManagerProps {
@@ -55,9 +58,19 @@ export function HomeLinkManager({
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
+  const [editErrorField, setEditErrorField] = useState<
+    "title" | "url" | "submit" | null
+  >(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<HomeLinkItem | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const isActionBusy = isUpdating || isDeleting;
 
   useEffect(() => {
     let isCancelled = false;
@@ -158,26 +171,42 @@ export function HomeLinkManager({
     }
   };
 
-  const startInlineEdit = (item: HomeLinkItem) => {
-    setEditingId(item.id);
-    setEditTitle(item.title);
-    setEditUrl(item.url);
-    setEditError(null);
-  };
-
-  const cancelInlineEdit = () => {
+  const resetInlineEditState = () => {
     setEditingId(null);
     setEditTitle("");
     setEditUrl("");
     setEditError(null);
+    setEditErrorField(null);
   };
 
-  const handleInlineSave = (event: FormEvent, targetId: string) => {
+  const startInlineEdit = (item: HomeLinkItem) => {
+    if (isActionBusy) return;
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditUrl(item.url);
+    setEditError(null);
+    setEditErrorField(null);
+  };
+
+  const cancelInlineEdit = () => {
+    if (isUpdating) return;
+    resetInlineEditState();
+  };
+
+  const handleInlineSave = async (event: FormEvent, targetId: string) => {
     event.preventDefault();
+    if (isUpdating) return;
+
+    const targetItem = links.find((item) => item.id === targetId);
+    if (!targetItem) {
+      resetInlineEditState();
+      return;
+    }
 
     const titleCheck = validateLinkTitle(editTitle);
     if (!titleCheck.valid) {
       setEditError(titleCheck.error ?? "제목을 입력해 주세요");
+      setEditErrorField("title");
       return;
     }
 
@@ -187,33 +216,89 @@ export function HomeLinkManager({
         urlCheck.error ??
           "올바른 URL 형식이 아닙니다 (예: https://example.com 또는 mailto:name@example.com)"
       );
+      setEditErrorField("url");
       return;
     }
 
-    const resolvedIcon = recommendIconForUrl(urlCheck.normalized);
-    setLinks((prev) =>
-      prev.map((item) =>
-        item.id === targetId
-          ? {
-              ...item,
-              title: titleCheck.normalized,
-              url: urlCheck.normalized,
-              icon: resolvedIcon,
-              category: LINK_ICON_LABELS[resolvedIcon],
-            }
-          : item
-      )
+    const { icon, category } = resolveUpdatedLinkIcon(
+      targetItem.url,
+      targetItem.icon,
+      targetItem.category,
+      urlCheck.normalized
     );
-    cancelInlineEdit();
-    showToast(`링크가 수정되었습니다 (${titleCheck.normalized})`);
+
+    setIsUpdating(true);
+    setEditError(null);
+    setEditErrorField(null);
+
+    try {
+      const updatedItem = await updateAnonymousLink({
+        id: targetId,
+        title: titleCheck.normalized,
+        url: urlCheck.normalized,
+        icon,
+        category,
+      });
+
+      setLinks((prev) =>
+        prev.map((item) => (item.id === targetId ? updatedItem : item))
+      );
+      resetInlineEditState();
+      showToast(`링크가 수정되었습니다 (${updatedItem.title})`);
+    } catch (error) {
+      setEditError(
+        formatFirestoreErrorMessage(
+          error,
+          "링크를 수정하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        )
+      );
+      setEditErrorField("submit");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleDeleteLink = (item: HomeLinkItem) => {
-    if (editingId === item.id) {
-      cancelInlineEdit();
+  const openDeleteDialog = (item: HomeLinkItem) => {
+    if (isActionBusy) return;
+    setDeleteTarget(item);
+    setDeleteError(null);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isDeleting) return;
+    setDeleteDialogOpen(nextOpen);
+    if (!nextOpen) {
+      setDeleteError(null);
     }
-    setLinks((prev) => prev.filter((link) => link.id !== item.id));
-    showToast(`링크가 삭제되었습니다 (${item.title})`);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || isDeleting) return;
+
+    const target = deleteTarget;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteAnonymousLink(target.id);
+      if (editingId === target.id) {
+        resetInlineEditState();
+      }
+      setLinks((prev) => prev.filter((link) => link.id !== target.id));
+      setDeleteDialogOpen(false);
+      setDeleteError(null);
+      showToast(`링크가 삭제되었습니다 (${target.title})`);
+    } catch (error) {
+      setDeleteError(
+        formatFirestoreErrorMessage(
+          error,
+          "링크를 삭제하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        )
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -331,23 +416,50 @@ export function HomeLinkManager({
                   return (
                     <li key={item.id}>
                       <form
-                        onSubmit={(event) => handleInlineSave(event, item.id)}
+                        onSubmit={(event) => {
+                          void handleInlineSave(event, item.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape" && !isUpdating) {
+                            event.preventDefault();
+                            cancelInlineEdit();
+                          }
+                        }}
                         noValidate
                         className="flex flex-col gap-3 rounded-[18px] border border-primary/40 bg-card p-4"
                       >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <div className="flex flex-col gap-1">
-                            <Label
-                              htmlFor={`edit-title-${item.id}`}
-                              className="text-[12px] font-semibold text-foreground"
-                            >
-                              제목
-                            </Label>
+                            <div className="flex items-center justify-between gap-2">
+                              <Label
+                                htmlFor={`edit-title-${item.id}`}
+                                className="text-[12px] font-semibold text-foreground"
+                              >
+                                제목
+                              </Label>
+                              <span
+                                className={cn(
+                                  "text-[11px] tabular-nums",
+                                  editTitle.length >= MAX_LINK_TITLE_LENGTH ||
+                                    editErrorField === "title"
+                                    ? "font-semibold text-destructive"
+                                    : "text-muted-foreground"
+                                )}
+                              >
+                                {editTitle.length}/{MAX_LINK_TITLE_LENGTH}
+                              </span>
+                            </div>
                             <Input
                               id={`edit-title-${item.id}`}
                               type="text"
                               value={editTitle}
                               maxLength={MAX_LINK_TITLE_LENGTH}
+                              autoFocus
+                              disabled={isUpdating}
+                              aria-invalid={editErrorField === "title"}
+                              aria-describedby={
+                                editError ? `edit-error-${item.id}` : undefined
+                              }
                               onChange={(event) => {
                                 setEditTitle(
                                   event.target.value.slice(
@@ -356,6 +468,7 @@ export function HomeLinkManager({
                                   )
                                 );
                                 setEditError(null);
+                                setEditErrorField(null);
                               }}
                               className="h-9 rounded-lg text-[14px]"
                             />
@@ -366,16 +479,23 @@ export function HomeLinkManager({
                               htmlFor={`edit-url-${item.id}`}
                               className="text-[12px] font-semibold text-foreground"
                             >
-                              URL
+                              주소 (URL)
                             </Label>
                             <Input
                               id={`edit-url-${item.id}`}
                               type="text"
                               inputMode="url"
+                              placeholder="https://example.com 또는 mailto:name@example.com"
                               value={editUrl}
+                              disabled={isUpdating}
+                              aria-invalid={editErrorField === "url"}
+                              aria-describedby={
+                                editError ? `edit-error-${item.id}` : undefined
+                              }
                               onChange={(event) => {
                                 setEditUrl(event.target.value);
                                 setEditError(null);
+                                setEditErrorField(null);
                               }}
                               className="h-9 rounded-lg text-[14px]"
                             />
@@ -384,10 +504,15 @@ export function HomeLinkManager({
 
                         {editError ? (
                           <p
+                            id={`edit-error-${item.id}`}
                             role="alert"
-                            className="text-[12px] font-semibold text-destructive"
+                            className="flex items-center gap-1.5 text-[12px] font-semibold text-destructive"
                           >
-                            {editError}
+                            <AlertCircle
+                              className="size-3.5 shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span>{editError}</span>
                           </p>
                         ) : null}
 
@@ -397,8 +522,11 @@ export function HomeLinkManager({
                             variant="outline"
                             size="sm"
                             shape="pill"
+                            data-cancel-action="true"
+                            disabled={isUpdating}
+                            onMouseDown={(event) => event.preventDefault()}
                             onClick={cancelInlineEdit}
-                            className="h-8 px-3.5 text-[13px] shadow-none"
+                            className="min-h-9 px-3.5 text-[13px] font-normal shadow-none"
                           >
                             취소
                           </Button>
@@ -406,9 +534,21 @@ export function HomeLinkManager({
                             type="submit"
                             size="sm"
                             shape="pill"
-                            className="h-8 bg-primary px-4 text-[13px] text-primary-foreground shadow-[0_1px_6px_rgba(0,0,0,0.12)] hover:bg-[#333336]"
+                            disabled={isUpdating}
+                            aria-busy={isUpdating}
+                            className="min-h-9 min-w-[84px] gap-1.5 bg-primary px-4 text-[13px] text-primary-foreground shadow-[0_1px_6px_rgba(0,0,0,0.12)] hover:bg-[#333336] disabled:cursor-not-allowed disabled:opacity-65"
                           >
-                            저장
+                            {isUpdating ? (
+                              <>
+                                <Spinner
+                                  decorative
+                                  className="size-3.5 text-primary-foreground"
+                                />
+                                <span>저장 중...</span>
+                              </>
+                            ) : (
+                              <span>저장</span>
+                            )}
                           </Button>
                         </div>
                       </form>
@@ -427,32 +567,36 @@ export function HomeLinkManager({
                       buttonStyle="card"
                       className="min-w-0 flex-1"
                     />
-                    <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row sm:items-stretch">
+                    <div className="flex shrink-0 items-stretch gap-1.5">
                       <button
                         type="button"
+                        disabled={isActionBusy}
                         onClick={() => startInlineEdit(item)}
                         aria-label={`${item.title} 수정`}
-                        title="인라인 수정"
+                        title="수정"
                         className={cn(
-                          "inline-flex flex-1 cursor-pointer items-center justify-center rounded-[14px] border border-border bg-card px-2.5 text-muted-foreground transition-colors sm:w-10 sm:rounded-[18px] sm:px-0",
+                          "inline-flex min-h-[64px] w-10 cursor-pointer items-center justify-center rounded-[16px] border border-border bg-card text-muted-foreground transition-colors sm:w-11 sm:rounded-[18px]",
                           "hover:border-primary/40 hover:bg-[var(--color-surface-pearl)] hover:text-primary active:scale-95",
-                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]",
+                          "disabled:pointer-events-none disabled:opacity-50"
                         )}
                       >
-                        <Pencil className="size-3.5" aria-hidden="true" />
+                        <Pencil className="size-4" aria-hidden="true" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDeleteLink(item)}
+                        disabled={isActionBusy}
+                        onClick={() => openDeleteDialog(item)}
                         aria-label={`${item.title} 삭제`}
                         title="삭제"
                         className={cn(
-                          "inline-flex flex-1 cursor-pointer items-center justify-center rounded-[14px] border border-border bg-card px-2.5 text-muted-foreground transition-colors sm:w-10 sm:rounded-[18px] sm:px-0",
+                          "inline-flex min-h-[64px] w-10 cursor-pointer items-center justify-center rounded-[16px] border border-border bg-card text-muted-foreground transition-colors sm:w-11 sm:rounded-[18px]",
                           "hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive active:scale-95",
-                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
+                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]",
+                          "disabled:pointer-events-none disabled:opacity-50"
                         )}
                       >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
+                        <Trash2 className="size-4" aria-hidden="true" />
                       </button>
                     </div>
                   </li>
@@ -484,6 +628,15 @@ export function HomeLinkManager({
         onOpenChange={setDialogOpen}
         activeItemCount={links.length}
         onAddLink={handleAddLink}
+      />
+
+      <DeleteLinkDialog
+        target={deleteTarget}
+        open={deleteDialogOpen}
+        isDeleting={isDeleting}
+        errorMessage={deleteError}
+        onOpenChange={handleDeleteDialogOpenChange}
+        onConfirmDelete={handleConfirmDelete}
       />
 
       {toastMessage ? (

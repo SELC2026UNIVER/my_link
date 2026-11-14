@@ -2,10 +2,13 @@ import { FirebaseError } from "firebase/app";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
 import type { LinkIcon } from "@/app/lib/types";
@@ -26,10 +29,22 @@ export interface CreateAnonymousLinkInput {
   icon: LinkIcon;
 }
 
+export interface UpdateAnonymousLinkInput {
+  id: string;
+  title: string;
+  url: string;
+  icon: LinkIcon;
+  category: string;
+}
+
 const VALID_LINK_ICON_SET = new Set<string>(LINK_ICON_VALUES);
 
 function getAnonymousLinksCollection() {
   return collection(getFirestoreDb(), "users", "anonymous", "links");
+}
+
+function getAnonymousLinkDoc(linkId: string) {
+  return doc(getFirestoreDb(), "users", "anonymous", "links", linkId);
 }
 
 function resolveValidLinkIcon(rawIcon: unknown, url: string): LinkIcon {
@@ -37,6 +52,37 @@ function resolveValidLinkIcon(rawIcon: unknown, url: string): LinkIcon {
     return rawIcon as LinkIcon;
   }
   return recommendIconForUrl(url);
+}
+
+/**
+ * URL 변경 여부에 따라 링크 수정 시 사용할 아이콘과 카테고리 라벨을 결정한다.
+ */
+export function resolveUpdatedLinkIcon(
+  previousUrl: string,
+  previousIcon: LinkIcon,
+  previousCategory: string,
+  nextNormalizedUrl: string
+): { icon: LinkIcon; category: string } {
+  if (nextNormalizedUrl === previousUrl) {
+    return { icon: previousIcon, category: previousCategory };
+  }
+
+  const recommendedNext = recommendIconForUrl(nextNormalizedUrl);
+  const recommendedPrev = recommendIconForUrl(previousUrl);
+  const resolvedIcon =
+    recommendedNext !== "link"
+      ? recommendedNext
+      : previousIcon === recommendedPrev
+        ? "link"
+        : previousIcon;
+
+  return {
+    icon: resolvedIcon,
+    category:
+      resolvedIcon === previousIcon
+        ? previousCategory
+        : LINK_ICON_LABELS[resolvedIcon],
+  };
 }
 
 /**
@@ -52,6 +98,9 @@ export function formatFirestoreErrorMessage(
     }
     if (error.code === "unavailable") {
       return "네트워크 연결을 확인한 뒤 다시 시도해 주세요.";
+    }
+    if (error.code === "not-found") {
+      return "이미 삭제되었거나 존재하지 않는 링크입니다. 목록을 새로고침해 주세요.";
     }
   }
   if (error instanceof Error && error.message) {
@@ -115,4 +164,34 @@ export async function createAnonymousLink(
     icon: input.icon,
     category,
   };
+}
+
+/**
+ * Firestore users/anonymous/links/{id} 문서를 수정하고 updatedAt 서버 타임스탬프를 갱신한다.
+ */
+export async function updateAnonymousLink(
+  input: UpdateAnonymousLinkInput
+): Promise<HomeLinkItem> {
+  await updateDoc(getAnonymousLinkDoc(input.id), {
+    title: input.title,
+    url: input.url,
+    icon: input.icon,
+    category: input.category,
+    updatedAt: serverTimestamp(),
+  });
+
+  return {
+    id: input.id,
+    title: input.title,
+    url: input.url,
+    icon: input.icon,
+    category: input.category,
+  };
+}
+
+/**
+ * Firestore users/anonymous/links/{id} 문서를 삭제한다.
+ */
+export async function deleteAnonymousLink(linkId: string): Promise<void> {
+  await deleteDoc(getAnonymousLinkDoc(linkId));
 }
