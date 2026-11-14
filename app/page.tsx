@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import BeginnerChecklist from "./components/BeginnerChecklist";
 import CopyEmailButton from "./components/CopyEmailButton";
 import ProfileShowcase from "./components/ProfileShowcase";
@@ -289,6 +290,14 @@ export default function Home() {
                   >
                     배우는 기술
                   </a>
+                </li>
+                <li>
+                  <Link
+                    href="/links"
+                    className="type-dense-link text-[var(--color-primary)] hover:underline"
+                  >
+                    링크 목록 보기
+                  </Link>
                 </li>
               </ul>
             </div>

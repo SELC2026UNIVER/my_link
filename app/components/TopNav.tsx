@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface TopNavProps {
@@ -14,6 +15,7 @@ const navItems = [
   { label: "공부 기록", href: "#study-log" },
   { label: "연습 작품", href: "#projects" },
   { label: "배우는 기술", href: "#stack" },
+  { label: "링크 목록", href: "/links" },
   { label: "연락처", href: "#contact" },
 ];
 
@@ -76,15 +78,25 @@ export default function TopNav({
           </a>
 
           <div className="hidden items-center gap-7 min-[834px]:flex">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="type-nav-link whitespace-nowrap text-white/80 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
-              >
-                {item.label}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item.href.startsWith("/") ? (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="type-nav-link whitespace-nowrap text-white/80 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="type-nav-link whitespace-nowrap text-white/80 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+                >
+                  {item.label}
+                </a>
+              )
+            )}
           </div>
 
           <button
@@ -139,16 +151,27 @@ export default function TopNav({
         {mobileOpen ? (
           <div className="border-t border-white/10 bg-[var(--color-surface-black)] px-5 pb-5 pt-3 min-[834px]:hidden">
             <div className="mx-auto flex max-w-[980px] flex-col">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="type-body border-b border-white/[0.08] py-3 text-white/90 transition-colors last:border-b-0 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navItems.map((item) =>
+                item.href.startsWith("/") ? (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="type-body border-b border-white/[0.08] py-3 text-white/90 transition-colors last:border-b-0 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="type-body border-b border-white/[0.08] py-3 text-white/90 transition-colors last:border-b-0 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
             </div>
           </div>
         ) : null}
@@ -169,6 +192,12 @@ export default function TopNav({
           </div>
 
           <div className="flex shrink-0 items-center gap-5">
+            <Link
+              href="/links"
+              className="type-nav-link whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3]"
+            >
+              링크 목록
+            </Link>
             <a
               href="#study-log"
               className="type-nav-link hidden whitespace-nowrap text-[var(--color-ink-muted-80)] transition-colors hover:text-[var(--color-primary)] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0071e3] sm:inline"
