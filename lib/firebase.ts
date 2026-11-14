@@ -40,7 +40,7 @@ export const auth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null;
 export function getFirestoreDb(): Firestore {
   if (!db) {
     throw new Error(
-      "Firebase 환경 변수(.env.local의 NEXT_PUBLIC_FIREBASE_*)가 설정되지 않았습니다."
+      "Firebase 환경 변수(NEXT_PUBLIC_FIREBASE_*)가 설정되지 않았습니다. .env.local 또는 Vercel 환경 변수 설정을 확인해 주세요."
     );
   }
   return db;
@@ -53,7 +53,7 @@ export function getFirestoreDb(): Firestore {
 export function getFirebaseAuth(): Auth {
   if (!auth) {
     throw new Error(
-      "Firebase 환경 변수(.env.local의 NEXT_PUBLIC_FIREBASE_*)가 설정되지 않았습니다."
+      "Firebase 환경 변수(NEXT_PUBLIC_FIREBASE_*)가 설정되지 않았습니다. .env.local 또는 Vercel 환경 변수 설정을 확인해 주세요."
     );
   }
   return auth;
