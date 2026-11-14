@@ -1,7 +1,8 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.4 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> 문서 버전: v3.5 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v3.5 변경: 링크 목록 페이지(`/links`) 및 기본 더미 데이터(`app/links/links-data.ts`의 `dummyLinks` 6종 · `linkListProfile`) 사용 명세를 라우팅, 데이터 모델, 폴더 설계에 반영
 > v3.4 변경: UI 컴포넌트 구현 기반을 **shadcn/ui (`https://ui.shadcn.com/create`)** + **Tailwind CSS 4 (CSS-first, `tailwind.config` 파일 미사용)** 로 정의하고, [`design.md`](../design.md)를 Apple 디자인 시스템 기준서로 유지·연동하는 원칙 명시
 > v3.3 변경: `10.3 사용자 시나리오 및 End-to-End 시연 시나리오` 확장 (페르소나별 정상·예외 시나리오 4종 및 발표용 6단계 데모 체크표 추가)
 > v3.2 변경: `10. 구현 로드맵 및 시연 마일스톤` 추가 (폴더·모듈 구조, M1~M3 마일스톤, 네이티브 드래그·경량 SVG 차트 직접 구현, End-to-End 시연 시나리오)
@@ -68,7 +69,8 @@
 
 | 경로 | 화면 | 접근 권한 | 설명 |
 |---|---|---|---|
-| `/` | 랜딩 페이지 | 누구나 | 마이링크 서비스 소개, `시작하기` 버튼, `예시 보기(/gildong)` 링크 |
+| `/` | 랜딩 페이지 | 누구나 | 마이링크 서비스 소개, `시작하기` 버튼, `예시 보기(/gildong)` 및 `링크 목록(/links)` 링크 |
+| `/links` | 링크 목록 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks`(제목·URL·아이콘·카테고리 6종) 및 `linkListProfile` 사용 |
 | `/login` | 데모 이메일 로그인 | 비로그인 | ① 이메일 입력 → ② 화면 내 안내되는 Mock 6자리 코드 입력 (또는 `데모 계정으로 바로 체험하기` 버튼) |
 | `/onboarding` | username 설정 | 첫 로그인 사용자 | `username`만 입력받아 초기 설정 완료 (`이름`은 `username`으로 자동 초기화) |
 | `/admin` | 대시보드 (편집기) | 로그인/데모 사용자 | **PC**: 좌측 `[프로필·링크 | 테마 | 통계]` 편집 영역 · 우측 **실시간 모바일 목업 프리뷰** 2단 분할 / **모바일**: 상단 `[편집 | 미리보기]` 탭 전환 |
@@ -417,6 +419,24 @@ export interface AnalyticsData {
 
 > **Mock 시드 데이터 (`/gildong`)**: 최초 방문 시 기존 홍길동 프로필(`avatar.jpg`, 이름, 소개), 소셜 미디어 링크, 연습 프로젝트 및 연락 링크, 최근 7일 Mock 방문/클릭 추이 데이터가 자동 생성되어 랜딩의 `예시 보기` 및 원클릭 데모 체험에 사용된다.
 
+### 5.1 링크 목록 기본 더미 데이터 (`app/links/links-data.ts`)
+
+[`app/links/links-data.ts`](../app/links/links-data.ts)에 정의된 더미 데이터(`linkListProfile`, `dummyLinks`)를 `/links` 링크 목록 화면의 기본 데이터 소스로 사용하며, 향후 초기 시드(`mock-seed.ts`) 구성 시에도 동일 데이터셋을 기준으로 연동한다.
+
+- **프로필 더미 (`linkListProfile`)**: 이름 `홍길동`, 핸들 `@gildong_study`, 소개 `"매일 한 걸음씩 성장하는 초보 웹 개발자의 링크 모음입니다."`, 아바타 `public/avatar.jpg`
+- **링크 목록 더미 (`dummyLinks`, 6건)** — `id`, `title`(제목), `url`(URL), `icon`(아이콘 키), `category`(분류) 포함:
+
+| ID | 제목 (`title`) | URL (`url`) | 아이콘 (`icon`) | 카테고리 (`category`) |
+|---|---|---|---|---|
+| `link-github` | GitHub 공부 저장소 | `https://github.com/gildong-study` | `github` | 코드 |
+| `link-blog` | 오늘의 개발 블로그 (TIL) | `https://velog.io/@gildong_study` | `blog` | 기록 |
+| `link-portfolio` | 연습 프로젝트 모음집 | `https://gildong-lab.vercel.app` | `portfolio` | 작품 |
+| `link-youtube` | 유튜브 코딩 브이로그 | `https://youtube.com/@gildong_dev` | `youtube` | 영상 |
+| `link-instagram` | 인스타그램 개발 일상 | `https://instagram.com/gildong_study` | `instagram` | SNS |
+| `link-email` | 응원 · 협업 이메일 보내기 | `mailto:hello@example.com` | `email` | 문의 |
+
+> URL 안전성 정책(6.2)에 따라 `resolveSafeHref`로 `http:`, `https:`, `mailto:` 스킴만 허용하고, `isExternalHttpUrl` 판별 시 새 탭(`target="_blank" rel="noopener noreferrer"`)으로 연결한다.
+
 ---
 
 ## 6. 비기능 요구사항
@@ -487,7 +507,7 @@ export interface AnalyticsData {
 
 ---
 
-## 8. 범위 외 (Out of Scope, 데모 v3.4)
+## 8. 범위 외 (Out of Scope, 데모 v3.5)
 
 - 실제 백엔드 서버·DB 구축 및 기기 간 실시간 원격 데이터 동기화
 - 실제 트랜잭션 이메일 발송 서버 연동 (브라우저 내 Mock 이메일 인증으로 대체)
@@ -527,7 +547,14 @@ my_link/
 ├── app/
 │   ├── globals.css               # Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
 │   ├── layout.tsx                # Inter · Noto Sans KR 폰트 & TooltipProvider 설정
-│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /gildong 예시 링크
+│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /links & /gildong 예시 링크
+│   ├── links/                    # Apple 스타일 중앙 정렬 링크 목록 페이지 (/links, 구현 완료)
+│   │   ├── page.tsx              # 프로필 요약 카드 + 링크 카드 목록 화면
+│   │   ├── links-data.ts         # 기본 더미 데이터 (dummyLinks 6종 · linkListProfile) & 안전 URL 검증
+│   │   └── components/
+│   │       ├── LinkCard.tsx      # shadcn/ui Card + Apple 18px 헤어라인 카드 컴포넌트
+│   │       ├── LinkIconBadge.tsx # Apple 단색/Action Blue 호버 아이콘 컨테이너
+│   │       └── CopyPageUrlButton.tsx # 현재 페이지 주소 복사 Action Blue 필 버튼
 │   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험
 │   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화)
 │   ├── admin/page.tsx            # 대시보드 (편집·테마·통계 탭 + 우측 실시간 모바일 목업)
@@ -535,7 +562,7 @@ my_link/
 │   ├── stores/
 │   │   └── useMyLinkStore.ts     # Zustand 5 + persist 스토어 (hasHydrated 가드 포함)
 │   ├── lib/
-│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (기존 avatar.jpg 및 profile-data 활용)
+│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (app/links/links-data.ts 더미 및 avatar.jpg 활용)
 │   │   ├── validators.ts         # URL(http/https/mailto)·이메일·username·예약어 검증 및 https 보정
 │   │   ├── icon-matcher.ts       # 도메인·스킴 기반 12종 아이콘 자동 추천
 │   │   ├── themes.ts             # 4종 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
