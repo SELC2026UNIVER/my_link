@@ -3,7 +3,7 @@
 import { AlertCircle } from "lucide-react";
 import { useState, type FocusEvent, type FormEvent } from "react";
 import { LINK_ICON_LABELS, recommendIconForUrl } from "@/app/lib/icon-matcher";
-import type { LinkIcon, LinkItem } from "@/app/lib/types";
+import type { LinkIcon } from "@/app/lib/types";
 import {
   MAX_ACTIVE_ITEMS,
   MAX_LINK_TITLE_LENGTH,
@@ -11,7 +11,6 @@ import {
   validateLinkTitle,
   validateLinkUrl,
 } from "@/app/lib/validators";
-import { useMyLinkStore } from "@/app/stores/useMyLinkStore";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,12 +48,21 @@ const SELECTABLE_LINK_ICONS: LinkIcon[] = [
   "portfolio",
 ];
 
+export interface AddLinkDraft {
+  title: string;
+  url: string;
+  icon: LinkIcon;
+}
+
+export type AddLinkSubmitResult =
+  | { ok: true }
+  | { ok: false; error: string; field?: "title" | "url" | "limit" };
+
 interface AddLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userId: string;
   activeItemCount: number;
-  onAdded?: (item: LinkItem) => void;
+  onAddLink: (draft: AddLinkDraft) => AddLinkSubmitResult;
 }
 
 /**
@@ -64,12 +72,9 @@ interface AddLinkDialogProps {
 export function AddLinkDialog({
   open,
   onOpenChange,
-  userId,
   activeItemCount,
-  onAdded,
+  onAddLink,
 }: AddLinkDialogProps) {
-  const addLink = useMyLinkStore((state) => state.addLink);
-
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [icon, setIcon] = useState<LinkIcon>("link");
@@ -178,8 +183,7 @@ export function AddLinkDialog({
       ? icon
       : recommendIconForUrl(urlCheck.normalized);
 
-    const result = addLink({
-      userId,
+    const result = onAddLink({
       title: titleCheck.normalized,
       url: urlCheck.normalized,
       icon: resolvedIcon,
@@ -196,7 +200,6 @@ export function AddLinkDialog({
       return;
     }
 
-    onAdded?.(result.item);
     handleDialogOpenChange(false);
   };
 

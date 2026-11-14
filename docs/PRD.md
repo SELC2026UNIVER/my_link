@@ -1,15 +1,12 @@
 # 마이링크 (MyLink) — 기능정의서 (PRD)
 
 > 링크트리(Linktree) 클론 서비스 — 멀티 링크 & 바이오 프로필 서비스
-> 문서 버전: v3.7 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
-> v3.7 변경: `F-02` 링크 추가 폼을 **다이얼로그(`shadcn/ui Dialog`)** 방식으로 확정하고, `/login` 미구현 단계에서의 `/admin` 데모 계정(`@gildong`) 자동 세션 연결 정책 및 `TopNav`·`/links`·`/[username]` 상단 바의 `/admin` 진입 동선을 반영 (`/admin` 링크 추가 및 실시간 프리뷰 구현 반영)
-> v3.6 변경: 전체 스타일링을 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일하고, **shadcn/ui (`Card`, `Badge`, `Button`, `Separator`) 기반 공용 `LinkCard` (`app/components/LinkCard.tsx`)** 재사용 아키텍처 및 M1 구현 완료(`/gildong`·`/[username]`·`PublicProfileView`·`useMyLinkStore`) 상태를 반영
+> 문서 버전: v3.8 · 작성일: 2026-11-15 · 상태: 확정(Confirmed)
+> v3.8 변경: 별도의 `/admin` 관리자 페이지·대시보드 및 임시 데모 계정(`@gildong`) 자동 세션·가짜 로그인(`/login`, `/onboarding`) 우회 스펙을 완전히 제거하고, **강의 표준 7주차 요구사항**에 맞춰 재정렬. 링크 목록 관리(모달 다이얼로그 `AddLinkDialog` 추가·인라인 편집·삭제)는 **메인 페이지(루트 `/`)** 에서 직접 수행하며, 현재 7주차 단계에서는 서버 연동 없이 **브라우저 로컬 메모리 상태(`React useState`)** 로 링크를 관리함을 명시
+> v3.7 변경: `F-02` 링크 추가 폼을 **다이얼로그(`shadcn/ui Dialog`)** 방식으로 확정하고 Action Blue(`#0066cc`) CTA 기준 정렬
+> v3.6 변경: 전체 스타일링을 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일하고, **shadcn/ui (`Card`, `Badge`, `Button`, `Separator`) 기반 공용 `LinkCard` (`app/components/LinkCard.tsx`)** 재사용 아키텍처 반영
 > v3.5 변경: 링크 목록 페이지(`/links`) 및 기본 더미 데이터(`app/links/links-data.ts`의 `dummyLinks` 6종 · `linkListProfile`) 사용 명세를 라우팅, 데이터 모델, 폴더 설계에 반영
 > v3.4 변경: UI 컴포넌트 구현 기반을 **shadcn/ui (`https://ui.shadcn.com/create`)** + **Tailwind CSS 4 (CSS-first, `tailwind.config` 파일 미사용)** 로 정의하고, [`design.md`](../design.md)를 Apple 디자인 시스템 기준서로 유지·연동하는 원칙 명시
-> v3.3 변경: `10.3 사용자 시나리오 및 End-to-End 시연 시나리오` 확장 (페르소나별 정상·예외 시나리오 4종 및 발표용 6단계 데모 체크표 추가)
-> v3.2 변경: `10. 구현 로드맵 및 시연 마일스톤` 추가 (폴더·모듈 구조, M1~M3 마일스톤, 네이티브 드래그·경량 SVG 차트 직접 구현, End-to-End 시연 시나리오)
-> v3.1 변경: 전역 상태 관리를 Zustand(`persist` 미들웨어 + `localStorage` Storage Adapter)로 확정
-> v3.0 변경: 클라이언트 완결형 데모(Next.js App Router + `localStorage` + Mock 데이터) 전환, 공개 프로필 확장(아바타·소셜 미디어 배치·섹션 구분 헤더), 대시보드 UX 확장(드래그 앤 드롭·테마 설정·통계 및 추이 차트) 반영
 
 ---
 
@@ -20,48 +17,42 @@
 | **이름** | 마이링크 (MyLink) |
 | **목적** | 개인 크리에이터 및 일반 사용자가 여러 개의 링크(SNS, 블로그, 포트폴리오, 쇼핑몰 등)와 프로필을 한 페이지에 모아 공유하는 **멀티 링크 & 바이오 프로필 서비스** |
 | **대상** | 개인 크리에이터, SNS 사용자, 일반 사용자, 인플루언서, 프리랜서, 소상공인 |
-| **핵심** | 링크·소셜·섹션 CRUD (Create · Read · Update · Delete) + 개인 URL(`/[username]`) 공유 + 실시간 라이브 프리뷰 대시보드 + 기본 통계 |
+| **핵심** | **메인 페이지(루트 `/`)** 상단 프라이머리 `링크 추가` 버튼 기반 **모달(다이얼로그) 링크 추가 + 카드 인라인 편집·삭제**, 공용 링크 목록 뷰(`/links`), 개인 공개 프로필(`/[username]`, `/gildong`) |
 | **해결하는 문제** | 인스타그램·틱톡 등 SNS 프로필에 링크를 1개만 넣을 수 있는 제약 해소 |
-| **구현 형태** | **Next.js (App Router) 기반 클라이언트 완결형 데모** — 별도 백엔드 서버·DB 구축 없이 브라우저 `localStorage` 및 Mock 데이터 연동으로 즉시 동작 |
-| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · **Zustand 5** (`persist` 미들웨어) · Web Storage(`localStorage`) · Mock 데이터 |
-| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
+| **구현 형태 (7주차)** | **서버·DB·임시 세션 연동 없이 브라우저 로컬 메모리 상태(`React useState`)로 동작하는 프론트엔드 애플리케이션** — 루트(`/`)에서 `dummyLinks` 초기 시드를 불러와 모달 추가·인라인 편집·삭제 시 목록에 즉시 반영됨 (새로고침 시 초기 목록으로 복원, 향후 주차에 서버/DB API 연동 예정) |
+| **기술 스택** | Next.js 16 (App Router) · React 19 · TypeScript · **Tailwind CSS 4** (CSS-first, `app/globals.css` 단일 스타일시트 — CSS Modules `.module.css` 미사용) · **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create), `@base-ui/react`, `lucide-react`) · React `useState` (루트 `/` 링크 로컬 메모리 상태) · Zustand 5 (`/[username]` 공개 프로필 조회용) |
+| **디자인 기준** | **컴포넌트 기반**: [`shadcn/ui`](https://ui.shadcn.com/create) 기반으로 UI 프리미티브와 재사용 링크 컴포넌트(`app/components/LinkCard.tsx`)·모달(`app/components/AddLinkDialog.tsx`) 구축<br>**시각 시스템**: [`design.md`](../design.md) 기반 **Apple 디자인 시스템** 스타일 구축 (단일 액센트 블루 `#0066cc` / 다크 타일 위 `#2997ff`, 필/18px 카드, 상단 라이트/하단 다크 풀블리드 타일 교차, SF Pro + Inter/Noto Sans KR 위계) |
 
 ### 1.1 성공 지표 (KPI)
 
 | 지표 | 목표 |
 |---|---|
-| 대시보드 진입 후 첫 링크 추가까지 걸리는 시간 | 1분 이내 |
-| 공개 페이지 초기 화면 렌더링 (LCP) | 2.5초 이내 |
-| 링크 추가 성공률 (유효성 안내 포함 오류 없이 저장) | 95% 이상 |
+| 홈(`/`) 진입 후 모달을 통해 첫 링크를 로컬 목록에 추가하는 시간 | 30초 이내 |
+| 루트(`/`) 및 공개 페이지 초기 화면 렌더링 (LCP) | 2.5초 이내 |
+| 링크 추가·인라인 편집 성공률 (유효성 안내 포함 오류 없이 반영) | 95% 이상 |
 
 ---
 
 ## 2. 기능 목록
 
 **우선순위 기준**
-- **필수 (P0)**: 데모 MVP 출시에 반드시 포함되는 핵심 기능
+- **필수 (P0)**: 현재 7주차 표준 요구사항에 포함되는 핵심 기능
 - **선택 (P1)**: 사용성을 높이는 부가 기능
-- **선택 (P2)**: 향후 실제 서버 연동 시 확장할 기능
+- **확장 (P2)**: 향후 실제 백엔드·인증·DB 연동 주차에서 확장할 기능
 
 | ID | 구분 | 기능명 | 설명 | 우선순위 |
 |---|---|---|---|---|
-| F-01 | 링크 | 링크 목록 표시 | 등록한 링크·섹션 구분 헤더를 순서대로 카드 형태로 표시 | **필수 (P0)** |
-| F-02 | 링크 | 링크 추가 | 제목·URL·아이콘(도메인 자동 추천)을 다이얼로그 폼으로 추가 | **필수 (P0)** |
-| F-03 | 링크 | 링크 수정 | 해당 카드를 인라인 편집 상태로 전환해 제목·URL·아이콘 변경 | **필수 (P0)** |
-| F-04 | 링크 | 링크 삭제 | 확인 대화상자 후 Soft Delete + 5초 실행 취소(Undo) 제공 | **필수 (P0)** |
-| F-05 | 공유 | 개인 URL (`/[username]`) | 사용자별 고유 공개 페이지 + username 변경 시 이전 주소 영구 리다이렉트 | **필수 (P0)** |
-| F-06 | 계정 | 데모 인증 (Mock 이메일 로그인) | 서버 없이 `localStorage` 기반으로 동작하는 Mock 이메일 6자리 코드 로그인 + 원클릭 데모 체험 + `/onboarding` | **필수 (P0)** |
-| F-07 | 프로필 | 프로필 영역 (아바타·이름·자기소개) | 공개 페이지 상단 프로필 표시(아바타 이미지 선택/업로드·이름·소개) 및 편집 | **필수 (P0)** |
-| F-08 | 프로필 | 소셜 미디어 배치 | 프로필 영역 하단에 SNS 아이콘 버튼 가로 배치 및 추가·수정·삭제 | **필수 (P0)** |
-| F-09 | 링크 | 섹션 구분 헤더 | 링크 목록을 주제별로 나누는 섹션 제목/헤어라인 구분선 추가·수정·삭제 | **필수 (P0)** |
-| F-10 | 링크 | 링크·섹션 순서 변경 | **드래그 앤 드롭**으로 순서 변경 (+ 접근성·모바일용 `▲`/`▼` 버튼 보조 지원) | **필수 (P0)** |
-| F-11 | 대시보드 | 실시간 라이브 프리뷰 | 편집 중인 프로필·링크·소셜·테마 변경 사항을 **모바일 목업**에 실시간 반영 | **필수 (P0)** |
-| F-12 | 대시보드 | 테마 설정 | 프리셋 테마(Apple 기본 교차/라이트/다크 등) 및 버튼 스타일 변경 | **필수 (P0)** |
-| F-13 | 통계 | 통계 및 분석 | **총 방문자 수, 링크별 클릭 누적 수, 최근 추이 차트** 제공 (Mock 시드 + 실시간 누적) | **필수 (P0)** |
-| F-14 | 링크 | 링크 공개/숨김 토글 | 삭제하지 않고 공개 페이지에서만 숨김 | 선택 (P1) |
-| F-15 | 공유 | URL 복사 / QR 코드 | 내 페이지 주소 원클릭 복사, QR 코드 이미지 생성 | 선택 (P1) |
-| F-16 | 데이터 | 데이터 초기화 / 내보내기 | 데모 데이터를 초기 Mock 상태로 리셋하거나 JSON으로 내보내기 | 선택 (P1) |
-| F-17 | 확장 | 실서버·DB·메일 API 연동 | 향후 Supabase/PostgreSQL 및 Resend 실제 이메일 인증 전환 | 선택 (P2) |
+| F-01 | 링크 | 링크 목록 표시 | 루트(`/`)·`/links`·`/[username]`에서 등록된 링크를 `LinkCard` 형태로 순서대로 표시 | **필수 (P0)** |
+| F-02 | 링크 | 모달 링크 추가 | 루트(`/`) 상단 프라이머리(`#0066cc`) `링크 추가` 버튼 → **`shadcn/ui Dialog` 모달**에서 제목·URL·아이콘(도메인 자동 추천)을 입력해 브라우저 로컬 메모리 상태(`useState`)에 즉시 추가 | **필수 (P0)** |
+| F-03 | 링크 | 인라인 링크 수정 | 루트(`/`) 링크 목록 카드의 `수정` 버튼을 눌러 해당 항목을 인라인 편집 폼으로 전환해 제목·URL(아이콘 자동 매칭) 즉시 수정 | **필수 (P0)** |
+| F-04 | 링크 | 링크 삭제 | 루트(`/`) 링크 목록 카드의 `삭제` 버튼 클릭 시 브라우저 로컬 메모리 목록에서 즉시 제거 | **필수 (P0)** |
+| F-05 | 공유 | 개인 URL (`/[username]`) | 사용자별 고유 공개 프로필 뷰 (`/gildong` 예시 포함, 대문자/이전 주소 리다이렉트 및 404 처리) | **필수 (P0)** |
+| F-06 | 프로필 | 프로필 및 공부/작품 소개 | 루트(`/`) 상단 프로필(아바타·이름·소개)·공부 기록·연습 작품 쇼케이스 표시 | **필수 (P0)** |
+| F-07 | UI | URL 안전성 및 도메인 아이콘 추천 | `http://`, `https://`, `mailto:`만 허용하고 도메인별 13종 아이콘을 자동 추천 | **필수 (P0)** |
+| F-08 | 링크 | 링크 순서 변경 | 목록 내 링크 순서 드래그 앤 드롭 또는 `▲`/`▼` 이동 버튼 지원 | 선택 (P1) |
+| F-09 | UI | 테마 프리셋 및 버튼 스타일 | 카드형(`18px`) / 필형(`9999px`) 및 라이트/다크 테마 전환 | 선택 (P1) |
+| F-10 | 공유 | URL 복사 / QR 코드 | 공개 프로필 주소 원클릭 복사 (`페이지 공유` 버튼 구현됨) | 선택 (P1) |
+| F-11 | 확장 | 실제 서버 · DB · 로그인 인증 연동 | 향후 백엔드 API, DB 영속화, 실제 사용자 세션 인증 연동 (별도 세션 우회/데모 자동 로그인 미사용) | 확장 (P2) |
 
 ---
 
@@ -71,362 +62,95 @@
 
 | 경로 | 화면 | 접근 권한 | 설명 |
 |---|---|---|---|
-| `/` | 랜딩 페이지 | 누구나 | 마이링크 서비스 소개, `시작하기` 버튼, `예시 보기(/gildong)` 및 `링크 목록(/links)` 링크 |
-| `/links` | 링크 목록 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 사용 |
-| `/login` | 데모 이메일 로그인 | 비로그인 | ① 이메일 입력 → ② 화면 내 안내되는 Mock 6자리 코드 입력 (또는 `데모 계정으로 바로 체험하기` 버튼) |
-| `/onboarding` | username 설정 | 첫 로그인 사용자 | `username`만 입력받아 초기 설정 완료 (`이름`은 `username`으로 자동 초기화) |
-| `/admin` | 대시보드 (편집기) *(부분 구현: 링크 추가·프리뷰)* | 로그인/데모 사용자 | **PC**: 좌측 `[프로필·링크 | 테마 | 통계]` 편집 영역 · 우측 **실시간 모바일 목업 프리뷰** 2단 분할 / **모바일**: 상단 `[편집 | 미리보기]` 탭 전환 (`TopNav`, `/links`, `/[username]` 상단 바에서 진입 링크 제공. `/login` 구현 전까지는 데모 계정 `@gildong` 자동 연결) |
-| `/[username]` | 공개 프로필 페이지 *(구현됨)* | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 공용 `LinkCard` 링크 목록 (`PublicProfileView` 기반). `/gildong` 기본 Mock 시드, 대문자/이전 username 리다이렉트 및 404 처리 포함 |
+| `/` | 메인 페이지 (프로필 & 링크 관리 홈) *(구현됨)* | 누구나 | 프로필 소개 히어로 + **상단 프라이머리(`#0066cc`) `링크 추가` 버튼** + **`내 링크 목록` (브라우저 로컬 메모리 상태 `useState`, 모달 추가 `AddLinkDialog` · 카드 인라인 편집 · 삭제)** + 공부 기록/연습 작품 타일 + 연락처 푸터 |
+| `/links` | 링크 목록 전용 유틸리티 페이지 *(구현됨)* | 누구나 | Apple 유틸리티 카드(`18px`, 단일 액센트 블루 `#0066cc`) 기반 중앙 정렬 페이지. 공용 `LinkCard`(`shadcn/ui Card`) 재사용, [`app/links/links-data.ts`](../app/links/links-data.ts)의 `dummyLinks` 6종 및 `linkListProfile` 사용 |
+| `/[username]` | 공개 프로필 페이지 *(구현됨)* | 누구나 | 프로필(아바타·이름·소개) + 소셜 미디어 아이콘 배치 + 섹션 구분 헤더 + 공용 `LinkCard` 링크 목록 (`PublicProfileView` 기반). `/gildong` 기본 시드, 대문자/이전 username 리다이렉트 및 404 처리 포함 (세션 자동 주입 없음) |
 
 ```mermaid
 flowchart LR
-    A["랜딩 /"] -->|"시작하기"| C["데모 로그인 /login"]
-    A -->|"예시 보기"| G["공개 예시 /gildong"]
-    C -->|"첫 로그인"| B["username 설정 /onboarding"]
-    C -->|"기존/데모 체험"| D["대시보드 /admin"]
-    B --> D
-    D -->|"라이브 목업 / 내 페이지 보기"| E["공개 페이지 /[username]"]
-    F["방문자"] --> E
+    A["메인 홈 / (링크 목록 · 모달 추가 · 인라인 편집)"] -->|"링크 목록 보기"| L["링크 카드 유틸리티 /links"]
+    A -->|"공개 프로필 보기"| E["공개 프로필 /[username] (예: /gildong)"]
+    L -->|"/gildong 공개 뷰"| E
+    E -->|"MyLink 배너 / 홈으로"| A
 ```
 
 ---
 
 ## 4. 상세 기능 정의
 
-### F-01. 링크·섹션 목록 표시 — 필수 (P0)
+### F-01. 링크 목록 표시 — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 사용자가 등록한 기본 URL 링크 버튼과 섹션 구분 헤더를 지정된 순서대로 세로 목록으로 표시 |
-| **동작 방식** | 페이지 진입 → `localStorage`(초기 접속 시 Mock 시드 자동 적재)에서 삭제되지 않은(`deletedAt === null`) 항목 조회 → `order` 오름차순 정렬 → 섹션 구분 헤더와 링크 버튼 렌더링 |
-| **입력** | `username` (공개 페이지) 또는 현재 세션 사용자 ID (대시보드) |
-| **출력** | • **공개 페이지**: 섹션 구분 헤더(제목 + 얇은 헤어라인) + 기본 URL 링크 버튼(아이콘 + 제목). 클릭 시 클릭 통계 누적 후 새 탭(`_blank`) 이동 (`mailto:`는 기본 메일 앱 실행)<br>• **대시보드**: 드래그 핸들(`⋮⋮`), 순서 보조 버튼(`▲`/`▼`), `수정`, `삭제` 버튼이 포함된 카드 목록 |
-| **예외 처리** | • 항목 0개: 대시보드 → `"첫 링크를 추가해 보세요"` 안내 + 추가 버튼 강조 / 공개 페이지 → `"아직 등록된 링크가 없습니다"` 표시<br>• `localStorage` 데이터 손상 시: 손상 감지 후 기본 Mock 데이터(`/gildong`)로 안전 초기화 및 알림 토스트 표시 |
+| **설명** | 사용자가 등록한 기본 URL 링크를 공용 `LinkCard`(`shadcn/ui Card`) 목록으로 표시 |
+| **동작 방식** | • **루트(`/`)**: 클라이언트 마운트 시 `dummyLinks` 6건으로 **브라우저 로컬 메모리 상태(`React useState`)** 를 초기화하고, 모달 추가·인라인 수정·삭제 결과를 즉시 목록에 반영<br>• **`/links`**: `app/links/links-data.ts`의 `dummyLinks` 정적 유틸리티 카드 표시<br>• **`/[username]`**: `PublicProfileView`를 통해 공개 프로필 섹션·링크 카드 표시 |
+| **예외 처리** | 루트(`/`) 목록 항목이 0개일 때: `"등록된 링크가 없습니다"` 빈 상태 안내 문구 및 상단 `링크 추가` CTA 안내 표시 |
 
-### F-02. 링크 추가 — 필수 (P0)
+### F-02. 모달 링크 추가 (`AddLinkDialog`) — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 제목, URL, 아이콘을 입력받아 목록에 새 기본 URL 링크 추가 |
-| **동작 방식** | `+ 링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 추가 폼 다이얼로그 열림** → URL 입력 시 도메인에 맞춰 아이콘 자동 추천 → 값 입력 후 `저장` 클릭 → 유효성 검사 → `useMyLinkStore`(`localStorage` persist) 저장 → 목록 맨 아래에 새 카드 추가 및 다이얼로그 닫힘 → 대시보드 목록·라이브 프리뷰·`/[username]` 즉시 반영 + `"링크가 추가되었습니다"` 토스트 |
+| **설명** | 루트(`/`) 상단의 프라이머리(`#0066cc`) `링크 추가` 버튼을 통해 **모달 다이얼로그(`shadcn/ui Dialog`)** 를 열고, 제목·URL·아이콘을 입력받아 브라우저 로컬 메모리 목록에 추가 |
+| **동작 방식** | 루트(`/`) 상단 `링크 추가` 버튼 클릭 → **`shadcn/ui Dialog` 기반 `AddLinkDialog` 열림** → URL 입력/블러 시 프로토콜(`https://`) 자동 보정 및 도메인 맞춤 아이콘 자동 추천 → `저장` 클릭 → 유효성 검사 → **부모(`HomeLinkManager`)의 `React useState` 로컬 메모리 목록 끝에 새 항목 즉시 추가** → 다이얼로그 닫힘 + `"링크가 추가되었습니다 (제목)"` 토스트 |
 | **취소** | `취소` 버튼, 닫기(`X`), 배경 클릭 또는 `Esc` 키 → 입력값·오류 상태 초기화 후 다이얼로그 닫힘 |
 
 **입력 항목**
 
 | 필드 | 타입 | 필수 | 규칙 | 예시 |
 |---|---|---|---|---|
-| 제목 | 텍스트 | ✅ | 1~50자, 앞뒤 공백 제거 | `내 인스타그램` |
-| URL | 텍스트 | ✅ | `http://`, `https://`, `mailto:` 스킴만 허용, 최대 2,048자 | `https://instagram.com/myid`, `mailto:hello@example.com` |
-| 아이콘 | 선택 목록 | ❌ | 12종 중 선택 (기본값: `link`). URL 입력 시 도메인·스킴 기반 자동 선택(수동 변경 가능) | `link`, `instagram`, `youtube`, `tiktok`, `x`, `threads`, `github`, `kakao`, `naver`, `blog`, `email`, `shop` |
+| 제목 | 텍스트 | ✅ | 1~50자, 앞뒤 공백 제거 | `내 유튜브 채널` |
+| URL | 텍스트 | ✅ | `http://`, `https://`, `mailto:` 스킴만 허용, 최대 2,048자 | `https://youtube.com/@mystudio`, `mailto:hello@example.com` |
+| 아이콘 | 선택 목록 | ❌ | 13종 중 선택 (기본값: `link`). URL 입력 시 도메인·스킴 기반 자동 선택(수동 변경 가능) | `link`, `instagram`, `youtube`, `tiktok`, `x`, `threads`, `github`, `kakao`, `naver`, `blog`, `email`, `shop`, `portfolio` |
 
 **아이콘 자동 추천 규칙**
 - `instagram.com` → `instagram` / `youtube.com`, `youtu.be` → `youtube` / `tiktok.com` → `tiktok`
 - `x.com`, `twitter.com` → `x` / `threads.net` → `threads` / `github.com` → `github`
 - `kakao.com`, `open.kakao.com`, `pf.kakao.com` → `kakao` / `naver.com`, `blog.naver.com`, `smartstore.naver.com` → `naver`
-- `mailto:` → `email` / 기타 URL은 기본 `link` (사용자 직접 변경 가능)
-
-**출력**: 목록 맨 아래에 새 링크 카드 추가 + 모바일 목업 라이브 프리뷰 즉시 갱신
+- `velog.io`, `medium.com`, `tistory.com` → `blog` / `mailto:` → `email` / 기타 URL은 기본 `link`
 
 **예외 처리**
 
 | 상황 | 처리 |
 |---|---|
 | URL 형식 오류 | 입력창 테두리 **빨간색(`#e30000`)** + 아래 빨간 글씨 `"올바른 URL 형식이 아닙니다 (예: https://example.com 또는 mailto:name@example.com)"` |
-| 프로토콜 누락 (`instagram.com/myid`) | 포커스 아웃(blur) 또는 저장 시 자동으로 `https://`를 앞에 붙여 보정 후 검사 |
+| 프로토콜 누락 (`youtube.com/@mystudio`) | 포커스 아웃(blur) 또는 저장 시 자동으로 `https://`를 앞에 붙여 보정 후 검사 |
 | `mailto:` 형식 오류 (`mailto:abc`) | 올바른 이메일 형식이 아니면 빨간색 경고 `"올바른 이메일 주소 형식이 아닙니다"` |
 | 제목 미입력 | 입력창 빨간색 + `"제목을 입력해 주세요"` |
 | 제목 50자 초과 | 입력 제한 + 글자 수 카운터(`50/50`) 빨간색 |
 | `javascript:`, `data:`, `vbscript:` 등 위험 스킴 | 저장 거부 + `"허용되지 않는 URL입니다"` |
-| 링크·헤더 합산 최대치(50개) 초과 | 추가 버튼 비활성화 + `"항목은 최대 50개까지 등록할 수 있습니다"` |
-| 저장 공간(`localStorage`) 초과 | 입력값 유지 + `"브라우저 저장 공간이 부족합니다"` 안내 |
+| 최대 등록 수(50개) 초과 | 추가 버튼 비활성화 + `"항목은 최대 50개까지 등록할 수 있습니다"` |
 
-> 유효성 검사 시점: 입력창에서 포커스가 빠질 때(blur) 1차 검사, `저장` 클릭 시 최종 검사. 오류가 있으면 저장되지 않음.
-
-### F-03. 링크 수정 — 필수 (P0)
+### F-03. 인라인 링크 수정 — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 등록된 링크의 제목·URL·아이콘 변경 |
-| **동작 방식** | 링크 카드의 `수정` 버튼 클릭 → **해당 카드 자체가 기존 값이 채워진 인라인 편집 폼으로 전환** → 값 변경 → `저장` 클릭 → 유효성 검사 → `localStorage` 저장 → 일반 카드 상태로 복귀 및 라이브 프리뷰 즉시 반영 → `"수정되었습니다"` 토스트 |
-| **입력** | F-02와 동일 (기존 값 미리 채움) |
-| **출력** | 수정된 내용이 반영된 링크 카드 (순서 유지) |
-| **예외 처리** | • 유효성 오류: F-02와 동일 (빨간색 경고)<br>• 변경 사항 없음: `저장` 버튼 비활성화<br>• 수정 중 취소(`취소` 또는 `Esc`): 변경 내용 버리고 원래 값으로 복귀<br>• 이미 삭제된 항목: `"존재하지 않는 링크입니다"` 안내 후 목록 새로고침 |
+| **설명** | 별도 페이지 이동 없이 루트(`/`) 링크 목록 카드 옆 `수정` 버튼을 눌러 **해당 행을 인라인 편집 폼으로 전환**해 수정 |
+| **동작 방식** | 카드 우측 `수정`(연필 아이콘) 클릭 → 제목·URL `Input`이 채워진 인라인 폼 표시 → 수정 후 `저장` 클릭 → 유효성 검사 및 도메인 기반 아이콘 재추천 → 로컬 메모리 상태(`useState`) 즉시 갱신 및 `"링크가 수정되었습니다 (제목)"` 토스트 |
+| **취소 / 예외** | `취소` 버튼 클릭 시 변경 버리고 일반 카드 복귀 · 제목/URL 오류 시 인라인 빨간 오류 메시지(`#e30000`) 표시 |
 
 ### F-04. 링크 삭제 — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 확인 대화상자와 5초 실행 취소(Undo)를 모두 제공하는 안전한 링크·섹션 삭제 |
-| **동작 방식** | ① `삭제` 버튼 클릭 → 확인 대화상자 `"'{제목}' 항목을 삭제할까요?"` 표시<br>② `삭제` 클릭 → `localStorage`에서 **Soft Delete(`deletedAt` 기록)** 처리 → 목록·라이브 프리뷰에서 즉시 제거<br>③ 화면 하단에 `"삭제되었습니다 · 실행 취소"` 토스트를 **5초간** 표시<br>④ 5초 이내 `실행 취소` 클릭 → `deletedAt = null`로 복구 → 원래 순서(`order`)로 목록 복원 |
-| **입력** | 삭제할 항목 ID |
-| **출력** | 해당 항목이 제거(또는 실행 취소 시 복구)된 목록 |
-| **예외 처리** | • 확인 대화상자에서 `취소`: 아무 변화 없음<br>• 5초 경과 후: 토스트 자동 닫힘 및 실제 정리(또는 보존 후 영구 제거) |
+| **설명** | 루트(`/`) 링크 목록 카드 옆 `삭제`(휴지통 아이콘) 버튼을 눌러 로컬 메모리 목록에서 해당 링크 제거 |
+| **동작 방식** | `삭제` 버튼 클릭 → `links` 상태 배열에서 해당 항목 제거(편집 중이던 항목이면 편집 모드 함께 종료) → `"링크가 삭제되었습니다 (제목)"` 토스트 표시 |
 
 ### F-05. 개인 URL (`/[username]`) — 필수 (P0)
 
 | 항목 | 내용 |
 |---|---|
-| **설명** | 사용자마다 `/username` 형태의 고유 공개 프로필 페이지 제공 및 변경 시 이전 주소 자동 연결 |
-| **동작 방식** | 방문자가 `/{username}` 접속 → ① `localStorage` 및 Mock 사용자 목록에서 활성 `username` 조회 → ② 없으면 `USERNAME_HISTORY`에서 `oldUsername` 조회 후 해당 사용자의 **현재 `/[username]`으로 자동 리다이렉트** → ③ 둘 다 없으면 404 표시 |
-| **입력** | URL 경로의 `username` |
-| **출력** | 읽기 전용 공개 프로필 페이지 (프로필 + 소셜 미디어 배치 + 섹션 구분 헤더 + 링크 목록 + 하단 `"MyLink로 나만의 페이지 만들기"` 배너) |
-
-**username 규칙 및 변경 정책**
-
-| 규칙 | 내용 |
-|---|---|
-| 길이 | 3~20자 |
-| 허용 문자 | 영문 소문자, 숫자, 밑줄(`_`), 마침표(`.`) (연속된 마침표 `..` 및 시작/끝 마침표 `.` 제한 권장) |
-| 중복 불가 | 현재 사용 중인 `username`은 물론, **다른 사용자의 이전 `username` 이력도 사용 불가** |
-| 예약어 | `admin`, `login`, `onboarding`, `api`, `auth`, `settings`, `about`, `demo`, `404`, `robots.txt`, `sitemap.xml` 등 시스템 경로 사용 불가 |
-| 변경 가능 여부 | `/admin` 프로필/계정 영역에서 **횟수 제한 없이 변경 가능** (변경 시 이전 `username`은 히스토리에 기록되어 영구 리다이렉트) |
-| 과거 내 이름으로 복귀 | 본인이 예전에 쓰던 `username`으로 되돌리는 것은 허용 (순환 리다이렉트 방지를 위해 해당 히스토리 정리) |
-
-**예외 처리**
-
-| 상황 | 처리 |
-|---|---|
-| 존재하지 않는 username | 404 페이지 `"페이지를 찾을 수 없습니다"` + 홈(`/`) 및 예시(`/gildong`) 이동 버튼 |
-| 설정·변경 시 중복 또는 타인의 이전 username | 입력창 빨간색 + `"이미 사용 중이거나 사용할 수 없는 이름입니다"` |
-| 규칙 위반 또는 예약어 입력 | 입력창 빨간색 + 위반한 규칙 안내 |
-| 대문자로 접속 (`/Gildong`) | 소문자 경로(`/gildong`)로 리다이렉트 |
-| 이전 username으로 접속 (`/old_name`) | 현재 활성 username(`/new_name`)으로 자동 리다이렉트 |
-
-### F-06. 데모 인증 (Mock 이메일 로그인) — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 별도 서버·메일 발송 API 없이 **브라우저 내부에서 완결되는 Mock 이메일 인증 로그인** 및 **원클릭 데모 계정 체험** 제공 |
-| **동작 방식** | ① `/login`에서 이메일 입력 → `인증코드 받기` 클릭 (또는 `데모 계정(/gildong)으로 바로 시작하기` 클릭 시 즉시 `/admin` 이동)<br>② 클라이언트가 6자리 Mock 인증코드를 생성해 `localStorage`에 임시 저장하고, **화면 내 데모 배너/토스트에 발급된 6자리 코드를 표시** (예: `[데모 안내] 발송된 인증코드: 123456`)<br>③ 코드 입력 → `확인` 클릭 → 검증 성공 시 `localStorage` 세션 발급 → **기존 이메일**은 `/admin`, **첫 로그인 이메일**은 `/onboarding` 이동<br>④ `/onboarding`에서 `username` 입력 시 **`displayName` 기본값을 `username`으로 자동 초기화** → `/admin` 이동<br>로그아웃: `localStorage` 세션 삭제 → `/` 이동 |
-| **입력** | 이메일 / 인증코드(숫자 6자리) / username (첫 로그인 시 `/onboarding`) |
-| **출력** | 화면 내 모의 인증코드 안내 배너, 브라우저 세션 상태(`mylink_session`) |
-| **규칙** | 6자리 숫자, 유효시간 10분(타이머 표시), 1회용, 5회 오입력 시 무효화 후 재발급 |
-| **예외 처리** | • 이메일 형식 오류: 입력창 빨간색 + `"올바른 이메일 형식이 아닙니다"`<br>• 인증코드 불일치: 입력창 빨간색 + `"인증코드가 올바르지 않습니다 (남은 시도 4회)"`<br>• 코드 만료 / 5회 오입력: 코드 무효화 + 재발급 안내<br>• 비로그인 상태로 `/admin`, `/onboarding` 접근: `/login`으로 리다이렉트 (단, `데모 바로 체험` 버튼 제공. **`/login` 미구현 단계에서는 `/admin` 진입 시 기본 데모 계정 `@gildong`을 활성 세션으로 자동 연결**) |
-
-### F-07. 프로필 영역 (아바타·이름·자기소개) — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 공개 페이지 최상단에 표시되는 크리에이터/사용자 프로필 정보 |
-| **동작 방식** | `/admin` 프로필 섹션에서 아바타 이미지 선택(또는 프리셋 선택), 이름, 자기소개를 수정하고 `저장` → `localStorage` 저장 → 라이브 프리뷰 및 `/[username]` 즉시 반영 |
-| **입력** | • **아바타**: 이미지 파일 업로드(JPG/PNG/WebP → 클라이언트에서 최대 256×256px 리사이징 후 Data URL 저장) 또는 기본/프리셋 아바타 선택<br>• **이름**: 1~30자 필수 (온보딩 직후 기본값 `username`)<br>• **자기소개**: 0~150자 선택 (줄바꿈 허용) |
-| **출력** | 공개 페이지 상단 프로필 타일: 원형 아바타 → 이름 → `@username` → 자기소개 순서로 가운데 정렬 표시 |
-| **예외 처리** | • 이름 미입력: 빨간색 경고 `"이름을 입력해 주세요"`<br>• 이름 30자 / 소개 150자 초과: 입력 제한 + 글자 수 카운터 빨간색<br>• 지원하지 않는 이미지 형식 또는 2MB 초과 파일: 빨간색 경고 `"JPG, PNG, WebP 형식(2MB 이하)만 등록할 수 있습니다"`<br>• 아바타 미등록 시: 이름 첫 글자 기반 기본 아바타 표시 |
-
-### F-08. 소셜 미디어 배치 — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 공개 프로필 상단 자기소개 아래에 주요 SNS 채널을 콤팩트한 아이콘 버튼 행으로 가로 배치 |
-| **동작 방식** | `/admin`의 소셜 미디어 관리 영역에서 `+ 소셜 추가` 클릭 → 플랫폼 선택 + URL(또는 이메일) 입력 → 저장 → 라이브 프리뷰 및 공개 페이지 프로필 하단에 원형/필 아이콘 버튼으로 나열 (최대 8개, 순서 조정·삭제 가능) |
-| **입력** | 플랫폼 (`instagram`, `youtube`, `tiktok`, `x`, `threads`, `github`, `kakao`, `naver`, `email`), URL (`http://`, `https://`, `mailto:`) |
-| **출력** | 프로필 영역 내 가로 정렬 소셜 아이콘 바 (`aria-label` 포함, 클릭 시 새 탭 이동) |
-| **예외 처리** | • URL 형식 오류: F-02와 동일하게 빨간색 경고 + 저장 차단<br>• 같은 플랫폼 중복 추가 시: 안내 경고 또는 허용 여부 체크(플랫폼당 1개 권장)<br>• 최대 8개 초과 시: 추가 버튼 비활성화 + `"소셜 링크는 최대 8개까지 배치할 수 있습니다"`<br>• 등록된 소셜 0개: 공개 페이지에서 소셜 아이콘 행 숨김(빈 여백 제거) |
-
-### F-09. 섹션 구분 헤더 — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 링크 버튼이 많아졌을 때 주제별로 그룹을 나누어 보여주는 구분 제목 및 얇은 헤어라인(구분선) 블록 |
-| **동작 방식** | `/admin`에서 `+ 섹션 헤더 추가` 버튼 클릭 → 섹션 제목 입력(예: `인기 콘텐츠`, `문의 및 스토어`) → 저장 → 링크 목록에 헤더 카드가 추가되며, 드래그 앤 드롭으로 원하는 링크들 사이에 자유롭게 배치 |
-| **입력** | 섹션 제목 (1~30자, 필수), 구분선 표시 여부(기본 `true`) |
-| **출력** | 공개 페이지 링크 목록 내 구분선 + 소제목 헤더로 렌더링 (클릭 동작 없는 비인터랙티브 구획 요소) |
-| **예외 처리** | • 제목 미입력: 입력창 빨간색 + `"섹션 제목을 입력해 주세요"`<br>• 30자 초과: 입력 제한 + 카운터 빨간색<br>• 수정/삭제/실행 취소: F-03, F-04와 동일하게 인라인 편집 및 5초 Undo 지원 |
-
-### F-10. 링크·섹션 순서 변경 (드래그 앤 드롭) — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 대시보드 편집기에서 링크 버튼과 섹션 구분 헤더의 순서를 직관적으로 재배치 |
-| **동작 방식** | 각 카드 좌측 핸들(`⋮⋮`)을 **드래그 앤 드롭**하여 원하는 위치에 놓음 (모바일·키보드 접근성을 위해 `▲`/`▼` 이동 버튼도 함께 제공) → 전체 항목 `order` 재계산 → `localStorage` 즉시 저장 → 우측 모바일 목업 라이브 프리뷰 즉시 반영 |
-| **입력** | 드래그한 항목 ID, 대상 위치 인덱스(또는 `▲`/`▼` 방향) |
-| **출력** | 변경된 순서대로 정렬된 목록 및 프리뷰 |
-| **예외 처리** | • 항목이 0~1개일 때: 드래그/이동 비활성화<br>• 드래그 중 영역 밖으로 취소(Esc 등): 원래 순서 유지<br>• 첫 항목의 `▲`, 마지막 항목의 `▼` 비활성화 |
-
-### F-11. 대시보드 실시간 라이브 프리뷰 — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 편집 중인 공개 프로필 화면을 스마트폰 목업 프레임으로 실시간 미리보기 |
-| **동작 방식** | 대시보드 상태(프로필, 소셜, 링크, 섹션 헤더, 테마) 변경 즉시 별도 저장 버튼 없이도(또는 저장 시 즉시) 우측 모바일 목업에 동일 컴포넌트로 렌더링 |
-| **입력** | 현재 편집기 상태 (`UserProfile`, `SocialLink[]`, `LinkItem[]`, `ThemePreset`) |
-| **출력** | 모바일 비율(예: 375px 폭) 프레임 내 실제 공개 페이지와 동일한 미리보기 + 상단 `내 페이지 열기(/username)` 버튼 |
-| **예외 처리** | • 좁은 화면(태블릿/모바일 ≤ 1023px): 2단 분할 대신 상단 `[편집 | 미리보기]` 탭 전환으로 화면 겹침 방지<br>• 미리보기 내부 링크 클릭 시 실제 외부 이동 대신 `"미리보기 모드입니다"` 안내 또는 새 탭 열기 선택 (단, **통계 클릭 수에는 합산하지 않음**) |
-
-### F-12. 테마 설정 — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 공개 프로필 페이지의 분위기(배경/타일/강조색)와 링크 버튼 모서리 스타일을 선택하는 기능 |
-| **동작 방식** | `/admin`의 `[테마]` 탭에서 프리셋 테마와 버튼 스타일 선택 → 모바일 목업에 실시간 적용 → `localStorage` 저장 → `/[username]` 공개 페이지에 반영 |
-| **입력** | • **테마 프리셋**: ① `Apple 클래식` (기본값: 상단 라이트 + 하단 다크 타일 교차), ② `퓨어 라이트` (전체 화이트/파치먼트), ③ `미드나잇 다크` (전체 다크 타일), ④ `소프트 블루` (은은한 블루 틴트)<br>• **버튼 스타일**: `카드형(18px 둥근 사각형)` / `필형(9999px 캡슐)` |
-| **출력** | 선택된 테마가 적용된 공개 페이지 및 모바일 목업 |
-| **예외 처리** | • 모든 프리셋 테마는 텍스트와 배경 간 **명도 대비 4.5:1 이상**을 보장하는 검증된 조합만 제공하여 가독성 저하 방지<br>• 저장 실패 또는 미설정 시 기본값(`Apple 클래식` + `카드형`) 자동 적용 |
-
-### F-13. 통계 및 분석 — 필수 (P0)
-
-| 항목 | 내용 |
-|---|---|
-| **설명** | 공개 프로필 방문 성과와 링크별 인기도를 파악할 수 있는 기본 통계 대시보드 |
-| **동작 방식** | • 공개 페이지(`/[username]`) 진입 시 해당 사용자의 `총 방문자 수` 및 당일 일별 방문 수 증가 (`localStorage` 기록, `/gildong` 등 초기 계정은 최근 7일 Mock 시드 데이터 포함)<br>• 공개 페이지에서 링크 버튼 클릭 시 해당 링크의 `clickCount` 및 당일 일별 클릭 수 즉시 증가<br>• 대시보드 `[통계]` 탭에서 요약 카드 + 링크별 누적 리스트 + 최근 추이 차트 렌더링 |
-| **입력** | 사용자 통계 스토어 (`totalVisits`, `dailyStats[7~14일]`, 링크별 `clickCount`) |
-| **출력** | ① **총 방문자 수** & 총 클릭 수 요약 카드<br>② **링크별 클릭 누적 수** (클릭 수 내림차순/비중 바 표시)<br>③ **최근 7일 추이 차트** (날짜별 방문자 수 vs 링크 클릭 수 비교 차트, 호버/터치 시 툴팁 수치 표시) |
-| **예외 처리** | • 대시보드 내 **모바일 목업 프리뷰 클릭은 통계에 집계하지 않음** (실제 `/[username]` 방문만 집계)<br>• 동일 브라우저에서 새로고침 반복에 의한 방문 수 뻥튀기 완화(예: `sessionStorage` 기준 동일 세션 중복 방문 1회 처리 옵션)<br>• 클릭/방문 데이터가 0건인 신규 계정: 차트 축을 0 기준으로 정상 렌더링하고 `"공개 페이지를 공유하면 방문 및 클릭 추이가 표시됩니다"` 안내 문구 출력 |
-
-### F-14 ~ F-17. 선택 기능 (P1 · P2) 요약
-
-| ID | 기능 | 우선순위 | 동작 방식 | 예외 처리 |
-|---|---|---|---|---|
-| F-14 | 링크 공개/숨김 토글 | P1 | 카드의 토글 스위치 클릭 → 즉시 `localStorage` 저장 | 숨김 링크는 대시보드에서 흐리게 표시, 라이브 프리뷰·공개 페이지 미노출 |
-| F-15 | URL 복사 / QR 코드 | P1 | `공유` 클릭 → 클립보드 복사 → `"복사되었습니다"` / `QR` 클릭 → QR 이미지 표시·다운로드 | 클립보드 권한 없음 → 주소를 선택 상태로 표시 |
-| F-16 | 데이터 초기화 / 내보내기 | P1 | `초기화` 클릭 → 확인 후 Mock 초기 상태로 복원 / `내보내기` → JSON 파일 다운로드 | 초기화 전 확인 대화상자 필수 |
-| F-17 | 실서버·DB·메일 API 연동 | P2 | `localStorage` 어댑터를 Supabase/PostgreSQL + Resend API로 교체 | 마이그레이션 시 기존 로컬 데이터 import 지원 검토 |
+| **설명** | 사용자별 고유 공개 프로필 페이지(`/gildong` 등) 조회 및 대문자/과거 주소 자동 리다이렉트 |
+| **동작 방식** | 방문자가 `/{username}` 접속 → 활성 `username` 조회 → 없으면 이전 `username` 이력 조회 후 리다이렉트 → 둘 다 없으면 404 안내 화면 |
+| **예약어** | `admin`, `login`, `onboarding`, `links`, `api`, `auth`, `settings`, `about`, `demo`, `404`, `robots.txt`, `sitemap.xml` |
 
 ---
 
-## 5. 데이터 모델 (`Zustand` 스토어 & `localStorage` 구조)
+## 5. 상태 관리 및 데이터 구조 (7주차 로컬 메모리 기준)
 
-별도 DB 없이 **Zustand 스토어**와 `persist` 미들웨어(`localStorage` Storage Adapter)로 상태를 전역 관리·영구 보관하며, 첫 실행 시 `/gildong` 등 기본 Mock 데이터를 자동 시드한다. (SSR 하이드레이션 불일치 방지를 위해 클라이언트 마운트 후 `hasHydrated` 플래그로 상태를 안전하게 복원한다.)
+### 5.1 루트(`/`) 링크 관리 상태 — 브라우저 로컬 메모리 (`React useState`)
 
-```mermaid
-erDiagram
-    USER_PROFILE ||--o{ SOCIAL_LINK : "배치한다"
-    USER_PROFILE ||--o{ LINK_ITEM : "가진다"
-    USER_PROFILE ||--o{ USERNAME_HISTORY : "변경 이력"
-    USER_PROFILE ||--|| ANALYTICS_DATA : "집계한다"
-    USER_PROFILE {
-        string id PK
-        string email UK
-        string username UK
-        string displayName
-        string bio
-        string avatarUrl
-        string themePreset
-        string buttonStyle
-        datetime createdAt
-        datetime updatedAt
-    }
-    SOCIAL_LINK {
-        string id PK
-        string userId FK
-        string platform
-        string url
-        int order
-    }
-    LINK_ITEM {
-        string id PK
-        string userId FK
-        string kind
-        string title
-        string url
-        string icon
-        int order
-        int clickCount
-        boolean isVisible
-        datetime deletedAt
-        datetime createdAt
-        datetime updatedAt
-    }
-    USERNAME_HISTORY {
-        string oldUsername PK
-        string userId FK
-        datetime changedAt
-    }
-    ANALYTICS_DATA {
-        string userId PK
-        int totalVisits
-        json dailyStats
-    }
-```
-
-```ts
-// 참고용 TypeScript 타입 (Zustand 스토어 · localStorage persist 기준)
-export type LinkIcon =
-  | "link"
-  | "instagram"
-  | "youtube"
-  | "tiktok"
-  | "x"
-  | "threads"
-  | "github"
-  | "kakao"
-  | "naver"
-  | "blog"
-  | "email"
-  | "shop";
-
-export type SocialPlatform =
-  | "instagram"
-  | "youtube"
-  | "tiktok"
-  | "x"
-  | "threads"
-  | "github"
-  | "kakao"
-  | "naver"
-  | "email";
-
-export type ThemePreset = "apple-classic" | "pure-light" | "midnight-dark" | "soft-blue";
-export type ButtonStyle = "card" | "pill";
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  username: string;
-  displayName: string;       // 1~30자 (온보딩 시 username으로 초기화)
-  bio: string;               // 0~150자
-  avatarUrl: string | null;  // Data URL 또는 정적 경로, null이면 첫 글자 기본 아바타
-  themePreset: ThemePreset;  // 기본값 "apple-classic"
-  buttonStyle: ButtonStyle;  // 기본값 "card"
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SocialLink {
-  id: string;
-  userId: string;
-  platform: SocialPlatform;
-  url: string;               // http://, https://, mailto:
-  order: number;
-}
-
-export interface LinkItem {
-  id: string;
-  userId: string;
-  kind: "link" | "header";   // 기본 URL 링크 vs 섹션 구분 헤더
-  title: string;             // 링크(1~50자) 또는 섹션 헤더(1~30자)
-  url?: string;              // kind === "link"일 때 필수 (http://, https://, mailto:)
-  icon?: LinkIcon;           // kind === "link"일 때 사용 (기본값 "link")
-  showDivider?: boolean;     // kind === "header"일 때 헤어라인 구분선 표시 여부
-  order: number;             // 링크·헤더 통합 정렬 순서
-  clickCount: number;        // 누적 클릭 수 (기본값 0)
-  isVisible: boolean;        // 기본값 true (P1)
-  deletedAt: string | null;  // Soft Delete 시각 (F-04 실행 취소 지원)
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DailyStatPoint {
-  date: string;              // YYYY-MM-DD
-  visits: number;
-  clicks: number;
-}
-
-export interface AnalyticsData {
-  userId: string;
-  totalVisits: number;
-  dailyStats: DailyStatPoint[]; // 최근 7일 추이 차트 데이터
-}
-```
-
-> **Mock 시드 데이터 (`/gildong`)**: 최초 방문 시 기존 홍길동 프로필(`avatar.jpg`, 이름, 소개), 소셜 미디어 링크, 연습 프로젝트 및 연락 링크, 최근 7일 Mock 방문/클릭 추이 데이터가 자동 생성되어 랜딩의 `예시 보기` 및 원클릭 데모 체험에 사용된다.
-
-### 5.1 링크 목록 기본 더미 데이터 (`app/links/links-data.ts`)
-
-[`app/links/links-data.ts`](../app/links/links-data.ts)에 정의된 더미 데이터(`linkListProfile`, `dummyLinks`)를 `/links` 링크 목록 화면의 기본 데이터 소스로 사용하며, 향후 초기 시드(`mock-seed.ts`) 구성 시에도 동일 데이터셋을 기준으로 연동한다.
-
-- **프로필 더미 (`linkListProfile`)**: 이름 `홍길동`, 핸들 `@gildong_study`, 소개 `"매일 한 걸음씩 성장하는 초보 웹 개발자의 링크 모음입니다."`, 아바타 `public/avatar.jpg`
-- **링크 목록 더미 (`dummyLinks`, 6건)** — `id`, `title`(제목), `url`(URL), `icon`(아이콘 키), `category`(분류) 포함:
+- **현재 7주차 표준**: 별도 백엔드 API, DB, 또는 가짜 로그인/임시 데모 계정 세션(`ensureDemoSession`, `currentUserId`) 없이 **`HomeLinkManager.tsx` 내부의 React `useState<MyLinkItem[]>` 로컬 메모리 상태**로 링크 목록을 관리합니다.
+- 초기 마운트 시 `app/links/links-data.ts`의 `dummyLinks`(6건)로 초기화되며, 모달(`AddLinkDialog`) 추가·인라인 수정·삭제 시 메모리 상태가 즉시 업데이트되어 화면에 반영됩니다. (서버 영속화가 없으므로 브라우저 새로고침 시 초기 목록 `dummyLinks` 6건으로 복원됩니다.)
 
 | ID | 제목 (`title`) | URL (`url`) | 아이콘 (`icon`) | 카테고리 (`category`) |
 |---|---|---|---|---|
@@ -437,7 +161,10 @@ export interface AnalyticsData {
 | `link-instagram` | 인스타그램 개발 일상 | `https://instagram.com/gildong_study` | `instagram` | SNS |
 | `link-email` | 응원 · 협업 이메일 보내기 | `mailto:hello@example.com` | `email` | 문의 |
 
-> URL 안전성 정책(6.2)에 따라 `resolveSafeHref`로 `http:`, `https:`, `mailto:` 스킴만 허용하고, `isExternalHttpUrl` 판별 시 새 탭(`target="_blank" rel="noopener noreferrer"`)으로 연결한다.
+### 5.2 공개 프로필 예시 뷰 (`/[username]`) 보조 타입 (`app/lib/types.ts` · `useMyLinkStore.ts`)
+
+- 공개 프로필 쇼케이스(`/[username]`, `/gildong`)는 `PublicProfileView`의 테마 프리셋(`apple-classic`, `pure-light`, `midnight-dark`, `soft-blue`), 버튼 스타일(`card`, `pill`), 리다이렉트 이력(`usernameHistory`) 및 읽기 전용 방문·클릭 카운터를 유지합니다.
+- 사용자 인증 세션(`currentUserId`)이나 자동 로그인 우회 로직은 포함하지 않습니다.
 
 ---
 
@@ -447,211 +174,134 @@ export interface AnalyticsData {
 
 | 항목 | 기준 |
 |---|---|
-| 초기 렌더링 속도 | 공개 페이지 및 대시보드 LCP 2.5초 이내 (4G 모바일 기준), Lighthouse 성능 점수 90점 이상 |
-| 반응 속도 | 모든 데이터 조작(링크/소셜/섹션 추가·수정·삭제·드래그 정렬·테마 변경)은 **Zustand 선택적 구독(selector)** 및 `localStorage` 즉시 반영으로 불필요한 리렌더링 없이 **50ms 이내** UI·라이브 프리뷰 갱신 |
-| 저장소 용량 관리 | 브라우저 `localStorage` 한계(약 5MB) 초과를 막기 위해 아바타 이미지는 업로드 시 클라이언트에서 리사이징·압축(WebP/JPEG) 후 저장 |
-| 이미지 최적화 | 정적/시드 이미지는 `next/image`로 최적화 |
-| 번들 크기 | 외부 차트·드래그 패키지 없이 경량 SVG 차트 및 네이티브 HTML5/Pointer 드래그를 직접 구현해 공개 페이지 초기 클라이언트 JS 120KB(gzip) 이하 목표 |
+| 초기 렌더링 속도 | 루트(`/`) 및 공개 페이지 LCP 2.5초 이내 (4G 모바일 기준) |
+| UI 반응 속도 | React 로컬 상태(`useState`) 기반 추가·인라인 수정·삭제 시 지연 없이 즉시 목록 리렌더링 |
+| 이미지 최적화 | 정적 이미지는 `next/image`로 최적화 |
 
 ### 6.2 보안 및 데이터 안정성
 
 | 항목 | 기준 |
 |---|---|
-| XSS 방지 | 사용자 입력(이름, 소개, 링크 제목, 섹션 제목)은 React 기본 이스케이프로 출력하고 `dangerouslySetInnerHTML` 사용 금지 |
-| URL 안전성 | `http://`, `https://`, `mailto:` 스킴만 허용하고 `javascript:`, `data:`, `vbscript:` 등 악성 스크립트 URL 차단 |
+| XSS 방지 | 사용자 입력(링크 제목, URL 등)은 React 기본 이스케이프로 출력하고 `dangerouslySetInnerHTML` 사용 금지 |
+| URL 안전성 | `http://`, `https://`, `mailto:` 스킴만 허용하고 `javascript:`, `data:`, `vbscript:` 등 악성 스크립트 URL 차단 (`resolveSafeHref`) |
 | 외부 링크 보호 | `http`/`https` 외부 링크에 `target="_blank" rel="noopener noreferrer"` 적용 |
-| username 사칭 방지 | `USERNAME_HISTORY`에 이전 username을 보관하여 타 계정(Mock/신규)이 과거 주소를 재사용하지 못하게 차단 |
-| 스토리지 손상 방어 | `localStorage` JSON 파싱 실패 시 앱이 멈추지 않도록 `try/catch`로 감싸고 기본 Mock 데이터로 안전 복구 |
-| 데모 환경 고지 | 클라이언트 완결형 데모 특성상 데이터가 브라우저에 저장되며 기기 간 동기화되지 않음(민감한 개인정보·실제 비밀번호 입력 금지 안내) |
+| 7주차 로컬 상태 고지 | 현재 7주차 단계는 서버 연동 없는 브라우저 로컬 메모리 상태이며 민감한 개인정보·비밀번호 입력 불필요 |
 
 ### 6.3 사용성 · 접근성
 
 | 항목 | 기준 |
 |---|---|
-| 반응형 | 모바일 우선 설계 (360px ~ 1440px), 공개 페이지 콘텐츠 최대 폭 680px |
-| 터치 영역 | 버튼·링크 카드·소셜 아이콘·`▲`/`▼` 버튼 최소 44 × 44px |
-| 접근성 | WCAG 2.1 AA 준수: 모든 테마 프리셋에서 명도 대비 4.5:1 이상, 드래그 앤 드롭의 키보드 대안(`▲`/`▼` 버튼) 제공, 포커스 링(`#0071e3`) 표시, 소셜·아이콘 버튼 `aria-label` 필수 |
-| 오류 표시 | 빨간색(`#e30000`) + 텍스트 메시지를 함께 사용 (색만으로 오류 전달 금지), `aria-invalid` · `aria-describedby` 적용 |
-| 피드백 | 추가·수정·삭제(실행 취소 포함)·테마 변경·초기화 등 모든 작업 결과를 토스트로 안내 |
-
-### 6.4 호환성 · 유지보수
-
-| 항목 | 기준 |
-|---|---|
-| 브라우저 | Chrome, Safari, Edge, Firefox 최신 2개 버전 / iOS Safari, Android Chrome / 인스타그램·카카오톡 인앱 브라우저 |
-| SEO · 공유 | 정적/기본 Open Graph 메타데이터 설정 및 페이지별 `document.title` 동적 반영 |
-| 코드 품질 | TypeScript strict 모드, ESLint 통과, Zustand 스토어의 Storage Adapter를 분리해 향후 백엔드(DB) 교체 용이 |
+| 반응형 | 모바일 우선 설계 (360px ~ 1440px), 링크 관리 목록 최대 폭 680px |
+| 터치 영역 | 버튼·링크 카드 최소 높이 44px 이상 (`min-h-11`) |
+| 접근성 | WCAG 2.1 AA 명도 대비 4.5:1 이상, 포커스 링(`#0071e3`), 아이콘 버튼 `aria-label` 필수 |
+| 오류 표시 | 빨간색(`#e30000`) + 텍스트 메시지를 함께 사용, `aria-invalid` · `aria-describedby` 적용 |
+| 피드백 | 링크 추가·인라인 수정·삭제 결과를 `role="status"` 플로팅 토스트로 안내 |
 
 ---
 
 ## 7. 디자인 시스템 및 UI 구현 전략
 
-앞으로의 UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https://ui.shadcn.com/create)** 를 기반으로 진행하며, 브랜드·시각적 완성도는 **[`design.md`](../design.md)** 에 정의된 **Apple 디자인 시스템**처럼 구축한다. 두 계층의 역할은 아래와 같이 결합한다.
+UI 컴포넌트 개발은 **[shadcn/ui (`https://ui.shadcn.com/create`)](https://ui.shadcn.com/create)** 를 기반으로 진행하며, 브랜드·시각적 완성도는 **[`design.md`](../design.md)** 에 정의된 **Apple 디자인 시스템** 기준으로 구축합니다.
 
 ### 7.1 역할 분리: shadcn/ui (컴포넌트 기반) + Apple 시스템 (`design.md`)
 
 | 구분 | 기준 | 적용 범위 및 원칙 |
 |---|---|---|
-| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Badge`, `Button`, `Card`, `Dialog`, `Input`, `Label`, `Select`, `Separator`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 `/links`, `/[username]`(`PublicProfileView`), `/admin` 모바일 프리뷰에서 재사용한다 (`app/links/components/LinkCard.tsx`는 공용 컴포넌트 위임 래퍼).<br>• 스타일링은 CSS Modules(`.module.css`) 및 별도 커스텀 CSS를 일절 사용하지 않고 **Tailwind CSS 4** CSS-first 단일 체계(`app/globals.css`의 `@import "tailwindcss";`, `@theme inline`/`@theme static`, `@utility` 및 `cn()` 유틸리티)로 통일한다. |
-| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 컬러, 타이포그래피 위계, 여백, 타일 교차 레이아웃, 모서리·그림자 철학은 `design.md`의 **Apple 웹 디자인 언어**처럼 일관되게 유지·구축한다.<br>• shadcn/ui 시맨틱 토큰(`--background`, `--foreground`, `--primary`, `--muted-foreground`, `--border`, `--ring`, `--destructive`)을 `design.md`의 Apple OKLCH/HEX 토큰에 매핑하고, `Button`의 `shape="pill"` 및 `LinkCard`의 `buttonStyle="card" | "pill"` 등 Apple 고유의 UI 문법을 확장 적용한다. |
+| **UI 컴포넌트 아키텍처** | **shadcn/ui** ([`https://ui.shadcn.com/create`](https://ui.shadcn.com/create)) | • 모든 UI 프리미티브(`Alert`, `Badge`, `Button`, `Card`, `Dialog`, `Input`, `Label`, `Select`, `Separator`, `Switch`, `Tabs`, `Textarea`, `Tooltip`)는 `components/ui/*`(`base-nova` 프리셋 · `@base-ui/react` · `lucide-react`) 기반으로 구축·확장한다.<br>• 링크 카드 UI는 `shadcn/ui Card` + `Badge` 기반 공용 컴포넌트 **`app/components/LinkCard.tsx`** 로 단일화하여 루트(`/`), `/links`, `/[username]`(`PublicProfileView`)에서 재사용한다.<br>• 스타일링은 CSS Modules(`.module.css`) 없이 **Tailwind CSS 4**(`app/globals.css`) 단일 체계로 통일한다. |
+| **시각 디자인 시스템** | **[`design.md`](../design.md)** (Apple 디자인 시스템) | • 단일 액센트 블루 `#0066cc`(`--color-primary` / `bg-primary`), 포커스 링 `#0071e3`, 카드 18px 둥근 모서리 · 헤어라인 보더 · 버튼/카드 무그림자 원칙을 유지한다.<br>• 루트(`/`) 상단 **`링크 추가`** 버튼은 프라이머리 `#0066cc` 필 버튼(`shape="pill"`, `min-h-11 px-[22px] py-[11px]`, 원형 `+` 배지)으로 시각적 최우선 위계를 부여한다. |
 
-### 7.2 화면별 시각 가이드 (Apple 시스템 기준)
+### 7.2 화면별 시각 가이드
 
 | 화면 / 요소 | 적용 스타일 |
 |---|---|
-| **랜딩(`/`) & 기본 공개(`/[username]`) 레이아웃** | `design.md`의 **상단 라이트 ↔ 하단 다크 풀블리드 타일 교차** 적용 (타일 경계 자체가 구분선 역할, 그림자 없음) |
-| **공개 페이지 상단 (프로필 + 소셜 배치)** | Pure White(`#ffffff`) 또는 Parchment(`#f5f5f7`) 배경, Near-Black Ink(`#1d1d1f`) 텍스트, 원형 아바타에만 `shadow-product` 적용 |
-| **공개 페이지 하단 (섹션 헤더 + 링크 목록)** | Near-Black Tile 1(`#272729`) 배경, 섹션 헤더는 `rgba(255,255,255,0.12)` 헤어라인 구분선 + 뮤트 캡션, 링크 카드는 Near-Black Tile 2(`#2a2a2c`) + `1px solid rgba(255,255,255,0.1)` 헤어라인 + 18px 둥근 모서리(또는 필형 선택), 강조 색상은 Sky Link Blue(`#2997ff`) |
-| **대시보드(`/admin`) · 로그인(`/login`) · 온보딩(`/onboarding`)** | Parchment(`#f5f5f7`) 배경 위 `shadcn/ui Card` 기반 White(`#ffffff`) 18px 둥근 카드 (`1px solid #e0e0e0` 헤어라인), 편집 집중형 UI + 우측 모바일 목업 프레임 |
-| **액센트 & 버튼** | `shadcn/ui Button`에 Apple Action Blue(`#0066cc`) 적용 — 추가·저장 등 주요 CTA는 필(`shape="pill"`) 형태, 눌림 시 active scale 트랜스폼, 포커스 링 `#0071e3` |
-| **오류 색상** | Error Red(`#e30000`) — `shadcn/ui Input`/`Alert` 유효성 오류 테두리(`--destructive`) 및 안내 문구 (`design.md`에 없는 상태값으로 본 문서에서 추가 정의) |
-| **글꼴** | `system-ui, -apple-system` (비 Apple 환경은 `Inter` + `Noto Sans KR`), 디스플레이 제목은 weight 600 및 음수 자간 |
+| **메인 페이지(`/`)** | 상단 라이트 히어로(아바타 · 이름 · **`링크 추가` 프라이머리 필 CTA** · 보조 `GitHub` · `이메일 복사` · **`내 링크 목록`** 로컬 상태 카드) ↔ 하단 다크 타일 교차 레이아웃 (`design.md` 기준) |
+| **`AddLinkDialog` 모달** | White(`#ffffff`) 배경 `18px` 둥근 모서리, `shadcn/ui Input`/`Select`, 오류 시 Error Red(`#e30000`), 하단 Action Blue(`#0066cc`) 필형 `저장` 버튼 |
+| **오류 색상** | Error Red(`#e30000`) — 유효성 오류 테두리(`--destructive`) 및 안내 문구 |
 
 ---
 
-## 8. 범위 외 (Out of Scope, 데모 v3.7)
+## 8. 범위 외 (Out of Scope, 7주차 단계)
 
-- 실제 백엔드 서버·DB 구축 및 기기 간 실시간 원격 데이터 동기화
-- 실제 트랜잭션 이메일 발송 서버 연동 (브라우저 내 Mock 이메일 인증으로 대체)
-- 유료 구독 / 결제 기능 및 커스텀 도메인 연결
-- 소셜 OAuth 로그인 (Google, Kakao)
-
----
-
-## 9. 수용 기준 (Acceptance Criteria) — 데모 MVP
-
-- [ ] 서버/DB 없이 Next.js App Router + `localStorage` + Mock 데이터(`/gildong`)만으로 모든 기능이 브라우저에서 동작하며 새로고침 후에도 유지된다.
-- [x] `/` 접속 시 마이링크 랜딩 페이지가 표시되며, `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·링크 버튼이 포함된 예시 공개 페이지를 볼 수 있다.
-- [ ] `/login`에서 Mock 이메일 인증코드 입력 또는 `데모 계정 바로 체험`으로 `/admin` 대시보드에 진입할 수 있고, 첫 이메일 로그인 시 `/onboarding`을 거친다.
-- [ ] `/admin`에서 PC는 2단 분할(좌측 편집 · 우측 실시간 모바일 목업), 모바일은 `[편집 | 미리보기]` 탭 전환으로 동작한다.
-- [ ] 프로필 영역(아바타·이름·자기소개)과 소셜 미디어 아이콘 배치를 추가·수정·삭제하면 모바일 목업과 `/[username]`에 즉시 반영된다.
-- [x] `+ 링크 추가` 클릭 → 추가 폼 다이얼로그(`shadcn/ui Dialog`) 표시 → 제목·URL·아이콘(도메인 자동 추천) 입력 → 저장 시 목록과 모바일 목업에 즉시 반영된다.
-- [x] 잘못된 URL 입력 시 입력창 테두리와 안내 문구가 빨간색(`#e30000`)으로 표시되고 저장되지 않는다.
-- [ ] 카드의 `수정` 클릭 시 인라인 편집 상태로 전환되어 수정할 수 있고, `삭제` 클릭 시 확인 대화상자 + 5초 실행 취소 토스트로 복구할 수 있다.
-- [ ] **섹션 구분 헤더**를 추가해 링크 목록을 그룹으로 나눌 수 있고, **드래그 앤 드롭**(및 `▲`/`▼` 버튼)으로 순서를 자유롭게 변경할 수 있다.
-- [ ] `[테마]` 설정에서 프리셋 테마와 버튼 스타일을 변경하면 라이브 프리뷰와 `/[username]`에 즉시 적용된다.
-- [ ] `[통계]` 탭에서 총 방문자 수, 링크별 클릭 누적 수, 최근 7일 추이 차트를 확인할 수 있으며, 실제 `/[username]` 방문·클릭 시 수치가 실시간으로 올라간다.
-- [ ] `username` 변경 시 이전 주소(`/이전username`) 접속 시 최신 `/[username]`으로 자동 리다이렉트되며, 존재하지 않는 username은 404가 표시된다.
+- 별도 관리자 대시보드 라우트(`/admin`) 및 임시 데모 계정 자동 세션 주입
+- 가짜 로그인 우회 화면(`/login`, `/onboarding`)
+- 실제 백엔드 서버·DB 구축 및 기기 간 실시간 데이터 영속 동기화 (향후 주차에서 확장)
 
 ---
 
-## 10. 구현 로드맵 및 시연 마일스톤
+## 9. 수용 기준 (Acceptance Criteria, 7주차)
 
-### 10.1 폴더 및 모듈 설계
+- [x] 프로젝트에 별도 `/admin` 관리자 라우트 및 `@gildong` 임시 데모 세션 우회 로직이 존재하지 않는다.
+- [x] `TopNav` 등 내비게이션에 `'대시보드(/admin)'` 링크가 표시되지 않는다.
+- [x] 메인 페이지(루트 `/`) 상단에 프라이머리(`#0066cc`) 색상의 `'링크 추가'` 버튼이 배치된다.
+- [x] `'링크 추가'` 클릭 시 `shadcn/ui Dialog`(`AddLinkDialog`) 모달이 열리고, 제목·URL(예: `youtube.com/@mystudio` → `https://` 자동 보정 + `youtube` 아이콘 추천)을 입력해 저장하면 서버 연동 없이 **브라우저 로컬 메모리 상태(`React useState`)** 에 반영되어 `/` 목록에 즉시 추가된다.
+- [x] 잘못된 URL 또는 위험 스킴(`javascript:`) 입력 시 입력창 테두리와 안내 문구가 빨간색(`#e30000`)으로 표시되고 저장이 차단된다.
+- [x] `/` 목록 카드에서 `수정` 클릭 시 인라인 편집 폼으로 전환되어 수정할 수 있고, `삭제` 클릭 시 로컬 목록에서 즉시 삭제된다.
+- [x] `/links`와 `/gildong` 공개 뷰가 공용 `LinkCard`와 Tailwind CSS 4로 정상 렌더링된다.
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm run build`가 오류 없이 통과한다.
+
+---
+
+## 10. 구현 구조 및 검증 체크표
+
+### 10.1 폴더 및 모듈 구조
 
 ```text
 my_link/
-├── components.json               # shadcn/ui 설정 (base-nova, Tailwind CSS 4 CSS-first 규격: tailwind.config 미사용)
+├── components.json               # shadcn/ui 설정 (base-nova, Tailwind CSS 4 CSS-first 규격)
 ├── lib/
 │   └── utils.ts                  # shadcn/ui 공용 cn() 클래스 병합 유틸리티
 ├── components/
-│   └── ui/                       # shadcn/ui 기반 공용 프리미티브 13종 구현 완료 (alert, badge, button, card, dialog, input, label, select, separator, switch, tabs, textarea, tooltip)
+│   └── ui/                       # shadcn/ui 공용 프리미티브 (alert, badge, button, card, dialog, input, label, select, separator, switch, tabs, textarea, tooltip)
 ├── app/
-│   ├── globals.css               # 유일한 CSS 파일 — Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑 (CSS Modules 미사용)
+│   ├── globals.css               # 유일한 CSS 파일 — Tailwind CSS 4 (@import "tailwindcss", @theme) + design.md Apple 토큰 매핑
 │   ├── layout.tsx                # Inter · Noto Sans KR 폰트 & TooltipProvider 설정
-│   ├── page.tsx                  # 랜딩 페이지 (/) — 서비스 소개, 시작하기, /links & /gildong 예시 링크 (구현 완료)
-│   ├── links/                    # Apple 스타일 중앙 정렬 링크 목록 페이지 (/links, 구현 완료)
+│   ├── page.tsx                  # 메인 페이지 (/) — 프로필 히어로 + HomeLinkManager + 공부 기록 + 연습 작품 + 푸터
+│   ├── links/                    # 링크 카드 유틸리티 페이지 (/links)
 │   │   ├── page.tsx              # 프로필 요약 카드 + 공용 LinkCard 목록 화면
-│   │   ├── links-data.ts         # 기본 더미 데이터 (dummyLinks 6종 · linkListProfile) & 안전 URL 검증
+│   │   ├── links-data.ts         # 기본 더미 데이터 (dummyLinks 6종 · linkListProfile)
 │   │   └── components/
 │   │       ├── LinkCard.tsx      # app/components/LinkCard 재사용 위임 래퍼
 │   │       ├── LinkIconBadge.tsx # LinkGlyph + Tailwind CSS 아이콘 컨테이너
 │   │       └── CopyPageUrlButton.tsx # 현재 페이지 주소 복사 Action Blue 필 버튼
-│   ├── login/page.tsx            # Mock 이메일 6자리 코드 로그인 & 원클릭 데모 체험 (예정)
-│   ├── onboarding/page.tsx       # 첫 로그인 username 설정 (displayName 자동 초기화, 예정)
-│   ├── admin/page.tsx            # 대시보드 — 링크 추가 다이얼로그·목록·실시간 모바일 프리뷰 (부분 구현 완료)
-│   ├── [username]/               # 공개 프로필 페이지 (구현 완료)
-│   │   ├── page.tsx              # Server Component (Cache Components / generateStaticParams)
-│   │   └── PublicProfileClient.tsx # 하이드레이션 가드·대문자/이전 username 리다이렉트·404·링크 클릭 통계 연동
+│   ├── [username]/               # 공개 프로필 페이지 (/gildong 등)
+│   │   ├── page.tsx              # Server Component (generateStaticParams)
+│   │   └── PublicProfileClient.tsx # 하이드레이션 가드·리다이렉트·404·읽기 전용 뷰
 │   ├── stores/
-│   │   └── useMyLinkStore.ts     # Zustand 5 + persist 스토어 (hasHydrated 가드, addLink·ensureDemoSession 포함, 구현 완료)
+│   │   └── useMyLinkStore.ts     # /[username] 공개 뷰 상태 (임시 데모 세션/로그인 우회 미포함)
 │   ├── lib/
-│   │   ├── types.ts              # UserAccount, ProfileData, LinkItem, ThemePreset 등 도메인 타입 (구현 완료)
-│   │   ├── mock-seed.ts          # /gildong 초기 시드 데이터 (app/links/links-data.ts 더미 및 avatar.jpg 활용, 구현 완료)
-│   │   ├── validators.ts         # URL(http/https/mailto)·제목(1~50자)·이메일·username·예약어 검증 및 https 보정 (구현 완료)
-│   │   ├── icon-matcher.ts       # 도메인·스킴 기반 12종 아이콘 자동 추천 (구현 완료)
-│   │   ├── themes.ts             # 4종 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일 (구현 완료)
-│   │   └── image-resize.ts       # 아바타 이미지 256×256px 리사이징·압축 Data URL (예정)
+│   │   ├── types.ts              # LinkIcon, LinkItem, ThemePreset 등 도메인 타입
+│   │   ├── mock-seed.ts          # /gildong 공개 뷰 시드 데이터
+│   │   ├── validators.ts         # URL(http/https/mailto)·제목(1~50자)·예약어 검증 및 https 보정
+│   │   ├── icon-matcher.ts       # 도메인·스킴 기반 13종 아이콘 자동 추천
+│   │   └── themes.ts             # 프리셋 테마 토큰 (Apple 클래식 기본) & 버튼 스타일
 │   └── components/
-│       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 폼 다이얼로그 (구현 완료)
-│       ├── AdminDashboardClient.tsx # /admin 클라이언트 — PC 2단 분할 · 모바일 [편집|미리보기] 탭 · 토스트 (구현 완료)
-│       ├── LinkCard.tsx          # shadcn/ui Card + Badge + Tailwind CSS 공용 링크 카드 (/links · /[username] · 프리뷰 재사용, 구현 완료)
-│       ├── LinkGlyph.tsx         # 12종 링크 아이콘 + 소셜 플랫폼 Lucide 통합 매핑 (구현 완료)
-│       ├── PublicProfileView.tsx # 공개 프로필 공용 뷰 — Button · Separator · LinkCard 조합 (/[username] 및 모바일 목업 프리뷰 재사용, 구현 완료)
-│       ├── PublicProfileSkeleton.tsx # SSR/CSR 하이드레이션 안전 스켈레톤 (구현 완료)
-│       ├── MobilePreviewFrame.tsx# 대시보드 우측 스마트폰 목업 프레임 (구현 완료)
-│       ├── LinkEditorList.tsx    # 링크/섹션 인라인 CRUD + HTML5/Pointer 드래그 + ▲/▼ 이동 + Undo 토스트 (예정)
-│       ├── SocialEditor.tsx      # 소셜 미디어 아이콘 배치 관리 (예정)
-│       ├── ProfileEditor.tsx     # 아바타·이름·자기소개·username 변경 편집 (예정)
-│       ├── ThemeSelector.tsx     # 테마 프리셋·버튼 스타일 선택기 (예정)
-│       └── AnalyticsPanel.tsx    # 총 방문자·링크별 누적 클릭·경량 SVG 최근 7일 추이 차트 (예정)
+│       ├── TopNav.tsx            # 상단 바 & 스티키 서브헤더 (/admin 링크 미포함)
+│       ├── HomeLinkManager.tsx   # 루트(/) 로컬 메모리 상태(useState) 링크 목록·모달 추가·인라인 편집·삭제
+│       ├── AddLinkDialog.tsx     # shadcn/ui Dialog + Select 기반 링크 추가 모달 폼
+│       ├── LinkCard.tsx          # shadcn/ui Card + Badge + Tailwind CSS 공용 링크 카드
+│       ├── LinkGlyph.tsx         # 13종 링크 아이콘 + 소셜 플랫폼 Lucide 통합 매핑
+│       ├── PublicProfileView.tsx # 공개 프로필 공용 뷰 (/[username])
+│       └── PublicProfileSkeleton.tsx # SSR/CSR 하이드레이션 안전 스켈레톤
 ```
 
-**핵심 구현 원칙**
-- **Tailwind CSS 4 단일 스타일링 통일**: 모든 화면과 컴포넌트는 **Tailwind CSS 4**(`app/globals.css` CSS-first 토큰 + `cn()`)로만 스타일링하며, CSS Modules(`.module.css`)나 개별 컴포넌트 전용 CSS 파일을 두지 않는다.
-- **shadcn/ui 기반 공용 컴포넌트 재사용**: 모든 UI는 `components/ui/*` (**shadcn/ui**, `https://ui.shadcn.com/create`) 기반으로 구축하며, 특히 **`LinkCard` (`app/components/LinkCard.tsx`)** 는 `shadcn/ui Card`와 `Badge` 위에서 테마·버튼 스타일(`"card"`/`"pill"`)·프리뷰 분기를 prop으로 수용해 `/links`, `/[username]`, `/admin` 모바일 목업 전반에서 재사용한다. 색상·타이포그래피·타일 여백·모서리 규칙은 [`design.md`](../design.md)의 Apple 디자인 시스템 기준으로 스타일링한다.
-- **단일 뷰 재사용**: `PublicProfileView.tsx`를 `/[username]` 공개 페이지와 `/admin` 모바일 목업 프레임이 공유하여 편집 화면과 실제 결과의 디자인·동작 일치를 보장한다 (`isPreview` prop으로 통계 집계만 분기).
-- **외부 의존성 최소화**: UI 프리미티브는 `shadcn/ui`(`@base-ui/react` · `lucide-react`)로 구성하되, 드래그 앤 드롭은 브라우저 네이티브 HTML5 Drag/Pointer 이벤트(`▲`/`▼` 버튼과 병행)로, 최근 7일 추이 차트는 순수 반응형 **SVG 차트**로 직접 구현한다.
-- **하이드레이션 안전성**: `localStorage`에서 복원하는 모든 클라이언트 화면은 `hasHydrated` 완료 전까지 스켈레톤/기본 상태를 렌더링해 Next.js SSR 하이드레이션 경고를 방지한다.
+### 10.2 단계별 구현 마일스톤 (7주차 기준)
 
-### 10.2 단계별 구현 및 시연 마일스톤 (M1 → M2 → M3)
+| 단계 | 핵심 구현 목표 | 완료 기준 (Definition of Done) |
+|---|---|---|
+| **M1** *(완료)*<br>스타일 & 공용 컴포넌트 | • Tailwind CSS 4 단일 스타일링 및 `shadcn/ui Card` 기반 공용 `LinkCard` 구축<br>• `/links` 유틸리티 뷰 및 `/gildong` 공개 프로필 뷰 구현 | • CSS Modules 없이 Tailwind 4 단일 체계 동작<br>• `/links`, `/gildong`, `/`에서 동일한 `LinkCard` 재사용 |
+| **M2** *(완료 · 7주차 정렬)*<br>홈(`/`) 모달 추가 · 인라인 편집 · 정리 | • `/admin` 라우트·컴포넌트 및 `@gildong` 임시 세션 자동 주입 완전 제거<br>• 루트(`/`) 상단 프라이머리(`#0066cc`) `링크 추가` 버튼 + `AddLinkDialog` 모달 구현<br>• `HomeLinkManager`에서 React `useState` 로컬 메모리 상태로 목록 추가 · 인라인 수정 · 삭제 반영 | • TopNav 및 전체 경로에서 `/admin` 제거(접속 시 404)<br>• 루트(`/`)에서 모달로 추가·인라인 수정한 항목이 목록에 즉시 반영되고, URL 오류 시 `#e30000` 경고 출력 |
+| **M3** *(향후 주차)*<br>백엔드 · 실제 인증 · 영속화 | • 실제 API/DB 연동 및 정식 사용자 인증(OAuth / 이메일) 도입 | • 브라우저 새로고침·다른 기기에서도 데이터 영구 저장 |
 
-| 단계 | 핵심 구현 목표 | 완료 기준 (Definition of Done) | 시연 포인트 |
-|---|---|---|---|
-| **M1** *(구현 완료)*<br>기반 & 공개 프로필 | • Zustand 5(`persist`) 스토어 및 `/gildong` Mock 시드 구축<br>• 랜딩(`/`) 및 공개 프로필(`/[username]`) 구현<br>• `shadcn/ui Card` 기반 공용 `LinkCard` 및 `PublicProfileView` 구축 (Tailwind CSS 4 통일, `design.md` 상단 라이트 + 하단 다크 타일 교차) | • `/gildong`에서 아바타·이름·소개·소셜 아이콘·섹션 헤더·공용 `LinkCard` 정상 표시<br>• 대문자 경로/이전 username 리다이렉트 및 미존재 시 404 표시 | **1차 시연**:<br>랜딩(`/`)에서 `예시 보기`를 눌러 `/gildong` 공개 프로필 레이아웃·외부 링크 동작 확인 |
-| **M2** *(일부 진행)*<br>인증 · 대시보드 CRUD · 프리뷰 | • Mock 이메일 인증(`/login`) & 원클릭 데모 + `/onboarding`<br>• `/admin` PC 2단 분할(좌측 편집 · 우측 `MobilePreviewFrame`) + 모바일 탭 전환 *(링크 목록·프리뷰 선행 구현)*<br>• 링크 추가 다이얼로그(`AddLinkDialog`) *(구현 완료)*<br>• 프로필(아바타 리사이징·이름·소개), 소셜 배치, 섹션 헤더, 링크 수정/삭제 + URL 오류 빨간 경고(`#e30000`) + 5초 Undo | • 잘못된 URL 입력 시 빨간 테두리·문구 출력 및 저장 차단<br>• 추가/수정/삭제/복구 시 모바일 목업과 새로고침 후에도 상태 유지<br>• `username` 변경 시 이전 주소 자동 리다이렉트 동작 | **2차 시연**:<br>이메일 로그인/온보딩부터 프로필·소셜·섹션·링크 추가, 오류 경고, 삭제 실행 취소, 목업 즉시 반영까지 시연 |
-| **M3**<br>정렬 · 테마 · 통계 & 최종 검증 | • 네이티브 드래그 앤 드롭 + `▲`/`▼` 순서 변경<br>• `[테마]` 4종 프리셋 및 카드/필 버튼 스타일 적용<br>• `[통계]` 총 방문자 수·링크별 클릭 수·경량 SVG 최근 7일 추이 차트<br>• 접근성(WCAG AA·키보드)·`next build`·ESLint 통과 | • 드래그/`▲`/`▼` 정렬, 테마 전환이 `/[username]`에 즉시 반영<br>• 미리보기 클릭은 제외하고 실제 `/[username]` 방문·클릭만 통계 및 SVG 차트에 누적<br>• `npm run lint` 및 `npm run build` 오류 0건 | **3차 최종 시연**:<br>아래 `10.3`·`10.4` 시나리오 전체 흐름 무중단 데모 |
+### 10.3 핵심 사용자 시나리오 (7주차 기준)
 
-### 10.3 핵심 사용자 시나리오 (정상 · 예외 흐름)
-
-#### 시나리오 A. 신규 크리에이터 온보딩 및 첫 페이지 개설
-- **사전 조건**: 기존 계정이 없는 방문자가 `/` 랜딩 페이지에 접속
-1. **랜딩 확인**: `/`에서 서비스 소개를 보고 `시작하기`를 클릭해 `/login`으로 이동한다.
-2. **이메일 인증 (정상/예외)**:
-   - 잘못된 이메일(`abc`)을 입력하면 테두리와 안내 문구가 빨간색(`#e30000`)으로 표시되며 코드 발급이 차단된다.
-   - 올바른 이메일(`creator@example.com`)을 입력하고 `인증코드 받기`를 누르면 화면 배너에 6자리 Mock 코드(예: `482910`)와 10분 타이머가 표시된다.
-   - 일부러 틀린 코드를 1회 입력해 `"남은 시도 4회"` 경고를 확인한 뒤, 안내된 정확한 코드를 입력해 인증을 마친다.
-3. **온보딩 (`/onboarding`)**:
-   - 첫 로그인이므로 `/onboarding`으로 이동한다. 예약어(`admin`)나 이미 있는 `gildong`을 입력하면 빨간 경고가 표시된다.
-   - 사용 가능한 `my_studio`를 입력해 저장하면 `displayName`이 `my_studio`로 자동 초기화된 채 `/admin` 대시보드로 이동한다.
-
-#### 시나리오 B. 프로필·소셜·섹션·링크 CRUD 및 오류·복구 시나리오
-- **사전 조건**: `/admin`에 로그인된 상태
-1. **프로필 & 소셜 미디어 배치**:
-   - 프로필 편집에서 아바타 이미지(2MB 초과 파일 시 빨간 경고 확인 후 정상 이미지 선택 → 256×256px 압축 저장), 이름(`김크리`), 한 줄 소개를 저장해 우측 모바일 목업에 즉시 반영되는지 확인한다.
-   - 소셜 미디어 관리에서 `Instagram`과 `Email`(`mailto:creator@example.com`)을 추가해 프로필 아래 가로 아이콘 배치를 확인한다.
-2. **링크 추가 및 URL 검증**:
-   - `+ 링크 추가` 클릭 시 `새 링크 추가` 다이얼로그(`shadcn/ui Dialog`)가 열린다.
-   - 위험 URL(`javascript:alert(1)`) 또는 잘못된 URL(`not a url`)을 입력하면 입력창이 빨간색(`#e30000`)으로 변하고 `"올바른 URL 형식이 아닙니다"` 오류와 함께 저장이 막힌다.
-   - 프로토콜 없이 `youtube.com/@mystudio`를 입력하고 포커스를 빼면 `https://`가 자동 보정되고 아이콘이 `youtube`로 자동 추천된다. 제목(`내 유튜브 채널`) 입력 후 저장하면 목록과 모바일 목업에 추가된다.
-3. **섹션 구분 헤더 & 드래그 정렬**:
-   - `+ 섹션 헤더 추가`로 `"추천 콘텐츠"` 헤더를 만든 뒤, 좌측 핸들(`⋮⋮`)을 **드래그 앤 드롭**(또는 `▲`/`▼` 버튼)해 새로 추가한 링크 위로 배치한다.
-4. **인라인 수정 & 삭제 5초 실행 취소(Undo)**:
-   - 링크 카드의 `수정`을 눌러 카드 자체가 인라인 폼으로 바뀌는 것을 확인하고 제목을 수정한다.
-   - `삭제` 클릭 → 확인 대화상자 `"'{제목}' 링크를 삭제할까요?"` 확인 → 목록에서 사라진 뒤 하단 `"삭제되었습니다 · 실행 취소"` 토스트(5초)가 뜬다. `실행 취소`를 눌러 원래 순서 그대로 복구되는 것을 확인한다.
-
-#### 시나리오 C. 테마 설정, 반응형 전환 및 새로고침 영속성
-1. **테마 & 버튼 스타일 전환**: `/admin` `[테마]` 탭에서 기본 `Apple 클래식`(상단 라이트/하단 다크 교차) → `미드나잇 다크` 또는 `퓨어 라이트`, 버튼 스타일을 `카드형(18px)` → `필형(9999px)`으로 바꾸며 모바일 목업이 지연 없이 변하는 것을 확인한다.
-2. **모바일 뷰포트 전환**: 브라우저 폭을 375px로 좁히면 2단 레이아웃이 상단 `[편집 | 미리보기]` 탭 구조로 전환되는지 확인한다.
-3. **영속성 검증**: 브라우저를 새로고침(`F5`)해도 프로필·소셜·섹션·링크·테마가 `localStorage`(Zustand `persist`)에서 그대로 복원된다.
-
-#### 시나리오 D. 방문자 공개 페이지 조회, 실시간 통계 및 주소 리다이렉트
-1. **모바일 목업 클릭 제외**: `/admin` 우측 모바일 목업에서 링크를 클릭해도 `[통계]`의 클릭 수가 올라가지 않는지 확인한다.
-2. **실제 공개 페이지 방문 & 클릭**: `내 페이지 열기`로 `/my_studio`에 새 탭/페이지로 접속해 소셜·링크 버튼을 클릭한다(외부 링크는 `target="_blank" rel="noopener noreferrer"`로 열리고 `mailto:`는 메일 클라이언트를 호출).
-3. **통계 및 SVG 차트 반영**: `/admin` `[통계]` 탭으로 돌아와 **총 방문자 수 +1**, 해당 링크의 **클릭 누적 수 +1**, **최근 7일 SVG 추이 차트**의 당일 막대/수치 증가를 확인한다. (기존 `/gildong` 계정에서는 초기 7일 Mock 추이 데이터도 함께 확인 가능)
-4. **username 변경 & 리다이렉트 / 404**:
-   - `/admin` 프로필 설정에서 `my_studio`를 `studio_official`로 변경한다.
-   - 주소창에 예전 주소 `/my_studio`나 대문자 `/Studio_Official`을 입력하면 최신 `/studio_official`로 자동 이동하며, 없는 주소(`/no_such_user_999`) 입력 시 404 안내 화면이 표시된다.
-
----
-
-### 10.4 발표용 End-to-End 시연 체크표 (약 3분 데모 흐름)
-
-| 순서 | 단계 | 이동 경로 / 조작 | 시연에서 보여줄 핵심 포인트 |
-|---|---|---|---|
-| **1** | 랜딩 & 예시 체험 | `/` → `예시 보기` → `/gildong` | 상단 라이트 프로필(아바타·소개·소셜 아이콘) + 하단 다크 타일 섹션·링크 UI 확인 |
-| **2** | 빠른 로그인 · 온보딩 | `/login` → Mock 코드 인증(또는 원클릭 데모) → `/onboarding` | 서버 없이 동작하는 6자리 Mock 인증, `username` 중복/예약어 검증 및 자동 초기화 |
-| **3** | 라이브 편집 & 예외 방어 | `/admin` (PC 2단 화면) | 잘못된 URL 입력 시 빨간색(`#e30000`) 경고 → 정상 URL 입력 시 아이콘 자동 추천 & 목업 즉시 반영 |
-| **4** | 구조화 · 정렬 · Undo | `/admin` 링크/섹션 편집기 | 섹션 구분 헤더 추가 → 드래그 앤 드롭 배치 → 삭제 확인 후 5초 `실행 취소` 복구 |
-| **5** | 테마 커스터마이징 | `/admin` `[테마]` 탭 | `Apple 클래식` ↔ 프리셋 전환 & `카드형`/`필형` 버튼 변경 실시간 미리보기 |
-| **6** | 방문 · 통계 · 리다이렉트 | `/[username]` 방문/클릭 → `/admin` `[통계]` → 주소 변경 | 총 방문자·링크별 클릭·7일 SVG 추이 차트 상승 + 이전 `/username` 영구 리다이렉트 확인 |
+1. **루트(`/`) 진입 및 초기 로컬 상태 확인**:
+   - 홈 화면 상단에 프라이머리(`#0066cc`) 색상의 `링크 추가` 버튼과, 초기 `dummyLinks` 6개가 채워진 `내 링크 목록`이 표시된다.
+   - 상단 `TopNav`에 `대시보드(/admin)` 링크가 없음을 확인한다.
+2. **모달(`AddLinkDialog`) 유효성 검증 & 링크 추가**:
+   - `링크 추가` 버튼 클릭 → `새 링크 추가` 다이얼로그가 열린다.
+   - `javascript:alert(1)` 등 위험 URL 입력 시 빨간 테두리(`#e30000`)와 안내 문구가 표시되며 저장이 차단된다.
+   - 프로토콜 없이 `youtube.com/@mystudio` 입력 후 포커스 아웃 시 `https://youtube.com/@mystudio` 보정 및 `YouTube` 아이콘 자동 선택. 제목 `'내 유튜브 채널'` 입력 후 `저장` → 모달 닫힘 + 토스트 + `내 링크 목록`에 7번째 카드로 즉시 추가된다.
+3. **인라인 수정 & 삭제 & 새로고침 동작**:
+   - 카드 우측 `수정` 클릭 → 인라인 입력 폼 전환 → 제목 수정 후 `저장` 시 즉시 반영된다.
+   - `삭제` 클릭 시 로컬 목록에서 즉시 제거된다.
+   - 브라우저 새로고침 시 서버 미연동(로컬 메모리 상태) 정책에 따라 초기 6개 목록으로 복원된다.

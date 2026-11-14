@@ -27,7 +27,7 @@ interface PublicProfileViewProps {
 }
 
 /**
- * 공개 프로필(/[username]) 및 대시보드 모바일 목업이 공유하는 shadcn/ui + Tailwind CSS 기반 뷰.
+ * 공개 프로필(/[username]) 화면을 렌더링하는 shadcn/ui + Tailwind CSS 기반 뷰.
  */
 export function PublicProfileView({
   profile,
@@ -162,47 +162,30 @@ export function PublicProfileView({
               <span>MyLink</span>
             </Link>
 
-            <div className="flex items-center gap-2">
-              <Link
-                href="/admin"
-                className={cn(
-                  buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    shape: "pill",
-                  }),
-                  "h-9 px-3.5 text-[13px] font-normal tracking-[-0.016em] active:scale-95",
-                  theme.topUtilityPillClass
-                )}
-              >
-                대시보드
-              </Link>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                shape="pill"
-                onClick={handleCopyProfileUrl}
-                aria-live="polite"
-                className={cn(
-                  "h-9 gap-1.5 px-3.5 text-[13px] font-normal tracking-[-0.016em] active:scale-95",
-                  theme.topUtilityPillClass
-                )}
-              >
-                {copiedUrl ? (
-                  <>
-                    <Check className="size-3.5" aria-hidden="true" />
-                    <span>주소 복사됨</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3.5" aria-hidden="true" />
-                    <span>페이지 공유</span>
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              shape="pill"
+              onClick={handleCopyProfileUrl}
+              aria-live="polite"
+              className={cn(
+                "h-9 gap-1.5 px-3.5 text-[13px] font-normal tracking-[-0.016em] active:scale-95",
+                theme.topUtilityPillClass
+              )}
+            >
+              {copiedUrl ? (
+                <>
+                  <Check className="size-3.5" aria-hidden="true" />
+                  <span>주소 복사됨</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5" aria-hidden="true" />
+                  <span>페이지 공유</span>
+                </>
+              )}
+            </Button>
           </div>
         ) : null}
 

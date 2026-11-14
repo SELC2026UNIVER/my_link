@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import BeginnerChecklist from "./components/BeginnerChecklist";
 import CopyEmailButton from "./components/CopyEmailButton";
+import { HomeLinkManager } from "./components/HomeLinkManager";
 import ProfileShowcase from "./components/ProfileShowcase";
 import TopNav from "./components/TopNav";
 import {
@@ -57,21 +58,11 @@ export default function Home() {
               {profile.role} · {profile.handle}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3.5">
-              <a
-                href={contactLinks[0].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[var(--color-primary)] px-[22px] py-[11px] text-[17px] font-normal leading-none tracking-[-0.022em] text-white transition-all duration-150 hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-focus)]"
-              >
-                GitHub
-              </a>
-              <CopyEmailButton email={profile.email} variant="secondary" />
-            </div>
-
-            <p className="type-body mx-auto mt-8 max-w-[640px] text-[var(--color-ink)]">
-              {profile.intro}
-            </p>
+            <HomeLinkManager
+              githubHref={contactLinks[0].href}
+              email={profile.email}
+              intro={profile.intro}
+            />
 
             <div className="mx-auto mt-12 max-w-[920px] sm:mt-16">
               <div className="overflow-hidden rounded-[18px] bg-[var(--color-canvas-parchment)] shadow-product">
@@ -305,14 +296,6 @@ export default function Home() {
                     className="type-dense-link text-[var(--color-primary)] hover:underline"
                   >
                     공개 프로필 (/gildong)
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/admin"
-                    className="type-dense-link text-[var(--color-primary)] hover:underline"
-                  >
-                    대시보드 (/admin)
                   </Link>
                 </li>
               </ul>

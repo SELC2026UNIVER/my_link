@@ -27,20 +27,12 @@ export default function LinksPage() {
             <span>프로필 홈</span>
           </Link>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/admin"
-              className="inline-flex h-7 items-center rounded-full border border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              대시보드
-            </Link>
-            <Link
-              href="/gildong"
-              className="inline-flex h-7 items-center rounded-full border border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-primary transition-colors hover:border-primary/40 hover:bg-[var(--color-surface-pearl)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              /gildong 공개 뷰 ›
-            </Link>
-          </div>
+          <Link
+            href="/gildong"
+            className="inline-flex h-7 items-center rounded-full border border-border bg-card px-2.5 text-[12px] font-semibold tracking-[-0.01em] text-primary transition-colors hover:border-primary/40 hover:bg-[var(--color-surface-pearl)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            /gildong 공개 뷰 ›
+          </Link>
         </div>
 
         {/* Apple 유틸리티 카드 (18px 둥근 모서리 · 헤어라인 보더 · 아바타에만 shadow-product 적용) */}
